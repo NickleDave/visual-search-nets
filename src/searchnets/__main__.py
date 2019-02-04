@@ -18,6 +18,7 @@ import json
 import tensorflow as tf
 
 from .train import train
+from .data import data
 
 
 def cli(command, configfile):
