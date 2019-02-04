@@ -1,0 +1,7 @@
+.ipynb_checkpoints/
+.idea
+*/__pycache__/*
+__pycache__/
+bvlc_alexnet.npy
+model/
+*.npz
