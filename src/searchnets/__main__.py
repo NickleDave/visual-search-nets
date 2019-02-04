@@ -17,6 +17,8 @@ import json
 
 import tensorflow as tf
 
+from .train import train
+
 
 def cli(command, configfile):
     """command-line interface
