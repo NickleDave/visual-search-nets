@@ -15,7 +15,7 @@ from setuptools import find_packages, setup, Command
 
 # Package meta-data.
 NAME = 'searchnets'
-DESCRIPTION = 'experiments measuring how deep neural networks perform a visual search task'
+DESCRIPTION = 'experiments measuring how convolutional neural networks perform a visual search task'
 URL = 'https://github.com/NickleDave/visual-search-nets'
 EMAIL = 'nicholdav@gmail.com'
 AUTHOR = 'David Nicholson'
