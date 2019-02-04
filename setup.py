@@ -24,7 +24,7 @@ VERSION = '0.0.1a1'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'numpy', 'tensorflow', 'searchstims',
+    'numpy', 'tensorflow', 'matplotlib', 'imageio', 'searchstims',
 ]
 
 # What packages are optional?
