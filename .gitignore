@@ -1,8 +1,11 @@
+# buildstuffs and other ephemera
 .ipynb_checkpoints/
 .idea
 */__pycache__/*
 __pycache__/
+*.egg-info/
+
+# data
 bvlc_alexnet.npy
-model/
 *.npz
 data/visual_search_stimuli/*/*
