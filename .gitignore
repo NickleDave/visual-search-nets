@@ -5,3 +5,4 @@ __pycache__/
 bvlc_alexnet.npy
 model/
 *.npz
+data/visual_search_stimuli/*/*
