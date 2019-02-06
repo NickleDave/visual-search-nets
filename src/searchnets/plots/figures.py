@@ -4,19 +4,18 @@ import matplotlib.pyplot as plt
 SET_SIZES = [1, 2, 4, 8]
 
 
-mpl.style.use('bmh')
-
-plt.rcParams['font.size'] = 18
-plt.rcParams['axes.labelsize'] = 18
-plt.rcParams['axes.labelweight'] = 'regular'
-plt.rcParams['axes.titlesize'] = 20
-plt.rcParams['xtick.labelsize'] = 16
-plt.rcParams['ytick.labelsize'] = 16
-plt.rcParams['legend.fontsize'] = 16
-plt.rcParams['figure.titlesize'] = 20
-
-
 def plot_results(eff_accs, ineff_accs, epochs, savefig=False, savedir=None):
+    mpl.style.use('bmh')
+
+    plt.rcParams['font.size'] = 18
+    plt.rcParams['axes.labelsize'] = 18
+    plt.rcParams['axes.labelweight'] = 'regular'
+    plt.rcParams['axes.titlesize'] = 20
+    plt.rcParams['xtick.labelsize'] = 16
+    plt.rcParams['ytick.labelsize'] = 16
+    plt.rcParams['legend.fontsize'] = 16
+    plt.rcParams['figure.titlesize'] = 20
+
     fig, ax = plt.subplots(1, 2, sharey=True)
     fig.set_size_inches(10, 5)
     ax = ax.ravel()
