@@ -51,7 +51,7 @@ def cli(command, configfile):
     to make it easier to test (instead of throwing everything into one 'main' function)
     """
     # get config first so we can know if we should save log, where to make results directory, etc.
-    config = ram.parse_config(configfile)
+    config = get_config(configfile)
     if command == 'data':
         data(config)
     elif command == 'train':
