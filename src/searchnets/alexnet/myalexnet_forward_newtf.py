@@ -7,7 +7,7 @@
 # With code from https://github.com/ethereon/caffe-tensorflow
 # Model from  https://github.com/BVLC/caffe/tree/master/models/bvlc_alexnet
 # Weights from Caffe converted using https://github.com/ethereon/caffe-tensorflow
-
+import os
 import time
 
 import numpy as np
@@ -15,27 +15,7 @@ import tensorflow as tf
 
 ALEXNET_INPUT_SHAPE = (227,227,3)
 
-################################################################################
-
-# (self.feed('data')
-#         .conv(11, 11, 96, 4, 4, padding='VALID', name='conv1')
-#         .lrn(2, 2e-05, 0.75, name='norm1')
-#         .max_pool(3, 3, 2, 2, padding='VALID', name='pool1')
-#         .conv(5, 5, 256, 1, 1, group=2, name='conv2')
-#         .lrn(2, 2e-05, 0.75, name='norm2')
-#         .max_pool(3, 3, 2, 2, padding='VALID', name='pool2')
-#         .conv(3, 3, 384, 1, 1, name='conv3')
-#         .conv(3, 3, 384, 1, 1, group=2, name='conv4')
-#         .conv(3, 3, 256, 1, 1, group=2, name='conv5')
-#         .fc(4096, name='fc6')
-#         .fc(4096, name='fc7')
-#         .fc(1000, relu=False, name='fc8')
-#         .softmax(name='prob'))
-
-
-with open("bvlc_alexnet.npy", "rb") as weights:
-    # use item to get dictionary saved in a numpy array
-    net_data = np.load(weights, encoding="latin1").item()
+THIS_FILE_PATH = os.path.dirname(__file__)
 
 
 def conv(input, kernel, biases, k_h, k_w, c_o, s_h, s_w,  padding="VALID", group=1):
