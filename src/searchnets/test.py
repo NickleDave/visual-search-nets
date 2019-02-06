@@ -1,4 +1,3 @@
-import argparse
 import ast
 import os
 
@@ -81,9 +80,9 @@ def test(config):
     acc_per_set_size_per_model = np.asarray(acc_per_set_size_per_model)
     acc_per_set_size_per_model = np.square(acc_per_set_size_per_model)
 
-    np.savez(os.path.join(config['TRAIN']['MODEL_SAVE_PATH'],'test_alexnet_output'),
+    savepath = config['TEST']['TEST_RESULTS_SAVE_PATH']
+    if not os.path.isdir(savepath):
+        os.makedirs(savepath)
+    np.savez(os.path.join(savepath, 'test_alexnet_output'),
              acc_per_set_size_per_model=acc_per_set_size_per_model,
              acc_per_set_size_model_dict=acc_per_set_size_model_dict)
-
-
-

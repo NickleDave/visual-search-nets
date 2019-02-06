@@ -22,10 +22,10 @@ def data(config):
         fname_json = fname_json[0]
 
     with open(fname_json) as f:
-        stim_fnames_by_set_size = json.load(f)
-    stim_fnames_by_set_size = {int(k): v for k, v in stim_fnames_by_set_size.items()}
+        stim_info_by_set_size = json.load(f)
+    stim_info_by_set_size = {int(k): v for k, v in stim_info_by_set_size.items()}
 
-    set_sizes = [k for k in stim_fnames_by_set_size.keys()]
+    set_sizes = [k for k in stim_info_by_set_size.keys()]
 
     train_size = int(config['DATA']['TRAIN_SIZE'])
     train_size_per_set_size = (train_size / len(set_sizes)) / 2
@@ -60,12 +60,26 @@ def data(config):
         val_set_files = None
         set_size_vec_val = None
 
+    # the dict comprehension below contains some hard-to-comprehend unpacking
+    # of 'stim_info_by_set_size', so we can just keep the filenames.
+    # The structure of the .json file is a dict of dicts (see the searchstims
+    # docs for more info). The net effect of the unpacking is that each
+    # `present_absent_dict` is a dict with 'present' and
+    # 'absent' keys. Value for each key is a list of filenames of images
+    # where target is either present (if key is 'present') or absent
+    stim_fnames_by_set_size = {
+        set_size: {present_or_absent: [
+            stim_info_dict['filename'] for stim_info_dict in stim_info_list
+        ]
+            for present_or_absent, stim_info_list in present_absent_dict.items()
+
+        }
+        for set_size, present_absent_dict in stim_info_by_set_size.items()
+    }
+
     # do some extra juggling to make sure we have equal number of target present
     # and target absent stimuli for each "set size", in training and test datasets
     for set_size, stim_fnames_present_absent in stim_fnames_by_set_size.items():
-        # each `stim_fnames_present_absent` is a dict with 'present' and
-        # 'absent' keys. Value for each key is a list of filenames of images
-        # where target is either present (if key is 'present') or absent
         for present_or_absent, stim_fnames in stim_fnames_present_absent.items():
             inds = np.arange(len(stim_fnames))
             if val_size:
