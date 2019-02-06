@@ -26,6 +26,7 @@ def test(config):
 
     acc_per_set_size_per_model = []
     acc_per_set_size_model_dict = {}
+    predictions_per_model_dict = {}
     for net_number in range(number_nets_to_train):
         tf.reset_default_graph()
         with tf.Session() as sess:
@@ -76,6 +77,7 @@ def test(config):
             # and insert into dictionary where model name is key
             # and list of accuracies per set size is the "value"
             acc_per_set_size_model_dict[savepath] = acc_per_set_size
+            predictions_per_model_dict[savepath] = predictions
 
     acc_per_set_size_per_model = np.asarray(acc_per_set_size_per_model)
     acc_per_set_size_per_model = np.square(acc_per_set_size_per_model)
@@ -85,4 +87,5 @@ def test(config):
         os.makedirs(savepath)
     np.savez(os.path.join(savepath, 'test_alexnet_output'),
              acc_per_set_size_per_model=acc_per_set_size_per_model,
-             acc_per_set_size_model_dict=acc_per_set_size_model_dict)
+             acc_per_set_size_model_dict=acc_per_set_size_model_dict,
+             predictions_per_model_dict=predictions_per_model_dict)
