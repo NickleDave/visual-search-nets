@@ -37,7 +37,16 @@ def conv(input, kernel, biases, k_h, k_w, c_o, s_h, s_w,  padding="VALID", group
                       [-1] + conv.get_shape().as_list()[1:])
 
 
-def alexnet(graph, x):
+def alexnet(graph, x, weights_path=None):
+    if weights_path is None:
+        weights_path = os.path.join(
+            THIS_FILE_PATH,
+            '..', '..', '..',
+            'data', 'neural_net_weights', 'bvlc_alexnet.npy'
+        )
+    with open(weights_path, "rb") as weights_fp:
+        # use item to get dictionary saved in a numpy array
+        net_data = np.load(weights_fp, encoding="latin1").item()
 
     #conv1
     #conv(11, 11, 96, 4, 4, padding='VALID', name='conv1')
