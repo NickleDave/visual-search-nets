@@ -9,6 +9,27 @@ from .utils.net.raschka_tf_utils import load, predict
 
 
 def test(config):
+    """test trained AlexNet models on test searchstims dataset
+
+    Parameters
+    ----------
+    config
+
+    Returns
+    -------
+    None
+
+    saves .npz output file with following keys:
+        acc_per_set_size_per_model : np.ndarray
+            where rows are models and columns are set size
+        acc_per_set_size_model_dict : dict
+            where keys are paths to model and values are accuracy by set size.
+            The actual set sizes are in the .npz file saved by data, under
+            the key 'set_size_vec_test'.
+        predictions_per_model_dict : dict
+            where keys are paths to model and values are array
+            of predictions made by that model for test set
+    """
     # boilerplate to unpack config from DATA section
     set_sizes = config['DATA']['SET_SIZES']
     train_dir = config['DATA']['TRAIN_DIR']
