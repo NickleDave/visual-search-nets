@@ -9,3 +9,4 @@ __pycache__/
 bvlc_alexnet.npy
 *.npz
 data/visual_search_stimuli/*/*
+data/checkpoints/*/*
