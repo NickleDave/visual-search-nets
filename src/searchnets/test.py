@@ -101,7 +101,7 @@ def test(config):
             predictions_per_model_dict[savepath] = predictions
 
     acc_per_set_size_per_model = np.asarray(acc_per_set_size_per_model)
-    acc_per_set_size_per_model = np.square(acc_per_set_size_per_model)
+    acc_per_set_size_per_model = np.squeeze(acc_per_set_size_per_model)
 
     savepath = config['TEST']['TEST_RESULTS_SAVE_PATH']
     if not os.path.isdir(savepath):
