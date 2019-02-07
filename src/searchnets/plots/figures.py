@@ -39,14 +39,14 @@ def plot_results(eff_accs, ineff_accs, epochs,
     fig.set_size_inches(10, 5)
     ax = ax.ravel()
 
-    ax[0].plot(SET_SIZES, eff_accs.T)
-    ax[0].set_xticks(SET_SIZES)
+    ax[0].plot(set_sizes, eff_accs.T)
+    ax[0].set_xticks(set_sizes)
     ax[0].set_title('efficient')
     ax[0].set_xlabel('set size')
     ax[0].set_ylabel('accuracy')
 
-    ax[1].plot(SET_SIZES, ineff_accs.T)
-    ax[1].set_xticks(SET_SIZES)
+    ax[1].plot(set_sizes, ineff_accs.T)
+    ax[1].set_xticks(set_sizes)
     ax[1].set_title('inefficient')
     ax[1].set_xlabel('set size')
     ax[1].set_ylim([0, 1.1])
