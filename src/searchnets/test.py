@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 import tensorflow as tf
+import joblib
 
 from .alexnet.myalexnet_forward_newtf import alexnet
 from .utils.net.raschka_tf_utils import load, predict
@@ -35,7 +36,7 @@ def test(config):
     train_dir = config['DATA']['TRAIN_DIR']
 
     # get test data
-    data_dict = np.load(config['DATA']['NPZ_FILENAME'])
+    data_dict = joblib.load(config['DATA']['GZ_FILENAME'])
     x_test = data_dict['x_test']
     y_test = data_dict['y_test']
 
@@ -106,7 +107,8 @@ def test(config):
     savepath = config['TEST']['TEST_RESULTS_SAVE_PATH']
     if not os.path.isdir(savepath):
         os.makedirs(savepath)
-    np.savez(os.path.join(savepath, 'test_alexnet_output'),
-             acc_per_set_size_per_model=acc_per_set_size_per_model,
-             acc_per_set_size_model_dict=acc_per_set_size_model_dict,
-             predictions_per_model_dict=predictions_per_model_dict)
+    results_fname = os.path.join(savepath, 'test_alexnet_output.gz')
+    results_dict = dict(acc_per_set_size_per_model=acc_per_set_size_per_model,
+                        acc_per_set_size_model_dict=acc_per_set_size_model_dict,
+                        predictions_per_model_dict=predictions_per_model_dict)
+    joblib.dump(results_dict, results_fname)
