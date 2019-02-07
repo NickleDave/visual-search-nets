@@ -192,7 +192,10 @@ def data(config):
     y_test = np.asarray(['present' in fname for fname in test_set_files],
                         dtype=int)
 
-    npz_filename = config['DATA']['NPZ_FILENAME']
+    gz_filename = config['DATA']['GZ_FILENAME']
+    gz_dirname = os.path.dirname(gz_filename)
+    if not os.path.isdir(gz_dirname):
+        os.makedirs(gz_dirname)
 
     data_dict = dict(x_train=x_train,
                      y_train=y_train,
@@ -208,6 +211,5 @@ def data(config):
                      set_size_vec_test=set_size_vec_test,
                      set_sizes=set_sizes,
                      )
-
-    joblib.dump(npz_filename, data_dict)
+    joblib.dump(data_dict, gz_filename)
 
