@@ -4,9 +4,55 @@ from glob import glob
 
 import numpy as np
 import imageio
+import joblib
 
 
 def data(config):
+    """prepare training, validation, and test datasets.
+    Saves a compressed Python dictionary in the path specified
+    by the NPZ_FILENAME option in the DATA section of a config.ini file.
+
+    Parameters
+    ----------
+    config
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    The dictionary saved has the following key-value pairs:
+        x_train : np.ndarray
+            images used as input to train neural network
+        y_train : np.ndarray
+            labels, expected output of neural network.
+            Either element is either 1, meaning "target present", or 0, "target absent".
+        x_val : np.ndarray
+            images for validation set used during training
+        y_val : np.ndarray
+            labels for validation set
+        x_test : np.ndarray
+            images for set used to test accuracy of trained network
+        y_test : np.ndarray
+            labels for set used to test accuracy of trained network
+        train_set_files : np.ndarray
+            filenames corresponding to images in x_train
+        val_set_files : np.ndarray
+            filenames corresponding to images in x_val
+        test_set_files : np.ndarray
+            filenames corresponding to images in x_test
+        set_size_vec_train : np.ndarray
+            "set size" of each image in x_train,
+            total number of targets + distractors.
+        set_size_vec_val : np.ndarray
+            set size of each image in x_val
+        set_size_vec_test : np.ndarray
+            set size of each image in x_test
+        set_sizes : list
+            ordered set of unique set sizes.
+            Useful if you need to plot accuracy v. set size.
+    """
     train_dir = config['DATA']['TRAIN_DIR']
     stim_type = config['DATA']['STIM_TYPE']
 
@@ -147,18 +193,21 @@ def data(config):
                         dtype=int)
 
     npz_filename = config['DATA']['NPZ_FILENAME']
-    np.savez(npz_filename,
-             x_train=x_train,
-             y_train=y_train,
-             x_val=x_val,
-             y_val=y_val,
-             x_test=x_test,
-             y_test=y_test,
-             train_set_files=train_set_files,
-             val_set_files=val_set_files,
-             test_set_files=test_set_files,
-             set_size_vec_train=set_size_vec_train,
-             set_size_vec_val=set_size_vec_val,
-             set_size_vec_test=set_size_vec_test,
-             set_sizes=set_sizes,
-             )
+
+    data_dict = dict(x_train=x_train,
+                     y_train=y_train,
+                     x_val=x_val,
+                     y_val=y_val,
+                     x_test=x_test,
+                     y_test=y_test,
+                     train_set_files=train_set_files,
+                     val_set_files=val_set_files,
+                     test_set_files=test_set_files,
+                     set_size_vec_train=set_size_vec_train,
+                     set_size_vec_val=set_size_vec_val,
+                     set_size_vec_test=set_size_vec_test,
+                     set_sizes=set_sizes,
+                     )
+
+    joblib.dump(npz_filename, data_dict)
+
