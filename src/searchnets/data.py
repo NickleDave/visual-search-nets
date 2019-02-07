@@ -89,7 +89,7 @@ def data(config):
             raise TypeError('val_size_per_set_size is not a whole number, adjust '
                             'total number of samples, or number of set sizes.')
     else:
-        val_size = Nonetrin
+        val_size = None
 
     train_set_files = []
     # initialize list to convert into a
