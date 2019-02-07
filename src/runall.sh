@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+source ~/anaconda3/bin/activate searchnets
+
 # create visual search stimuli used to train neural nets
 searchstims ./configs/searchstims/config_number_082818.ini
 searchstims ./configs/searchstims/config_rectangle_082818.ini
