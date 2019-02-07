@@ -13,21 +13,28 @@ plt.rcParams['legend.fontsize'] = 16
 plt.rcParams['figure.titlesize'] = 20
 
 
-def plot_results(eff_accs, ineff_accs, epochs, savefig=False, savedir=None):
-    mpl.style.use('bmh')
+def plot_results(eff_accs, ineff_accs, epochs,
+                 set_sizes=[1, 2, 4, 8], savefig=False, savedir=None):
+    """plot accuracy of trained models on visual search task
+    with separate plots for efficient and inefficient search stimuli
 
-    plt.rcParams['font.size'] = 18
-    plt.rcParams['axes.labelsize'] = 18
-    plt.rcParams['axes.labelweight'] = 'regular'
-    plt.rcParams['axes.titlesize'] = 20
-    plt.rcParams['xtick.labelsize'] = 16
-    plt.rcParams['ytick.labelsize'] = 16
-    plt.rcParams['legend.fontsize'] = 16
-    plt.rcParams['figure.titlesize'] = 20
+    Parameters
+    ----------
+    eff_accs
+    ineff_accs
+    epochs
+    set_sizes
+    savefig
+    savedir
 
+    Returns
+    -------
+    None
+    """
     fig, ax = plt.subplots(1, 2, sharey=True)
     fig.set_size_inches(10, 5)
     ax = ax.ravel()
+
     ax[0].plot(SET_SIZES, eff_accs.T)
     ax[0].set_xticks(SET_SIZES)
     ax[0].set_title('efficient')
