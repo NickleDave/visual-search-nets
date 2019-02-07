@@ -4,6 +4,7 @@ import ast
 
 import numpy as np
 import tensorflow as tf
+import joblib
 
 from .alexnet.myalexnet_forward_newtf import alexnet
 from .utils.net.raschka_tf_utils import train as _train
@@ -27,7 +28,7 @@ def train(config):
     train_dir = config['DATA']['TRAIN_DIR']
 
     # get training data
-    data_dict = np.load(config['DATA']['NPZ_FILENAME'])
+    data_dict = joblib.load(config['DATA']['GZ_FILENAME'])
     x_train = data_dict['x_train']
     y_train = data_dict['y_train']
     training_set = [x_train, y_train]
