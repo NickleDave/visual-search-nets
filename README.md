@@ -3,6 +3,8 @@
 Experiments to measure the behavior of deep neural networks performing 
 a visual search task.
 
+For some background and a summary of the results, please see [this Jupyter notebook](./docs/notebooks/results.ipynb).
+
 ## Installation
 Experiments were run using Anaconda on Ubuntu 16.04.
 The following commands were used to create the environment:
