@@ -402,24 +402,25 @@ def fetch(url, destination_path='.', remove_compressed_file=True):
     -------
     None
     """
-    destination_path = os.path.expanduser(destination_path)
-    if not os.path.isdir(destination_path):
-        raise NotADirectoryError('could not find destination_path: {}'
-                                 .format(destination_path))
+    desination_path = os.path.expanduser(destination_path)
+    destination_dirname = os.path.dirname(destination_path)
+    if not os.path.isdir(destination_dirname):
+        raise NotADirectoryError('could not find destination directory: {}'
+                                 .format(destination_dirname))
 
     # helpers from MNE-Python that do actual downloading
-    _fetch_file(url, file_name)
+    _fetch_file(url=url, file_name=destination_path)
 
-    if file_name.endswith('.tar.gz') or file_name.endswith('.zip'):
-        print('extracting {}'.format(file_name))
+    if destination_path.endswith('.tar.gz') or destination_path.endswith('.zip'):
+        print('extracting {}'.format(destination_path))
 
         if file_name.endswith('.tar.gz'):
-            with tarfile.open(file_name) as tar:
-                tar.extractall(path=destination_path)
+            with tarfile.open(destination_path) as tar:
+                tar.extractall(path=destination_path.replace('.tar.gz', ''))
 
         elif file_name.endswith('.zip'):
             with ZipFile(file_name, 'r') as zipfile:
-                zipfile.extractall(path=destination_path)
+                zipfile.extractall(path=destination_path.replace('.zip', ''))
 
         if remove_compressed_file:
             os.remove(file_name)
