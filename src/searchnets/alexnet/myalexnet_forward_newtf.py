@@ -13,7 +13,10 @@ import time
 import numpy as np
 import tensorflow as tf
 
-ALEXNET_INPUT_SHAPE = (227,227,3)
+from ..utils.data import fetch
+from ..utils.figshare_urls import ALEXNET_WEIGHTS_URL
+
+ALEXNET_INPUT_SHAPE = (227, 227, 3)
 
 THIS_FILE_PATH = os.path.dirname(__file__)
 
@@ -44,6 +47,11 @@ def alexnet(graph, x, weights_path=None):
             '..', '..', '..',
             'data', 'neural_net_weights', 'bvlc_alexnet.npy'
         )
+    if not os.path.isfile(weights_path):
+        print("downloading weights for AlexNet")
+        fetch(url=ALEXNET_WEIGHTS_URL,
+              destination_path=weights_path)
+
     with open(weights_path, "rb") as weights_fp:
         # use item to get dictionary saved in a numpy array
         net_data = np.load(weights_fp, encoding="latin1").item()
@@ -93,7 +101,7 @@ def alexnet(graph, x, weights_path=None):
                                               bias=bias)
 
     #maxpool2
-    #max_pool(3, 3, 2, 2, padding='VALID', name='pool2')                                                  
+    #max_pool(3, 3, 2, 2, padding='VALID', name='pool2')
     k_h = 3; k_w = 3; s_h = 2; s_w = 2; padding = 'VALID'
     maxpool2 = tf.nn.max_pool(lrn2, ksize=[1, k_h, k_w, 1],
                               strides=[1, s_h, s_w, 1], padding=padding)
