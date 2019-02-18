@@ -11,4 +11,5 @@ bvlc_alexnet.npy
 data/visual_search_stimuli/*/*
 data/checkpoints/*/*
 data/data_prepd_for_nets/*
+data/experiment_*/
 results/*/*
