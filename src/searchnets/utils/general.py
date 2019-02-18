@@ -1,15 +1,19 @@
 import csv
 
+import pandas
+from statsmodels.formula.api import ols
+
+
 def make_csv(eff_accs_10_epochs, ineff_accs_10_epochs, eff_accs_400_epochs, ineff_accs_400_epochs,
-             set_sizes=[1, 2, 4, 8], csv_fname='results.csv'):
+             set_sizes=(1, 2, 4, 8), csv_fname='results.csv'):
     """make csv from results
 
     Parameters
     ----------
-    eff_accs_10_epochs : np.ndarray
-    ineff_accs_10_epochs : np.ndarray
-    eff_accs_400_epochs : np.ndarray
-    ineff_accs_400_epochs : np.ndarray
+    eff_accs_10_epochs : numpy.ndarray
+    ineff_accs_10_epochs : numpy.ndarray
+    eff_accs_400_epochs : numpy.ndarray
+    ineff_accs_400_epochs : numpy.ndarray
     set_sizes : list
         of set sizes, in same order they appear in columns of array.
         Default is [1, 2, 4, 8].
@@ -38,3 +42,11 @@ def make_csv(eff_accs_10_epochs, ineff_accs_10_epochs, eff_accs_400_epochs, inef
     with open(csv_fname, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerows(out)
+
+
+def anova(csv_fname):
+    """run anova on data in csv file generated with make_csv"""
+    data = pandas.read_csv(csv_fname)
+    model = ols('acc ~ C(stim_type) + epochs + set_size', data).fit()
+    print(model.summary())
+    return model
