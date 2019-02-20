@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import joblib
+from scipy import stats
 
 mpl.style.use('bmh')
 
@@ -19,7 +20,8 @@ plt.rcParams['figure.titlesize'] = 20
 
 
 def eff_v_ineff(eff_results, ineff_results, epochs,
-                set_sizes=(1, 2, 4, 8), savefig=False, savedir=None):
+                set_sizes=(1, 2, 4, 8), savefig=False, savedir=None,
+                figsize=(10, 5)):
     """plot accuracy of trained models on visual search task
     with separate plots for efficient and inefficient search stimuli
 
@@ -50,7 +52,7 @@ def eff_v_ineff(eff_results, ineff_results, epochs,
     ineff_accs = np.squeeze(ineff_accs)
 
     fig, ax = plt.subplots(1, 2, sharey=True)
-    fig.set_size_inches(10, 5)
+    fig.set_size_inches(figsize)
     ax = ax.ravel()
 
     ax[0].plot(set_sizes, eff_accs.T)
@@ -65,11 +67,84 @@ def eff_v_ineff(eff_results, ineff_results, epochs,
     ax[1].set_xlabel('set size')
     ax[1].set_ylim([0, 1.1])
 
-    plt.tight_layout()
+    fig.suptitle(f'{epochs} epochs')
 
     if savefig:
         fname = os.path.join(savedir, f'alexnet_eff_v_ineff_{epochs}_epochs.png')
         plt.savefig(fname)
+
+
+def mn_slope_by_epoch(eff_results_list, ineff_results_list, epochs_list,
+                      set_sizes=(1, 2, 4, 8), savefig=False, savedir=None,
+                      figsize=(20, 5)):
+    """plot accuracy as a function of number of epochs of training
+
+    Parameters
+    ----------
+    eff_results_list
+    ineff_results_list
+    epochs_list
+
+    Returns
+    -------
+    None
+    """
+    eff_slopes = []
+    ineff_slopes = []
+    for eff_results, ineff_results, epochs in zip(eff_results_list, ineff_results_list, epochs_list):
+        eff_accs = joblib.load(eff_results)['acc_per_set_size_per_model']
+        eff_accs = np.squeeze(eff_accs)
+        eff_slopes_this_epochs = []
+        for acc_row in eff_accs:
+            slope, intercept, r_value, p_value, std_err = stats.linregress(set_sizes, acc_row)
+            eff_slopes_this_epochs.append(slope)
+        eff_slopes_this_epochs = np.asarray(eff_slopes_this_epochs)
+        eff_slopes.append(eff_slopes_this_epochs)
+
+        ineff_accs = joblib.load(ineff_results)['acc_per_set_size_per_model']
+        ineff_accs = np.squeeze(ineff_accs)
+        ineff_slopes_this_epochs = []
+        for acc_row in ineff_accs:
+            slope, intercept, r_value, p_value, std_err = stats.linregress(set_sizes, acc_row)
+            ineff_slopes_this_epochs.append(slope)
+        ineff_slopes_this_epochs = np.asarray(ineff_slopes_this_epochs)
+        ineff_slopes.append(ineff_slopes_this_epochs)
+
+    def set_box_color(bp, color):
+        plt.setp(bp['boxes'], color=color)
+        plt.setp(bp['whiskers'], color=color)
+        plt.setp(bp['caps'], color=color)
+        plt.setp(bp['medians'], color=color)
+
+    fig, ax = plt.subplots(1, 3)
+    fig.set_size_inches(figsize)
+
+    bpl = ax[0].boxplot(eff_slopes, sym='', widths=0.6)
+    ax[0].set_xticklabels(epochs_list)
+    ax[0].set_ylabel('slope of\naccuracy v. set size')
+    ax[0].set_xlabel('number of\ntraining epochs')
+    ax[0].set_title('efficient')
+    set_box_color(bpl, '#D7191C')  # colors are from http://colorbrewer2.org/
+
+    bpr = ax[1].boxplot(ineff_slopes, sym='', widths=0.6)
+    ax[1].set_xticklabels(epochs_list)
+    ax[1].set_ylabel('slope of\naccuracy v. set size')
+    ax[1].set_xlabel('number of\ntraining epochs')
+    ax[1].set_title('inefficient')
+    set_box_color(bpr, '#2C7BB6')
+
+    mn_eff_slopes = np.asarray([np.mean(slopes) for slopes in eff_slopes])
+    mn_ineff_slopes = np.asarray([np.mean(slopes) for slopes in ineff_slopes])
+    diffs = mn_eff_slopes - mn_ineff_slopes
+
+    ax[2].bar(range(len(epochs_list)), diffs)
+    ax[2].set_xticklabels(epochs_list)
+    ax[2].set_ylabel('difference of means\n(efficient - inefficient)')
+    ax[2].set_xlabel('number of\ntraining epochs')
+
+    plt.tight_layout()
+    if savefig:
+        plt.savefig('boxcompare.png')
 
 
 def item_heatmap(json_fname, data_fname, test_results_fname,
