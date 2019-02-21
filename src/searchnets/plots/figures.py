@@ -19,20 +19,20 @@ plt.rcParams['legend.fontsize'] = 16
 plt.rcParams['figure.titlesize'] = 20
 
 
-def eff_v_ineff(eff_results, ineff_results, epochs,
+def ftr_v_spt_conj(ftr_results, spt_conj_results, epochs,
                 set_sizes=(1, 2, 4, 8), savefig=False, savedir=None,
                 figsize=(10, 5)):
     """plot accuracy of trained models on visual search task
-    with separate plots for efficient and inefficient search stimuli
+    with separate plots for feature and spatial conjunction search stimuli
 
     Parameters
     ----------
-    eff_results : str
+    ftr_results : str
         path to results.gz file saved after measuring accuracy of trained convnets
-        on test set of efficient search stimuli
-    ineff_results
+        on test set of feature search stimuli
+    spt_conj_results
         path to results.gz file saved after measuring accuracy of trained convnets
-        on test set of efficient search stimuli
+        on test set of feature search stimuli
     epochs : int
         number of epochs that nets were trained
     set_sizes : list
@@ -46,69 +46,69 @@ def eff_v_ineff(eff_results, ineff_results, epochs,
     -------
     None
     """
-    eff_accs = joblib.load(eff_results)['acc_per_set_size_per_model']
-    eff_accs = np.squeeze(eff_accs)
-    ineff_accs = joblib.load(ineff_results)['acc_per_set_size_per_model']
-    ineff_accs = np.squeeze(ineff_accs)
+    ftr_accs = joblib.load(ftr_results)['acc_per_set_size_per_model']
+    ftr_accs = np.squeeze(ftr_accs)
+    spt_conj_accs = joblib.load(spt_conj_results)['acc_per_set_size_per_model']
+    spt_conj_accs = np.squeeze(spt_conj_accs)
 
     fig, ax = plt.subplots(1, 2, sharey=True)
     fig.set_size_inches(figsize)
     ax = ax.ravel()
 
-    ax[0].plot(set_sizes, eff_accs.T)
+    ax[0].plot(set_sizes, ftr_accs.T)
     ax[0].set_xticks(set_sizes)
-    ax[0].set_title('efficient')
+    ax[0].set_title('feature')
     ax[0].set_xlabel('set size')
     ax[0].set_ylabel('accuracy')
 
-    ax[1].plot(set_sizes, ineff_accs.T)
+    ax[1].plot(set_sizes, spt_conj_accs.T)
     ax[1].set_xticks(set_sizes)
-    ax[1].set_title('inefficient')
+    ax[1].set_title('spatial conjunction')
     ax[1].set_xlabel('set size')
     ax[1].set_ylim([0, 1.1])
 
     fig.suptitle(f'{epochs} epochs')
 
     if savefig:
-        fname = os.path.join(savedir, f'alexnet_eff_v_ineff_{epochs}_epochs.png')
+        fname = os.path.join(savedir, f'alexnet_ftr_v_spt_conj_{epochs}_epochs.png')
         plt.savefig(fname)
 
 
-def mn_slope_by_epoch(eff_results_list, ineff_results_list, epochs_list,
+def mn_slope_by_epoch(ftr_results_list, spt_conj_results_list, epochs_list,
                       set_sizes=(1, 2, 4, 8), savefig=False, savedir=None,
                       figsize=(20, 5)):
     """plot accuracy as a function of number of epochs of training
 
     Parameters
     ----------
-    eff_results_list
-    ineff_results_list
+    ftr_results_list
+    spt_conj_results_list
     epochs_list
 
     Returns
     -------
     None
     """
-    eff_slopes = []
-    ineff_slopes = []
-    for eff_results, ineff_results, epochs in zip(eff_results_list, ineff_results_list, epochs_list):
-        eff_accs = joblib.load(eff_results)['acc_per_set_size_per_model']
-        eff_accs = np.squeeze(eff_accs)
-        eff_slopes_this_epochs = []
-        for acc_row in eff_accs:
+    ftr_slopes = []
+    spt_conj_slopes = []
+    for ftr_results, spt_conj_results, epochs in zip(ftr_results_list, spt_conj_results_list, epochs_list):
+        ftr_accs = joblib.load(ftr_results)['acc_per_set_size_per_model']
+        ftr_accs = np.squeeze(ftr_accs)
+        ftr_slopes_this_epochs = []
+        for acc_row in ftr_accs:
             slope, intercept, r_value, p_value, std_err = stats.linregress(set_sizes, acc_row)
-            eff_slopes_this_epochs.append(slope)
-        eff_slopes_this_epochs = np.asarray(eff_slopes_this_epochs)
-        eff_slopes.append(eff_slopes_this_epochs)
+            ftr_slopes_this_epochs.append(slope)
+        ftr_slopes_this_epochs = np.asarray(ftr_slopes_this_epochs)
+        ftr_slopes.append(ftr_slopes_this_epochs)
 
-        ineff_accs = joblib.load(ineff_results)['acc_per_set_size_per_model']
-        ineff_accs = np.squeeze(ineff_accs)
-        ineff_slopes_this_epochs = []
-        for acc_row in ineff_accs:
+        spt_conj_accs = joblib.load(spt_conj_results)['acc_per_set_size_per_model']
+        spt_conj_accs = np.squeeze(spt_conj_accs)
+        spt_conj_slopes_this_epochs = []
+        for acc_row in spt_conj_accs:
             slope, intercept, r_value, p_value, std_err = stats.linregress(set_sizes, acc_row)
-            ineff_slopes_this_epochs.append(slope)
-        ineff_slopes_this_epochs = np.asarray(ineff_slopes_this_epochs)
-        ineff_slopes.append(ineff_slopes_this_epochs)
+            spt_conj_slopes_this_epochs.append(slope)
+        spt_conj_slopes_this_epochs = np.asarray(spt_conj_slopes_this_epochs)
+        spt_conj_slopes.append(spt_conj_slopes_this_epochs)
 
     def set_box_color(bp, color):
         plt.setp(bp['boxes'], color=color)
@@ -119,28 +119,33 @@ def mn_slope_by_epoch(eff_results_list, ineff_results_list, epochs_list,
     fig, ax = plt.subplots(1, 3)
     fig.set_size_inches(figsize)
 
-    bpl = ax[0].boxplot(eff_slopes, sym='', widths=0.6)
+    bpl = ax[0].boxplot(ftr_slopes, sym='', widths=0.6)
     ax[0].set_xticklabels(epochs_list)
-    ax[0].set_ylabel('slope of\naccuracy v. set size')
+    ax[0].set_ylabel('slope')
+    ax[0].set_ylim([-0.1, 0.])
     ax[0].set_xlabel('number of\ntraining epochs')
-    ax[0].set_title('efficient')
+    ax[0].set_title('feature')
     set_box_color(bpl, '#D7191C')  # colors are from http://colorbrewer2.org/
 
-    bpr = ax[1].boxplot(ineff_slopes, sym='', widths=0.6)
+    bpr = ax[1].boxplot(spt_conj_slopes, sym='', widths=0.6)
     ax[1].set_xticklabels(epochs_list)
-    ax[1].set_ylabel('slope of\naccuracy v. set size')
+    ax[1].set_ylabel('slope')
+    ax[1].set_ylim([-0.1, 0.])
     ax[1].set_xlabel('number of\ntraining epochs')
-    ax[1].set_title('inefficient')
+    ax[1].set_title('spatial conjunction')
     set_box_color(bpr, '#2C7BB6')
 
-    mn_eff_slopes = np.asarray([np.mean(slopes) for slopes in eff_slopes])
-    mn_ineff_slopes = np.asarray([np.mean(slopes) for slopes in ineff_slopes])
-    diffs = mn_eff_slopes - mn_ineff_slopes
+    mn_ftr_slopes = np.asarray([np.mean(slopes) for slopes in ftr_slopes])
+    mn_spt_conj_slopes = np.asarray([np.mean(slopes) for slopes in spt_conj_slopes])
+    diffs = mn_ftr_slopes - mn_spt_conj_slopes
 
     ax[2].bar(range(len(epochs_list)), diffs)
+    ax[2].set_xticks(range(len(epochs_list)))
     ax[2].set_xticklabels(epochs_list)
-    ax[2].set_ylabel('difference of means\n(efficient - inefficient)')
+    ax[1].set_title('spatial conjunction')
+    ax[2].set_ylabel('slope difference\n(feature - spatial conjunction)')
     ax[2].set_xlabel('number of\ntraining epochs')
+    ax[2].set_title('difference')
 
     plt.tight_layout()
     if savefig:
