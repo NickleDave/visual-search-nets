@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 import joblib
 
-from .alexnet.myalexnet_forward_newtf import alexnet
+from .alexnet import AlexNet
 from .utils.net.raschka_tf_utils import train as _train
 from .utils.net.raschka_tf_utils import save
 
@@ -39,8 +39,9 @@ def train(config):
         val_set = None
 
     # boilerplate to unpack config from TRAIN section
+    net_name = int(config['TRAIN']['NETNAME'])
     number_nets_to_train = int(config['TRAIN']['number_nets_to_train'])
-    alexnet_input_shape = ast.literal_eval(config['TRAIN']['ALEXNET_INPUT_SHAPE'])
+    input_shape = ast.literal_eval(config['TRAIN']['INPUT_SHAPE'])
     new_learn_rate_layers = ast.literal_eval(config['TRAIN']['NEW_LEARN_RATE_LAYERS'])
     base_learning_rate = float(config['TRAIN']['BASE_LEARNING_RATE'])
     new_layer_learning_rate = float(config['TRAIN']['NEW_LAYER_LEARNING_RATE'])
@@ -57,7 +58,12 @@ def train(config):
             y_onehot = tf.one_hot(indices=y, depth=len(np.unique(y_train)),
                                   dtype=tf.float32, name='y_onehot')
 
-            layers_list = alexnet(graph, x)
+            if net_name == 'AlexNet':
+                dropout_rate_placeholder = tf.placeholder(tf.float32, name='dropout_rate')
+                model = AlexNet(x, init_layer=new_learn_rate_layers, dropout_rate=dropout_rate_placeholder)
+                dropout_rate = 0.5
+            elif net_name == 'VGG16':
+                dropout_rate = None
 
             predictions = {
                 'probabilities': tf.nn.softmax(layers_list[-1],  # last fully-connected
@@ -105,7 +111,8 @@ def train(config):
                    epochs=epochs,
                    shuffle=True,
                    random_seed=random_seed,
-                   batch_size=batch_size)
+                   batch_size=batch_size,
+                   droput_rate=dropout_rate)
 
             savepath = os.path.join(config['TRAIN']['MODEL_SAVE_PATH'],
                                     'net_number_{}'.format(net_number))
