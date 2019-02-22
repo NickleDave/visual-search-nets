@@ -1,8 +1,9 @@
 import configparser
 
 
-def get_config(config_fname):
-    """parse config file
+def parse_config(config_fname):
+    """parse config.ini file
+    Uses ConfigParser from Python standard library.
 
     Parameters
     ----------
@@ -11,10 +12,10 @@ def get_config(config_fname):
 
     Returns
     -------
-    config : dict
-        dictionary with all configuration parameters
+    config : ConfigParser
+        instance of ConfigParser; dictionary-like object
+        with all configuration parameters
     """
-
     config = configparser.ConfigParser()
     config.read(config_fname)
     return config
