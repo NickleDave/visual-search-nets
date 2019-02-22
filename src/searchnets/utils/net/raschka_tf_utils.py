@@ -37,7 +37,8 @@ def load(saver, sess, path, epoch):
 
 def train(sess, training_set, validation_set=None,
           initialize=True, epochs=20, shuffle=True,
-          random_seed=None, batch_size=64):
+          random_seed=None, batch_size=64,
+          dropout_rate=None):
 
     X_data = np.array(training_set[0])
     y_data = np.array(training_set[1])
@@ -53,9 +54,13 @@ def train(sess, training_set, validation_set=None,
                                     batch_size=batch_size,
                                     shuffle=shuffle)
         avg_loss = 0.0
-        for i, (batch_x,batch_y) in enumerate(batch_gen):
+        for i, (batch_x, batch_y) in enumerate(batch_gen):
             feed = {'x:0': batch_x,
                     'y:0': batch_y}
+
+            if dropout_rate:
+                feed['dropout_rate'] = dropout_rate
+
             loss, _ = sess.run(
                     ['cross_entropy_loss:0', 'train_op'],
                     feed_dict=feed)
