@@ -29,7 +29,7 @@ REQUIRED = [
 
 # What packages are optional?
 EXTRAS = {
-    # 'fancy feature': ['django'],
+    'dev': ['jupytext'],
 }
 
 # The rest you shouldn't have to touch too much :)
