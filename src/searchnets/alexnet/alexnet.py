@@ -152,7 +152,7 @@ class AlexNet:
     def create(self):
         """Create the network graph."""
         # 1st Layer: Conv (w ReLu) -> Lrn -> Pool
-        conv1 = self.conv(self.X, 11, 11, 96, 4, 4, padding='VALID', name='conv1')
+        conv1 = self.conv(self.x, 11, 11, 96, 4, 4, padding='VALID', name='conv1')
         norm1 = self.lrn(conv1, 2, 2e-05, 0.75, name='norm1')
         pool1 = self.max_pool(norm1, 3, 3, 2, 2, padding='VALID', name='pool1')
 
