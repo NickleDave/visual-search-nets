@@ -7,7 +7,7 @@ to type the python -m)
 """
 import argparse
 
-from .config import get_config
+from .config import parse_config
 from .data import data
 from .train import train
 from .test import test
@@ -41,7 +41,7 @@ def cli(command, configfile):
     to make it easier to test (instead of throwing everything into one 'main' function)
     """
     # get config first so we can know if we should save log, where to make results directory, etc.
-    config = get_config(configfile)
+    config = parse_config(configfile)
     if command == 'data':
         data(config)
     elif command == 'train':
