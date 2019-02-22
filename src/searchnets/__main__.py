@@ -5,17 +5,7 @@ The package is installed on the path by pip, so typing
 `$ searchnets --help` would have the same effect (i.e., no need
 to type the python -m)
 """
-import os
-import sys
 import argparse
-from datetime import datetime
-import logging
-import importlib
-import importlib.util
-from configparser import ConfigParser
-import json
-
-import tensorflow as tf
 
 from .config import get_config
 from .data import data
