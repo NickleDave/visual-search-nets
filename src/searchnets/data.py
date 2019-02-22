@@ -54,7 +54,6 @@ def data(config):
             Useful if you need to plot accuracy v. set size.
     """
     train_dir = config['DATA']['TRAIN_DIR']
-    stim_type = config['DATA']['STIM_TYPE']
 
     fname_json = glob(os.path.join(train_dir, '*.json'))
 
@@ -162,14 +161,16 @@ def data(config):
     print('loading images for training set')
     x_train = []
     for fname in train_set_files:
-        x_train.append(imageio.imread(fname))
+        path_to_file = os.path.join(train_dir, fname)
+        x_train.append(imageio.imread(path_to_file))
     x_train = np.asarray(x_train)
 
     if val_size:
         print('loading images for validation set')
         x_val = []
         for fname in val_set_files:
-            x_val.append(imageio.imread(fname))
+            path_to_file = os.path.join(train_dir, fname)
+            x_val.append(imageio.imread(path_to_file))
         x_val = np.asarray(x_val)
     else:
         x_val = None
@@ -177,7 +178,8 @@ def data(config):
     print('loading images for test set')
     x_test = []
     for fname in test_set_files:
-        x_test.append(imageio.imread(fname))
+        path_to_file = os.path.join(train_dir, fname)
+        x_test.append(imageio.imread(path_to_file))
     x_test = np.asarray(x_test)
 
     y_train = np.asarray(['present' in fname for fname in train_set_files],
