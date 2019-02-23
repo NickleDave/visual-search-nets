@@ -86,7 +86,14 @@ def train(config):
     new_learn_rate_layers = ast.literal_eval(config['TRAIN']['NEW_LEARN_RATE_LAYERS'])
     base_learning_rate = float(config['TRAIN']['BASE_LEARNING_RATE'])
     new_layer_learning_rate = float(config['TRAIN']['NEW_LAYER_LEARNING_RATE'])
-    epochs = int(config['TRAIN']['EPOCHS'])
+    epochs_list = ast.literal_eval(config['TRAIN']['EPOCHS'])
+    if type(epochs_list) is int:
+        epochs_list = [epochs_list]
+    elif type(epochs_list) is list:
+        pass
+    else:
+        raise TypeError("'EPOCHS' option in 'TRAIN' section of config.ini file parsed "
+                        f"as invalid type: {type(epochs_list)}")
     batch_size = int(config['TRAIN']['BATCH_SIZE'])
     random_seed = int(config['TRAIN']['RANDOM_SEED'])
 
@@ -98,96 +105,98 @@ def train(config):
     np.random.seed(random_seed)  # for shuffling in batch_generator
     tf.random.set_random_seed(random_seed)
 
-    for net_number in range(number_nets_to_train):
-        tf.reset_default_graph()
-        graph = tf.Graph()
-        with tf.Session(graph=graph) as sess:
-            x = tf.placeholder(tf.float32, (None,) + input_shape, name='x')
-            y = tf.placeholder(tf.int32, shape=[None], name='y')
-            y_onehot = tf.one_hot(indices=y, depth=len(np.unique(y_train)),
-                                  dtype=tf.float32, name='y_onehot')
-            rate = tf.placeholder_with_default(tf.constant(1.0, dtype=tf.float32), shape=(), name='dropout_rate')
+    for epochs in epochs_list:
+        print(f'training {net_name} model for {epochs} epochs')
+        for net_number in range(number_nets_to_train):
+            tf.reset_default_graph()
+            graph = tf.Graph()
+            with tf.Session(graph=graph) as sess:
+                x = tf.placeholder(tf.float32, (None,) + input_shape, name='x')
+                y = tf.placeholder(tf.int32, shape=[None], name='y')
+                y_onehot = tf.one_hot(indices=y, depth=len(np.unique(y_train)),
+                                      dtype=tf.float32, name='y_onehot')
+                rate = tf.placeholder_with_default(tf.constant(1.0, dtype=tf.float32), shape=(), name='dropout_rate')
 
-            if net_name == 'alexnet':
-                model = AlexNet(x, init_layer=new_learn_rate_layers, dropout_rate=rate)
-            elif net_name == 'VGG16':
-                model = VGG16(x, init_layer=new_learn_rate_layers, dropout_rate=rate)
+                if net_name == 'alexnet':
+                    model = AlexNet(x, init_layer=new_learn_rate_layers, dropout_rate=rate)
+                elif net_name == 'VGG16':
+                    model = VGG16(x, init_layer=new_learn_rate_layers, dropout_rate=rate)
 
-            predictions = {
-                'probabilities': tf.nn.softmax(model.output, name='probabilities'),
-                'labels': tf.cast(tf.argmax(model.output, axis=1), tf.int32, name='labels')
-            }
+                predictions = {
+                    'probabilities': tf.nn.softmax(model.output, name='probabilities'),
+                    'labels': tf.cast(tf.argmax(model.output, axis=1), tf.int32, name='labels')
+                }
 
-            cross_entropy_loss = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
-                                                           labels=y_onehot),
-                name='cross_entropy_loss')
+                cross_entropy_loss = tf.reduce_mean(
+                    tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
+                                                               labels=y_onehot),
+                    name='cross_entropy_loss')
 
-            var_list1 = []  # all layers before fully-connected
-            var_list2 = []  # fully-connected layers
-            for train_var in tf.trainable_variables():
-                if any([new_rate_name in train_var.name
-                        for new_rate_name in new_learn_rate_layers]):
-                    var_list2.append(train_var)
-                else:
-                    var_list1.append(train_var)
+                var_list1 = []  # all layers before fully-connected
+                var_list2 = []  # fully-connected layers
+                for train_var in tf.trainable_variables():
+                    if any([new_rate_name in train_var.name
+                            for new_rate_name in new_learn_rate_layers]):
+                        var_list2.append(train_var)
+                    else:
+                        var_list1.append(train_var)
 
-            opt1 = tf.train.GradientDescentOptimizer(base_learning_rate)
-            opt2 = tf.train.GradientDescentOptimizer(new_layer_learning_rate)
-            grads = tf.gradients(cross_entropy_loss, var_list1 + var_list2)
-            grads1 = grads[:len(var_list1)]
-            grads2 = grads[len(var_list1):]
-            train_op1 = opt1.apply_gradients(zip(grads1, var_list1))
-            train_op2 = opt2.apply_gradients(zip(grads2, var_list2))
-            train_op = tf.group(train_op1, train_op2, name='train_op')
+                opt1 = tf.train.GradientDescentOptimizer(base_learning_rate)
+                opt2 = tf.train.GradientDescentOptimizer(new_layer_learning_rate)
+                grads = tf.gradients(cross_entropy_loss, var_list1 + var_list2)
+                grads1 = grads[:len(var_list1)]
+                grads2 = grads[len(var_list1):]
+                train_op1 = opt1.apply_gradients(zip(grads1, var_list1))
+                train_op2 = opt2.apply_gradients(zip(grads2, var_list2))
+                train_op = tf.group(train_op1, train_op2, name='train_op')
 
-            correct_predictions = tf.equal(predictions['labels'],
-                                           y, name='correct_preds')
-            saver = tf.train.Saver()
+                correct_predictions = tf.equal(predictions['labels'],
+                                               y, name='correct_preds')
+                saver = tf.train.Saver()
 
-            accuracy = tf.reduce_mean(
-                tf.cast(correct_predictions, tf.float32),
-                name='accuracy')
+                accuracy = tf.reduce_mean(
+                    tf.cast(correct_predictions, tf.float32),
+                    name='accuracy')
 
-            X_data = np.array(training_set[0])
-            y_data = np.array(training_set[1])
-            training_loss = []
+                X_data = np.array(training_set[0])
+                y_data = np.array(training_set[1])
+                training_loss = []
 
-            sess.run(tf.global_variables_initializer())
+                sess.run(tf.global_variables_initializer())
 
-            for epoch in range(1, epochs + 1):
-                total = int(np.ceil(X_data.shape[0] / batch_size))
-                batch_gen = batch_generator(X_data, y_data,
-                                            batch_size=batch_size,
-                                            shuffle=True)
-                avg_loss = 0.0
-                pbar = tqdm(enumerate(batch_gen), total=total)
-                for i, (batch_x, batch_y) in pbar:
-                    pbar.set_description(f'batch {i} of {total}')
-                    feed = {x: batch_x,
-                            y: batch_y,
-                            rate: dropout_rate}
+                for epoch in range(1, epochs + 1):
+                    total = int(np.ceil(X_data.shape[0] / batch_size))
+                    batch_gen = batch_generator(X_data, y_data,
+                                                batch_size=batch_size,
+                                                shuffle=True)
+                    avg_loss = 0.0
+                    pbar = tqdm(enumerate(batch_gen), total=total)
+                    for i, (batch_x, batch_y) in pbar:
+                        pbar.set_description(f'batch {i} of {total}')
+                        feed = {x: batch_x,
+                                y: batch_y,
+                                rate: dropout_rate}
 
-                    loss, _ = sess.run(
-                        [cross_entropy_loss, train_op],
-                        feed_dict=feed)
-                    avg_loss += loss
+                        loss, _ = sess.run(
+                            [cross_entropy_loss, train_op],
+                            feed_dict=feed)
+                        avg_loss += loss
 
-                training_loss.append(avg_loss / (i + 1))
-                print('Epoch %02d Training Avg. Loss: %7.3f' % (
-                    epoch, avg_loss), end=' ')
-                if val_set is not None:
-                    feed = {x: val_set[0],
-                            y: val_set[1]}
-                    valid_acc = sess.run(accuracy, feed_dict=feed)
-                    print(' Validation Acc: %7.3f' % valid_acc)
-                else:
-                    print()
+                    training_loss.append(avg_loss / (i + 1))
+                    print('Epoch %02d Training Avg. Loss: %7.3f' % (
+                        epoch, avg_loss), end=' ')
+                    if val_set is not None:
+                        feed = {x: val_set[0],
+                                y: val_set[1]}
+                        valid_acc = sess.run(accuracy, feed_dict=feed)
+                        print(' Validation Acc: %7.3f' % valid_acc)
+                    else:
+                        print()
 
-            savepath = os.path.join(config['TRAIN']['MODEL_SAVE_PATH'],
-                                    'net_number_{}'.format(net_number))
-            if not os.path.isdir(savepath):
-                os.makedirs(savepath)
-            print(f'Saving model in {savepath}')
-            ckpt_name = os.path.join(savepath, f'{net_name}-model.ckpt')
-            saver.save(sess, ckpt_name, global_step=epochs)
+                savepath = os.path.join(config['TRAIN']['MODEL_SAVE_PATH'],
+                                        'net_number_{}'.format(net_number))
+                if not os.path.isdir(savepath):
+                    os.makedirs(savepath)
+                print(f'Saving model in {savepath}')
+                ckpt_name = os.path.join(savepath, f'{net_name}-model.ckpt')
+                saver.save(sess, ckpt_name, global_step=epochs)
