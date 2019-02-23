@@ -182,4 +182,8 @@ def train(config):
 
             savepath = os.path.join(config['TRAIN']['MODEL_SAVE_PATH'],
                                     'net_number_{}'.format(net_number))
-            save(saver, sess, epoch=epochs, path=savepath)
+            if not os.path.isdir(savepath):
+                os.makedirs(savepath)
+            print('Saving model in %s' % path)
+            ckpt_name = os.path.join(savepath, f'{net_name}-model.ckpt')
+            saver.save(sess, ckpt_name, global_step=epochs)
