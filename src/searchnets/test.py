@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 import joblib
 
-from .alexnet.myalexnet_forward_newtf import alexnet
+from .nets.myalexnet_forward_newtf import alexnet
 from .utils.net.raschka_tf_utils import load, predict
 
 
