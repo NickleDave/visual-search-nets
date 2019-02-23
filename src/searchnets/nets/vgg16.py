@@ -1,164 +1,171 @@
-# Copyright 2015 The TensorFlow Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
-"""VGG16 model for Keras.
+"""VGG16 implementation, adapted from Frederik Kratzert AlexNet implementation, under BSD-3 license
+https://github.com/kratzert/finetune_alexnet_with_tensorflow/blob/master/LICENSE
 
-# Reference
-
-- [Very Deep Convolutional Networks for Large-Scale Image
-Recognition](https://arxiv.org/abs/1409.1556)
+Uses VGG16 architecture as specified in
+https://github.com/tensorflow/tensorflow/blob/r1.8/tensorflow/python/keras/_impl/keras/applications/vgg16.py
+which is released under Apache license 2.0, http://www.apache.org/licenses/LICENSE-2.0
 """
 import os
 
-from tensorflow.keras import backend as K
-from tensorflow.keras.layers import Conv2D
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import Flatten
-from tensorflow.keras.layers import Input
-from tensorflow.keras.layers import MaxPooling2D
-from tensorflow.keras.models import Model
-from tensorflow.keras.utils import get_file
+import tensorflow as tf
+import numpy as np
+
+from ..utils.data import fetch
+from ..utils.figshare_urls import VGG16_WEIGHTS_URL
+from .layers import max_pool, dropout
+
+THIS_FILE_PATH = os.path.dirname(__file__)
 
 
-WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels.h5'
-WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.1/vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5'
+class VGG16:
+    """Implementation of VGG16."""
 
+    def __init__(self, x, init_layer, dropout_rate, num_classes=2, weights_path='DEFAULT'):
+        """initialize an instance of VGG16
 
-def VGG16(input_tensor=None,
-          pooling=None,
-          classes=2):
-    """Instantiates the VGG16 architecture.
+        Parameters
+        ----------
+        x: tensorflow.Placeholder
+            Placeholder for the input tensor.
+        init_layer: list
+            of strings, names of layers that will have variables initialized at random and
+            trained "from scratch" instead of loading pre-trained weights.
+        dropout_rate: tensorflow.Placeholder
+            Dropout probability. Default used by 'train' function is 0.5.
+        num_classes: int
+            Number of classes in the dataset. Default is 2 (for "target present" / "target absent")
+        weights_path: str
+            Complete path to the pre-trained weight file. If file doesn't exist, weights will
+            be downloaded and saved to this location. Default is 'DEFAULT', in which case the
+            path used is '../../../data/neural_net_weights/bvlc_alexnet.npy'
+        """
+        self.x = x
+        self.num_classes = num_classes
+        self.dropout_rate = dropout_rate
+        self.init_layer = init_layer
 
-    Optionally loads weights pre-trained
-    on ImageNet. Note that when using TensorFlow,
-    for best performance you should set
-    `image_data_format='channels_last'` in your Keras config
-    at ~/.keras/keras.json.
+        if weights_path == 'DEFAULT':
+            weights_path = os.path.join(
+                THIS_FILE_PATH,
+                '..', '..', '..',
+                'data', 'neural_net_weights', 'vgg16_weights.npz'
+            )
+        if not os.path.isfile(weights_path):
+            print("downloading weights for AlexNet")
+            fetch(url=VGG16_WEIGHTS_URL,
+                  destination_path=weights_path)
+        self.weights_path = weights_path
+        self.weights_dict = np.load(self.weights_path)
 
-    The model and the weights are compatible with both
-    TensorFlow and Theano. The data format
-    convention used by the model is the one
-    specified in your Keras config file.
+        self.output = None  # will be set during call to self.create() below
 
-    Arguments:
-        input_tensor: optional Keras tensor (i.e. output of `layers.Input()`)
-            to use as image input for the model.
-        classes: optional number of classes to classify images
-            into, only to be specified if `include_top` is True, and
-            if no `weights` argument is specified.
+        self.create()
 
-    Returns:
-        A Keras model instance.
+    def conv(self, x, filter_height, filter_width, num_filters, stride_y, stride_x, name,
+             padding='SAME', groups=1):
+        """Create a convolution layer.
 
-    Raises:
-        ValueError: in case of invalid argument for `weights`,
-            or invalid input shape.
-    """
-    # Determine proper input shape
-    input_shape = (224, 224, 3)
+        Adapted from: https://github.com/ethereon/caffe-tensorflow
+        """
+        # Get number of input channels
+        input_channels = int(x.get_shape()[-1])
 
-    if input_tensor is None:
-        img_input = Input(shape=input_shape)
-    else:
-        if not K.is_keras_tensor(input_tensor):
-            img_input = Input(tensor=input_tensor, shape=input_shape)
+        # Create lambda function for the convolution
+        convolve = lambda i, k: tf.nn.conv2d(i, k,
+                                             strides=[1, stride_y, stride_x, 1],
+                                             padding=padding)
+
+        with tf.variable_scope(name) as scope:
+            # if this is a layer we should initialize new weights for
+            if name in self.init_layer:
+                weights = tf.get_variable('weights', shape=[filter_height,
+                                                            filter_width,
+                                                            input_channels / groups,
+                                                            num_filters])
+                biases = tf.get_variable('biases', shape=[num_filters])
+            else:
+                # if this is a layer we should load weights for
+                weights = tf.Variable(self.weights_dict[name + '_W'], name='weights')
+                biases = tf.Variable(self.weights_dict[name + '_b'], name='biases')
+
+        if groups == 1:
+            conv = convolve(x, weights)
+
+        # In the cases of multiple groups, split inputs & weights and
         else:
-            img_input = input_tensor
-    # Block 1
-    x = Conv2D(
-        64, (3, 3), activation='relu', padding='same', name='block1_conv1')(
-        img_input)
-    x = Conv2D(
-        64, (3, 3), activation='relu', padding='same', name='block1_conv2')(
-        x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x)
+            # Split input and weights and convolve them separately
+            input_groups = tf.split(axis=3, num_or_size_splits=groups, value=x)
+            weight_groups = tf.split(axis=3, num_or_size_splits=groups,
+                                     value=weights)
+            output_groups = [convolve(i, k) for i, k in zip(input_groups, weight_groups)]
 
-    # Block 2
-    x = Conv2D(
-        128, (3, 3), activation='relu', padding='same', name='block2_conv1')(
-        x)
-    x = Conv2D(
-        128, (3, 3), activation='relu', padding='same', name='block2_conv2')(
-        x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(x)
+            # Concat the convolved output together again
+            conv = tf.concat(axis=3, values=output_groups)
 
-    # Block 3
-    x = Conv2D(
-        256, (3, 3), activation='relu', padding='same', name='block3_conv1')(
-        x)
-    x = Conv2D(
-        256, (3, 3), activation='relu', padding='same', name='block3_conv2')(
-        x)
-    x = Conv2D(
-        256, (3, 3), activation='relu', padding='same', name='block3_conv3')(
-        x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(x)
+        # Add biases
+        bias = tf.reshape(tf.nn.bias_add(conv, biases), tf.shape(conv))
 
-    # Block 4
-    x = Conv2D(
-        512, (3, 3), activation='relu', padding='same', name='block4_conv1')(
-        x)
-    x = Conv2D(
-        512, (3, 3), activation='relu', padding='same', name='block4_conv2')(
-        x)
-    x = Conv2D(
-        512, (3, 3), activation='relu', padding='same', name='block4_conv3')(
-        x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(x)
+        # Apply relu function
+        relu = tf.nn.relu(bias, name=scope.name)
 
-    # Block 5
-    x = Conv2D(
-        512, (3, 3), activation='relu', padding='same', name='block5_conv1')(
-        x)
-    x = Conv2D(
-        512, (3, 3), activation='relu', padding='same', name='block5_conv2')(
-        x)
-    x = Conv2D(
-        512, (3, 3), activation='relu', padding='same', name='block5_conv3')(
-        x)
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
+        return relu
 
-    x = Flatten(name='flatten')(x)
-    x = Dense(4096, activation='relu', name='fc1')(x)
-    x = Dense(4096, activation='relu', name='fc2')(x)
-    INIT_CLASSES = 1000
-    x = Dense(INIT_CLASSES, activation='softmax', name='predictions')(x)
+    def fc(self, x, num_in, num_out, name, relu=True):
+        """Create a fully connected layer."""
+        with tf.variable_scope(name) as scope:
+            if name in self.init_layer:
+                weights = tf.get_variable('weights', shape=[num_in, num_out],
+                                          trainable=True)
+                biases = tf.get_variable('biases', [num_out], trainable=True)
+            else:
+                weights = tf.Variable(self.weights_dict[name + '_W'], name='weights')
+                biases = tf.Variable(self.weights_dict[name + '_b'], name='biases')
 
-    # Create model.
-    model = Model(img_input, x, name='vgg16')
+            # Matrix multiply weights and inputs and add bias
+            act = tf.nn.xw_plus_b(x, weights, biases, name=scope.name)
 
-    weights_path = get_file(
-        'vgg16_weights_tf_dim_ordering_tf_kernels.h5',
-        WEIGHTS_PATH,
-        cache_subdir='models',
-        file_hash='64373286793e3c8b2b4e3219cbf3544b')
+        if relu:
+            # Apply ReLu non linearity
+            relu = tf.nn.relu(act)
+            return relu
+        else:
+            return act
 
-    model.load_weights(weights_path)
+    def create(self):
+        """Create the network graph."""
+        block1_conv1 = self.conv(self.x, 3, 3, 64, 1, 1, padding='SAME', name='conv1_1')
+        block1_conv2 = self.conv(block1_conv1, 3, 3, 64, 1, 1, padding='SAME', name='conv1_2')
+        block1_pool = max_pool(block1_conv2, 2, 2, 2, 2, padding='VALID', name='conv1__pool')
 
-    for layer in range(4):
-        # as per Poder 2017, we don't want trained weights for last 3 layers
-        model.layers.pop()
+        block2_conv1 = self.conv(block1_pool, 3, 3, 128, 1, 1, padding='SAME', name='conv2_1')
+        block2_conv2 = self.conv(block2_conv1, 3, 3, 128, 1, 1, padding='SAME', name='conv2_2')
+        block2_pool = max_pool(block2_conv2, 2, 2, 2, 2, padding='VALID', name='conv2_pool')
 
-    x = Dense(4096, activation='relu', name='fc1')(model.layers[-1].output)
-    x = Dense(4096, activation='relu', name='fc2')(x)
-    x = Dense(classes, activation='softmax', name='predictions')(x)
+        block3_conv1 = self.conv(block2_pool, 3, 3, 256, 1, 1, padding='SAME', name='conv3_1')
+        block3_conv2 = self.conv(block3_conv1, 3, 3, 256, 1, 1, padding='SAME', name='conv3_2')
+        block3_conv3 = self.conv(block3_conv2, 3, 3, 256, 1, 1, padding='SAME', name='conv3_3')
+        block3_pool = max_pool(block3_conv3, 2, 2, 2, 2, padding='VALID', name='block3_pool')
 
-    # Create model.
-    model = Model(img_input, x, name='vgg16')
+        block4_conv1 = self.conv(block3_pool, 3, 3, 512, 1, 1, padding='SAME', name='conv4_1')
+        block4_conv2 = self.conv(block4_conv1, 3, 3, 512, 1, 1, padding='SAME', name='conv4_2')
+        block4_conv3 = self.conv(block4_conv2, 3, 3, 512, 1, 1, padding='SAME', name='conv4_3')
+        block4_pool = max_pool(block4_conv3, 2, 2, 2, 2, padding='VALID', name='conv4_pool')
 
-    # and we only want to train the final output layer
-    for layer in model.layers[:-1]:
-        layer.trainable = False
+        block5_conv1 = self.conv(block4_pool, 3, 3, 512, 1, 1, padding='SAME', name='conv5_1')
+        block5_conv2 = self.conv(block5_conv1, 3, 3, 512, 1, 1, padding='SAME', name='conv5_2')
+        block5_conv3 = self.conv(block5_conv2, 3, 3, 512, 1, 1, padding='SAME', name='conv5_3')
+        block5_pool = max_pool(block5_conv3, 2, 2, 2, 2, padding='VALID', name='conv5_pool')
 
-    return model
+        new_shape = int(np.prod(block5_pool.get_shape()[1:]))
+        flattened = tf.reshape(block5_pool, [-1, new_shape], name='flatten')
+        fc6 = self.fc(flattened, new_shape, 4096, name='fc6')
+        dropout1 = dropout(fc6, self.dropout_rate)
+
+        # 7th Layer: FC (w ReLu) -> Dropout
+        fc7 = self.fc(dropout1, 4096, 4096, name='fc7')
+        dropout2 = dropout(fc7, self.dropout_rate)
+
+        # 8th Layer: FC and return unscaled activations
+        fc8 = self.fc(dropout2, 4096, self.num_classes, relu=False, name='fc8')
+
+        self.output = fc8
