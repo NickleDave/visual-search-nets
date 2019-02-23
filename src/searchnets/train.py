@@ -156,11 +156,14 @@ def train(config):
             sess.run(tf.global_variables_initializer())
 
             for epoch in range(1, epochs + 1):
+                total = int(np.ceil(X_data.shape[0] / batch_size))
                 batch_gen = batch_generator(X_data, y_data,
                                             batch_size=batch_size,
                                             shuffle=True)
                 avg_loss = 0.0
-                for i, (batch_x, batch_y) in tqdm(enumerate(batch_gen)):
+                pbar = tqdm(enumerate(batch_gen), total=total)
+                for i, (batch_x, batch_y) in pbar:
+                    pbar.set_description(f'batch {i} of {total}')
                     feed = {x: batch_x,
                             y: batch_y,
                             rate: dropout_rate}
