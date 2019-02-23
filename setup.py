@@ -29,7 +29,7 @@ REQUIRED = [
 
 # What packages are optional?
 EXTRAS = {
-    'dev': ['jupytext'],
+    'dev': ['jupytext', 'cite2c'],
 }
 
 # The rest you shouldn't have to touch too much :)
