@@ -5,6 +5,7 @@ import ast
 import numpy as np
 import tensorflow as tf
 import joblib
+from tqdm import tqdm
 
 from .nets import AlexNet
 from .nets import VGG16
@@ -159,7 +160,7 @@ def train(config):
                                             batch_size=batch_size,
                                             shuffle=True)
                 avg_loss = 0.0
-                for i, (batch_x, batch_y) in enumerate(batch_gen):
+                for i, (batch_x, batch_y) in tqdm(enumerate(batch_gen)):
                     feed = {x: batch_x,
                             y: batch_y,
                             rate: dropout_rate}
