@@ -6,8 +6,8 @@ import numpy as np
 import tensorflow as tf
 import joblib
 
-from .alexnet import AlexNet
-from .vgg16 import VGG16
+from .nets import AlexNet
+from .nets import VGG16
 from .utils.net.raschka_tf_utils import batch_generator
 from .utils.net.raschka_tf_utils import save
 
@@ -50,6 +50,11 @@ def train(config):
     batch_size = int(config['TRAIN']['BATCH_SIZE'])
     random_seed = int(config['TRAIN']['RANDOM_SEED'])
 
+    if config.has_option('TRAIN', 'DROPOUT_RATE'):
+        dropout_rate = config['TRAIN']['DROPOUT_RATE']
+    else:
+        dropout_rate = 0.5
+
     np.random.seed(random_seed)  # for shuffling in batch_generator
     tf.random.set_random_seed(random_seed)
 
@@ -61,14 +66,12 @@ def train(config):
             y = tf.placeholder(tf.int32, shape=[None], name='y')
             y_onehot = tf.one_hot(indices=y, depth=len(np.unique(y_train)),
                                   dtype=tf.float32, name='y_onehot')
+            rate = tf.placeholder_with_default(tf.constant(1.0, dtype=tf.float32), shape=(), name='dropout_rate')
 
             if net_name == 'alexnet':
-                rate = tf.placeholder_with_default(tf.constant(1.0, dtype=tf.float32), shape=(), name='dropout_rate')
                 model = AlexNet(x, init_layer=new_learn_rate_layers, dropout_rate=rate)
-                dropout_rate = 0.5
             elif net_name == 'VGG16':
-                model = VGG16()
-                dropout_rate = 1.0
+                model = VGG16(x, init_layer=new_learn_rate_layers, dropout_rate=rate)
 
             predictions = {
                 'probabilities': tf.nn.softmax(model.output, name='probabilities'),
@@ -76,8 +79,8 @@ def train(config):
             }
 
             cross_entropy_loss = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits(logits=model.output,
-                                                        labels=y_onehot),
+                tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
+                                                           labels=y_onehot),
                 name='cross_entropy_loss')
 
             var_list1 = []  # all layers before fully-connected
