@@ -48,13 +48,17 @@ def cli(command, configfile):
         train(config)
     elif command == 'test':
         test(config)
+    elif command == 'all':
+        data(config)
+        train(config)
+        test(config)
 
 
 def get_parser():
     parser = argparse.ArgumentParser(description='main script',
                                      formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('command', type=str, choices=['data', 'train', 'test'],
-                        help="Command to run, either 'data', 'train' or 'test' \n"
+    parser.add_argument('command', type=str, choices=['data', 'train', 'test', 'all'],
+                        help="Command to run, either 'data', 'train', 'test', or 'all'\n"
                              "$ searchstims train ./configs/config_2018-12-17.ini")
     parser.add_argument('configfile', type=str,
                         help='name of config.ini file to use \n'
