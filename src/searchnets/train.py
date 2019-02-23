@@ -8,8 +8,47 @@ import joblib
 
 from .nets import AlexNet
 from .nets import VGG16
-from .utils.net.raschka_tf_utils import batch_generator
-from .utils.net.raschka_tf_utils import save
+
+
+def batch_generator(X, y, batch_size=64,
+                    shuffle=False, random_seed=None):
+    """generator that yields batches of training data and labels
+
+    Parameters
+    ----------
+    X : numpy.ndarray
+        training data, e.g., images with dimensions (number of samples, height, width, channels)
+    y : numpy.ndarray
+        labels for training data, e.g. vector of integers
+    batch_size : int
+        number of elements in each batch from X and y. Default is 64.
+    shuffle : bool
+        if True, shuffle data before creating generator. Default is False.
+    random_seed : int
+        integer to seed random number generator. Default is None.
+
+    Returns
+    -------
+    batch_x : numpy.ndarray
+        subset of X where first dimension is of size batch_size
+    batch_y : numpy.ndarray
+        subset of y where first dimension is of size batch_size
+
+    Notes
+    -----
+    adapted from code by Sebastian Raschka under MIT license
+    https://github.com/rasbt/python-machine-learning-book-2nd-edition/blob/master/LICENSE.txt
+    """
+    idx = np.arange(y.shape[0])
+
+    if shuffle:
+        rng = np.random.RandomState(random_seed)
+        rng.shuffle(idx)
+        X = X[idx]
+        y = y[idx]
+
+    for i in range(0, X.shape[0], batch_size):
+        yield (X[i:i + batch_size, :], y[i:i + batch_size])
 
 
 def train(config):
