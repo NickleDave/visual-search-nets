@@ -17,6 +17,18 @@ tu@computi:~$ cd ./visual-search-nets
 tu@computi:~$ pip install .
 ```
 
+## usage
+Installing this package (by running `pip install .` in the source directory) makes it 
+possible to run the experiments from the command line with the `searchnets` command, like so:
+```console
+tu@computi:~$ searchnets train config.ini
+```  
+The command-line interface accepts arguments with the syntax `searchnets command config.ini`,  
+where `command` is some command to run, and `config.ini` is the name of a configuration file 
+with options that specify how the command will be executed.  
+For details on the commands, see [this page in the docs](./docs/cli.md).
+For details on the `config.ini` files, please see [this other page](./docs/config.ini.md).
+
 ## Data
 Data is deposited here:
 <https://figshare.com/articles/visual-search-nets/7688840>
