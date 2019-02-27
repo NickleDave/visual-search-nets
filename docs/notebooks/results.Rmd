@@ -6,7 +6,7 @@ jupyter:
       extension: .Rmd
       format_name: rmarkdown
       format_version: '1.0'
-      jupytext_version: 1.0.0
+      jupytext_version: 1.0.1
   kernelspec:
     display_name: Python 3
     language: python
@@ -59,13 +59,13 @@ import os
 from searchnets.plots.figures import ftr_v_spt_conj, mn_slope_by_epoch
 
 TEST_RESULTS_DIR = '../../data/experiment_1/results'
-eff_400_results = os.path.join(TEST_RESULTS_DIR,
-                            'config_efficient_400_epochs_models/test_alexnet_output.gz')
-ineff_400_results = os.path.join(TEST_RESULTS_DIR,
-                             'config_inefficient_400_epochs_models/test_alexnet_output.gz')
+ftr_400_results = os.path.join(TEST_RESULTS_DIR,
+                            'feature_search_alexnet_models/test_alexnet_trained_400_epochs.gz')
+sptl_400_results = os.path.join(TEST_RESULTS_DIR,
+                             'spatial_config_search_alexnet_models/test_alexnet_trained_400_epochs.gz')
 
-ftr_v_spt_conj(eff_400_results,
-               ineff_400_results,
+ftr_v_spt_conj(ftr_400_results,
+               sptl_400_results,
                epochs=400)
 ```
 
@@ -76,24 +76,24 @@ ftr_v_spt_conj(eff_400_results,
 Given the surprising result that CNNs showed attention-like effects without attention mechanisms and in spite of processing their inputs in a parallel, feedforward fashion, we next asked whether these effects might depend on training. Again to our surprise, we saw that slopes for the feature search got closer to zero as we increased the number of epochs of training, while the slopes for spatial conjunction search got steeper. This was in spite of the fact that training accuracy continued to increase up until about 800 epochs, as measured on a validation set. 
 
 ```{python}
-TEST_RESULTS_DIR = '../../data/experiment_2/results'
-epochs_list = [10, 50, 200, 800]
-eff_results_list = []
-ineff_results_list = []
+TEST_RESULTS_DIR = '../../data/experiment_1/results'
+epochs_list = [10, 50, 200, 400, 800]
+ftr_results_list = []
+sptl_results_list = []
 for epochs in epochs_list:
-    eff_results = os.path.join(TEST_RESULTS_DIR, f'config_efficient_{epochs}_epochs_models/test_alexnet_output.gz')
-    eff_results_list.append(eff_results)
-    ineff_results = os.path.join(TEST_RESULTS_DIR, f'config_inefficient_{epochs}_epochs_models/test_alexnet_output.gz')
-    ineff_results_list.append(ineff_results)
-    ftr_v_spt_conj(eff_results,
-                   ineff_results,
+    ftr_results = os.path.join(TEST_RESULTS_DIR, f'feature_search_alexnet_models/test_alexnet_trained_{epochs}_epochs.gz')
+    ftr_results_list.append(ftr_results)
+    sptl_results = os.path.join(TEST_RESULTS_DIR, f'spatial_config_search_alexnet_models/test_alexnet_trained_{epochs}_epochs.gz')
+    sptl_results_list.append(sptl_results)
+    ftr_v_spt_conj(ftr_results,
+                   sptl_results,
                    epochs=epochs)
 ```
 
-To quantify this result, we fit slopes to the accuracy vs. set size plots for each trained replicate of AlexNet, for each number of training epochs. As shown below, the slope for feature search decreased as the number of training epochs increased, while the slpe for spatial conjunction search increased. We took the mean slope for each type of search stimulus and subtracted them to get a measure of the difference, and saw that indeed this difference did increase as the number of training epochs increased.
+To quantify this result, we fit slopes to the accuracy vs. set size plots for each trained replicate of AlexNet, for each number of training epochs. As shown below, the slope for feature search decreased as the number of training epochs increased, while the slope for spatial conjunction search increased. We took the mean slope for each type of search stimulus and subtracted them to get a measure of the difference, and saw that indeed this difference did increase as the number of training epochs increased.
 
 ```{python}
-mn_slope_by_epoch(eff_results_list, ineff_results_list, epochs_list)
+mn_slope_by_epoch(ftr_results_list, sptl_results_list, epochs_list)
 ```
 
 ## Methods
