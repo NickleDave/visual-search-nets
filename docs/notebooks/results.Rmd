@@ -88,13 +88,49 @@ for epochs in epochs_list:
     ftr_v_spt_conj(ftr_results,
                    sptl_results,
                    epochs=epochs)
+alexnet_results = {
+    'ftr': ftr_results_list,
+    'sptl': sptl_results_list,
+}
 ```
 
 To quantify this result, we fit slopes to the accuracy vs. set size plots for each trained replicate of AlexNet, for each number of training epochs. As shown below, the slope for feature search decreased as the number of training epochs increased, while the slope for spatial conjunction search increased. We took the mean slope for each type of search stimulus and subtracted them to get a measure of the difference, and saw that indeed this difference did increase as the number of training epochs increased.
 
 ```{python}
-mn_slope_by_epoch(ftr_results_list, sptl_results_list, epochs_list)
+mn_slope_by_epoch(alexnet_results['ftr'], alexnet_results['sptl'], epochs_list)
 ```
+
+### Other CNN architectures also show similar effects
+To test whether these effects resulted from the architecture of AlexNet or were more general, we repeated the simulations using the VGG16 architecture.
+
+```{python}
+TEST_RESULTS_DIR = '../../data/experiment_1/results'
+epochs_list = [10, 50, 200, 400, 800]
+ftr_results_list = []
+sptl_results_list = []
+for epochs in epochs_list:
+    ftr_results = os.path.join(TEST_RESULTS_DIR, f'feature_search_vgg16_models/test_VGG16_trained_{epochs}_epochs.gz')
+    ftr_results_list.append(ftr_results)
+    sptl_results = os.path.join(TEST_RESULTS_DIR, f'spatial_config_search_vgg16_models/test_VGG16_trained_{epochs}_epochs.gz')
+    sptl_results_list.append(sptl_results)
+vgg16_results = {
+    'ftr': ftr_results_list,
+    'sptl': sptl_results_list,
+}
+
+ftr_v_spt_conj(vgg16_results['ftr'][3],
+               vgg16_results['sptl'][3],
+               epochs=epochs_list[3])
+```
+
+We again saw this effect became stronger the more that the VGG16 architecture was trained.
+
+```{python}
+mn_slope_by_epoch(vgg16_results['ftr'], vgg16_results['sptl'], epochs_list)
+```
+
+
+
 
 ## Methods
 Alexnet training:  
