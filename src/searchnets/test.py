@@ -55,6 +55,8 @@ def test(config):
         raise TypeError("'EPOCHS' option in 'TRAIN' section of config.ini file parsed "
                         f"as invalid type: {type(epochs_list)}")
 
+    model_save_path = config['TRAIN']['MODEL_SAVE_PATH']
+
     for epochs in epochs_list:
         print(f'measuring accuracy on test set for {net_name} model trained for {epochs} epochs')
 
@@ -86,10 +88,11 @@ def test(config):
                 }
 
                 saver = tf.train.Saver()
-                savepath = os.path.join(config['TRAIN']['MODEL_SAVE_PATH'],
-                                        'net_number_{}'.format(net_number))
-                print('Loading model from %s' % savepath)
-                ckpt_path = os.path.join(savepath, f'{net_name}-model.ckpt-{epochs}')
+                restore_path = os.path.join(model_save_path,
+                                        f'trained_{epochs}_epochs',
+                                        f'net_number_{net_number}')
+                print(f'Loading model from {restore_path}')
+                ckpt_path = os.path.join(restore_path, f'{net_name}-model.ckpt-{epochs}')
                 saver.restore(sess, ckpt_path)
 
                 y_pred_all = []
@@ -116,8 +119,8 @@ def test(config):
                 acc_per_set_size_per_model.append(acc_per_set_size)
                 # and insert into dictionary where model name is key
                 # and list of accuracies per set size is the "value"
-                acc_per_set_size_model_dict[savepath] = acc_per_set_size
-                predictions_per_model_dict[savepath] = y_pred_all
+                acc_per_set_size_model_dict[restore_path] = acc_per_set_size
+                predictions_per_model_dict[restore_path] = y_pred_all
 
         acc_per_set_size_per_model = np.asarray(acc_per_set_size_per_model)
         acc_per_set_size_per_model = np.squeeze(acc_per_set_size_per_model)
