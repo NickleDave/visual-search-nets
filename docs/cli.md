@@ -22,7 +22,14 @@ The files used to create the data sets are produced by first running the `search
 the `config.ini` files supplied for that package in this repository.
 
 ### `train`
-Train neural net architecture, as specified in `config.ini` file
+Train neural net architecture, as specified in `config.ini` file.
+Trained checkpoints will be saved in subdirectories created in the directory 
+specified by the `MODEL_SAVE_PATH`. There will be one sub-directory created for each number of 
+epochs specified by the `EPOCHS` option, e.g. if `EPOCHS = 10` there will be a 
+`trained_10_epochs` directory,  and if `EPOCHS = [10, 40]`, there would be 
+an additional `trained_40_epochs` directory. 
+Within each `trained_x_epochs` directory there will be one sub-directory for each "replicate" 
+that contains the actual checkpoint files used to save and load train models. 
 
 ### `test`
 Test accuracy of trained neural net architecture, as specified in `config.ini` file
