@@ -105,6 +105,8 @@ def train(config):
     np.random.seed(random_seed)  # for shuffling in batch_generator
     tf.random.set_random_seed(random_seed)
 
+    model_save_path = config['TRAIN']['MODEL_SAVE_PATH']
+
     for epochs in epochs_list:
         print(f'training {net_name} model for {epochs} epochs')
         for net_number in range(number_nets_to_train):
@@ -193,10 +195,11 @@ def train(config):
                     else:
                         print()
 
-                savepath = os.path.join(config['TRAIN']['MODEL_SAVE_PATH'],
-                                        'net_number_{}'.format(net_number))
+                savepath = os.path.join(model_save_path,
+                                        f'trained_{epochs}_epochs',
+                                        f'net_number_{net_number}')
                 if not os.path.isdir(savepath):
-                    os.makedirs(savepath)
+                    os.makedirs(savepath, exist_ok=True)
                 print(f'Saving model in {savepath}')
                 ckpt_name = os.path.join(savepath, f'{net_name}-model.ckpt')
                 saver.save(sess, ckpt_name, global_step=epochs)
