@@ -133,14 +133,14 @@ mn_slope_by_epoch(vgg16_results['ftr'], vgg16_results['sptl'], epochs_list)
 The Feature Integration Theory of visual search attributed set size effects to serial processing (Treisman). This conclusion made sense based on the result that reaction time increased when discriminating targets from distractors required considering more than one feature, e.g. both color and orientation. However, later work showed that reaction time effects disappear as targets and distractors become more easily discriminable along one feature dimension (Duncan paper).  
 Later researchers, using methods from psychophysics and signal-detection theory, carefully controlled for the discriminability of targets and distractors (Palmer review). This work provided important alternative explanations for the results seen in visual search experiments: attentional effects can be explained in terms of completely parallel but noisy representations that are used by a decision rule (Palmer, Eckstein). This approach also explains errors in terms of low thresholds used by decision making criteria.  We adapted these psychophysics methods to see if they offered additional insights into the attention-like effects we saw in CNNs.  
 #### Psychometric curves
-First we generated 'feature' search stimuli--red vertical rectangle v. green vertical rectangle.  
+First we generated 'feature' search stimuli--red vertical rectangle v. green vertical rectangle--where the red and green were more or less discriminable. We did so by taking advantage of RGB color space: by adding more red to the green color, and vice versa, the colors of the target and distractor can be moved closer to each other from the two red and green verticies of the triangle that defines RGB space. (When the color has "all red" and "all green", it becomes yellow, so the stimuli we generated moved closer and closer to yellow.) We then used these stimuli to measure the accuracy of the neural nets we trained as the target and distractor became more and more similar.  
 <img src="../static/psychometric_function_fits.png" alt="efficient" style="width: 500px;"/>
 #### Threshold v. set size
 We then used the psychometric curves to find what level of target-distractor discriminability gave rise to 75% accuracy, known as the "difference threshold". We found this difference threshold for each trained network and each set size.  
 <img src="../static/threshold_v_setsize.png" alt="efficient" style="width: 600px;"/>  
-Here we see that the threshold goes up with set size, meaning more discriminable target-distractor pairs are required as set size increases.
+Here we see that the threshold goes up with set size, meaning more discriminable target-distractor pairs are required as set size increases. In signal detection theory terms, this result is consistent with any theory of attention where decisions are made with a low threshold.
 
-For a detailed walkthrough of how we did this, please see [this notebook](./psychometrics.ipynb).
+For a detailed walkthrough of how we did this, please see [this notebook](./psychometric.ipynb).
 
 
 ## Methods
