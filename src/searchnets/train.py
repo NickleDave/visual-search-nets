@@ -164,6 +164,11 @@ def train(config):
                 y_data = np.array(training_set[1])
                 training_loss = []
 
+                # note that running global_variables_initializer() will initialize at random all the variables in the
+                # model that are in the `init_layer` list passed as an argument when the model was instantiated, **and**
+                # assign the pre-trained weights + biases to the other variables that are not in `init_layer`. This can
+                # be confusing if you are thinking of "initialize" as synonymous with "at random", but fear not, the
+                # pre-trained weights are in fact being loaded
                 sess.run(tf.global_variables_initializer())
 
                 for epoch in range(1, epochs + 1):
