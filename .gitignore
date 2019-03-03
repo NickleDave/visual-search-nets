@@ -6,8 +6,12 @@ __pycache__/
 *.egg-info/
 
 # data
+results/*
 bvlc_alexnet.npy
 *.npz
-data/visual_search_stimuli/*/*
+data/visual_search_stimuli/*
 data/experiment_*/
-results/*/*
+data/checkpoints/*/
+data/data_prepd_for_nets/*.gz
+data/for_figshare/*
+data/results/*/
