@@ -38,3 +38,11 @@ The `Makefile` replicates the experiments.
 ```console
 tu@computi:~$ make all
 ```
+
+## Acknowledgements
+- Research funded by the Lifelong Learning Machines program, 
+DARPA/Microsystems Technology Office, 
+DARPA cooperative agreement HR0011-18-2-0019
+- David Nicholson was partially supported by the 
+2017 William K. and Katherine W. Estes Fund to F. Pestilli, 
+R. Goldstone and L. Smith, Indiana University Bloomington.
