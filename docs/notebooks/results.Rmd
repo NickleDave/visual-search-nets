@@ -151,12 +151,13 @@ Here we see that the difference threshold goes up with set size, meaning more di
 
 
 ## Methods
-Alexnet training:  
-• based on Poder 2017  
-https://arxiv.org/pdf/1707.09775.pdf
-• Stochastic gradient descent  
-• Learning rate for fully-connected layers: 1e-20  
-• 10 epochs (as in Poder 2017), and 400 epochs  
+Fine-tuning Alexnet and VGG16:
+* based on Põder 2017: https://arxiv.org/pdf/1707.09775.pdf
+* Stochastic gradient descent
+* Base learning rate: 1e-20
+* Rate for fully-connected layers: 0.0001
+* epochs: [10 (as in Poder 2017), 50, 200, 400, 800]
+
 
 
 ## References
