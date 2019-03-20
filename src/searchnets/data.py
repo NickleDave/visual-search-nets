@@ -7,14 +7,25 @@ import imageio
 import joblib
 
 
-def data(config):
+def data(train_dir,
+         train_size,
+         gz_filename,
+         val_size=None):
     """prepare training, validation, and test datasets.
     Saves a compressed Python dictionary in the path specified
-    by the NPZ_FILENAME option in the DATA section of a config.ini file.
+    by the GZ_FILENAME option in the DATA section of a config.ini file.
 
     Parameters
     ----------
-    config
+    train_dir : str
+        path to directory where training data is saved
+    train_size : int
+        number of samples to put in training data set
+    gz_filename : str
+        name of .gz file in which to save dataset
+    val_size : int
+        number of samples to put in validation data set.
+        Default is None, in which case there will be no validation set.
 
     Returns
     -------
@@ -53,8 +64,6 @@ def data(config):
             ordered set of unique set sizes.
             Useful if you need to plot accuracy v. set size.
     """
-    train_dir = config['DATA']['TRAIN_DIR']
-
     fname_json = glob(os.path.join(train_dir, '*.json'))
 
     if not fname_json:
@@ -72,15 +81,13 @@ def data(config):
 
     set_sizes = [k for k in stim_info_by_set_size.keys()]
 
-    train_size = int(config['DATA']['TRAIN_SIZE'])
     train_size_per_set_size = (train_size / len(set_sizes)) / 2
     if train_size_per_set_size.is_integer():
         train_size_per_set_size = int(train_size_per_set_size)
     else:
         raise TypeError('train_size_per_set_size is not a whole number, adjust '
                         'total number of samples, or number of set sizes.')
-    if config.has_option('DATA', 'VALIDATION_SIZE'):
-        val_size = int(config['DATA']['VALIDATION_SIZE'])
+    if val_size:
         val_size_per_set_size = (val_size / len(set_sizes)) / 2
         if val_size_per_set_size.is_integer():
             val_size_per_set_size = int(val_size_per_set_size)
@@ -194,7 +201,6 @@ def data(config):
     y_test = np.asarray(['present' in fname for fname in test_set_files],
                         dtype=int)
 
-    gz_filename = config['DATA']['GZ_FILENAME']
     gz_dirname = os.path.dirname(gz_filename)
     if not os.path.isdir(gz_dirname):
         os.makedirs(gz_dirname)
