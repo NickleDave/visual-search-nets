@@ -42,8 +42,20 @@ def cli(command, configfile):
     """
     # get config first so we can know if we should save log, where to make results directory, etc.
     config = parse_config(configfile)
+
     if command == 'data':
-        data(config)
+        train_size = int(config['DATA']['TRAIN_SIZE'])
+        if config.has_option('DATA', 'VALIDATION_SIZE'):
+            val_size = int(config['DATA']['VALIDATION_SIZE'])
+        else:
+            val_size = None
+        gz_filename = config['DATA']['GZ_FILENAME']
+
+        data(train_dir=config['DATA']['TRAIN_DIR'],
+             train_size=train_size,
+             val_size=val_size,
+             gz_filename=gz_filename
+             )
     elif command == 'train':
         train(config)
     elif command == 'test':
