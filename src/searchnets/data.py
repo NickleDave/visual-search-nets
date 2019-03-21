@@ -137,13 +137,23 @@ def data(train_dir,
         for present_or_absent, stim_fnames in stim_fnames_present_absent.items():
             inds = np.arange(len(stim_fnames))
             if val_size:
+                size = train_size_per_set_size + val_size_per_set_size
+                if size > len(stim_fnames):
+                    raise ValueError(
+                        f'number of samples for training + validation set, {size}, '
+                        f'is larger than number of samples in data set, {len(stim_fnames)}'
+                    )
                 not_test_inds = np.random.choice(inds,
-                                                 size=train_size_per_set_size +
-                                                      val_size_per_set_size,
+                                                 size=size,
                                                  replace=False)
                 train_inds_bool = np.isin(inds, not_test_inds[:train_size_per_set_size])
                 val_inds_bool = np.isin(inds, not_test_inds[-val_size_per_set_size:])
             else:
+                if train_size_per_set_size > len(stim_fnames):
+                    raise ValueError(
+                        f'number of samples for training set, {train_size_per_set_size}, '
+                        f'is larger than number of samples in data set, {len(stim_fnames)}'
+                    )
                 not_test_inds = np.random.choice(inds,
                                                  size=train_size_per_set_size,
                                                  replace=False)
