@@ -169,6 +169,8 @@ class Config:
         represents [DATA] section
     test: TestConfig
         represents [TEST] section
+    learncurve: LearnCurveConfig
+        represents [LEARNCURVE] section
     """
     train = attr.ib(validator=instance_of(TrainConfig))
     data = attr.ib(validator=instance_of(DataConfig))
