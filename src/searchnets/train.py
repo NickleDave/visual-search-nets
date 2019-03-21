@@ -1,6 +1,5 @@
 # Approach to training based on https://arxiv.org/pdf/1707.09775.pdf
 import os
-import ast
 
 import numpy as np
 import tensorflow as tf
@@ -52,41 +51,79 @@ def batch_generator(X, y, batch_size=64,
         yield (X[i:i + batch_size, :], y[i:i + batch_size])
 
 
-def train(config):
-    """train neural network according to options in config
+def train(gz_filename,
+          net_name,
+          number_nets_to_train,
+          input_shape,
+          base_learning_rate,
+          new_learn_rate_layers,
+          new_layer_learning_rate,
+          epochs_list,
+          batch_size,
+          random_seed,
+          model_save_path,
+          dropout_rate=0.5,
+          val_size=None):
+    """train convolutional neural networks to perform visual search task.
+    A fine tuning approach is used, as in Poder 2017 (https://arxiv.org/pdf/1707.09775.pdf)
 
     Parameters
     ----------
-    config : ConfigParser instance
-        typically loaded by main function in __main__.py
+    gz_filename : str
+        name of .gz file containing prepared data sets
+    net_name : str
+        name of convolutional neural net architecture to train.
+        One of {'alexnet', 'VGG16'}
+    number_nets_to_train : int
+        number of training "replicates"
+    input_shape : tuple
+        with 3 elements, (rows, columns, channels)
+        should be (227, 227, 3) for AlexNet
+        and (224, 224, 3) for VGG16
+    new_learn_rate_layers : list
+        of layer names whose weights will be initialized randomly
+        and then trained with the 'new_layer_learning_rate'.
+    base_learning_rate : float
+        Applied to layers with weights loaded from training the
+        architecture on ImageNet. Should be a very small number
+        so the trained weights don't change much.
+    new_layer_learning_rate : float
+        Applied to `new_learn_rate_layers'. Should be larger than
+        `base_learning_rate` but still smaller than the usual
+        learning rate for a deep net trained with SGD,
+        e.g. 0.001 instead of 0.01
+    epochs_list : list
+        of training epochs. Replicates will be trained for each
+        value in this list. Can also just be one value, but a list
+        is useful if you want to test whether effects depend on
+        number of training epochs.
+    batch_size : int
+        number of samples in a batch of training data
+    random_seed : int
+        to seed random number generator
+    model_save_path : str
+        path to directory where model checkpoints should be saved
+    dropout_rate : float
+        Probability that any unit in a layer will "drop out" during
+        a training epoch, as a form of regularization. Default is 0.5.
+    val_size : int
+        number of samples in validation set. Default is None.
 
     Returns
     -------
     None
     """
-    # boilerplate to unpack config from DATA section
-    set_sizes = config['DATA']['SET_SIZES']
-    train_dir = config['DATA']['TRAIN_DIR']
-
     # get training data
-    data_dict = joblib.load(config['DATA']['GZ_FILENAME'])
+    data_dict = joblib.load(gz_filename)
     x_train = data_dict['x_train']
     y_train = data_dict['y_train']
     training_set = [x_train, y_train]
-    if config.has_option('DATA', 'VALIDATION_SIZE'):
+    if val_size:
         val_set = [data_dict['x_val'],
                    data_dict['y_val']]
     else:
         val_set = None
 
-    # boilerplate to unpack config from TRAIN section
-    net_name = config['TRAIN']['NETNAME']
-    number_nets_to_train = int(config['TRAIN']['number_nets_to_train'])
-    input_shape = ast.literal_eval(config['TRAIN']['INPUT_SHAPE'])
-    new_learn_rate_layers = ast.literal_eval(config['TRAIN']['NEW_LEARN_RATE_LAYERS'])
-    base_learning_rate = float(config['TRAIN']['BASE_LEARNING_RATE'])
-    new_layer_learning_rate = float(config['TRAIN']['NEW_LAYER_LEARNING_RATE'])
-    epochs_list = ast.literal_eval(config['TRAIN']['EPOCHS'])
     if type(epochs_list) is int:
         epochs_list = [epochs_list]
     elif type(epochs_list) is list:
@@ -94,18 +131,9 @@ def train(config):
     else:
         raise TypeError("'EPOCHS' option in 'TRAIN' section of config.ini file parsed "
                         f"as invalid type: {type(epochs_list)}")
-    batch_size = int(config['TRAIN']['BATCH_SIZE'])
-    random_seed = int(config['TRAIN']['RANDOM_SEED'])
-
-    if config.has_option('TRAIN', 'DROPOUT_RATE'):
-        dropout_rate = config['TRAIN']['DROPOUT_RATE']
-    else:
-        dropout_rate = 0.5
 
     np.random.seed(random_seed)  # for shuffling in batch_generator
     tf.random.set_random_seed(random_seed)
-
-    model_save_path = config['TRAIN']['MODEL_SAVE_PATH']
 
     for epochs in epochs_list:
         print(f'training {net_name} model for {epochs} epochs')
