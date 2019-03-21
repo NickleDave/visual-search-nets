@@ -89,7 +89,7 @@ BATCH_SIZE = 64
 MODEL_SAVE_PATH = ../data/checkpoints/config_efficient_10_epochs_models/
 ```
 ### `[TEST]` section
-The `[TRAIN]` section provide the following options for training convolutional neural networks:
+The `[TEST]` section provide the following options for testing the trained convolutional neural networks:
 
 * `TEST_RESULTS_SAVE_PATH` : string  
   Path to directory where results of measuring accuracy on a test set should be saved.
