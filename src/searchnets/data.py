@@ -85,8 +85,10 @@ def data(train_dir,
     if train_size_per_set_size.is_integer():
         train_size_per_set_size = int(train_size_per_set_size)
     else:
-        raise TypeError('train_size_per_set_size is not a whole number, adjust '
-                        'total number of samples, or number of set sizes.')
+        raise TypeError(f'train_size_per_set_size, {train_size_per_set_size}, is is not a whole number.\n'
+                        'It is calculated as: (train_size / len(set_sizes)) / 2\n'
+                        '(2 is for target present or absent).\n'
+                        'Adjust total number of samples, or number of set sizes.')
     if val_size:
         val_size_per_set_size = (val_size / len(set_sizes)) / 2
         if val_size_per_set_size.is_integer():
