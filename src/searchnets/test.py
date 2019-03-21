@@ -9,12 +9,44 @@ from tqdm import tqdm
 from .nets import AlexNet, VGG16
 
 
-def test(config):
-    """test trained AlexNet models on test searchstims dataset
+def test(gz_filename,
+         net_name,
+         number_nets_to_train,
+         input_shape,
+         new_learn_rate_layers,
+         epochs_list,
+         batch_size,
+         model_save_path,
+         test_results_save_path):
+    """measure accuracy of trained convolutional neural networks on test set of visual search stimuli
 
     Parameters
     ----------
-    config
+    gz_filename : str
+        name of .gz file containing prepared data sets
+    net_name : str
+        name of convolutional neural net architecture to train.
+        One of {'alexnet', 'VGG16'}
+    number_nets_to_train : int
+        number of training "replicates"
+    input_shape : tuple
+        with 3 elements, (rows, columns, channels)
+        should be (227, 227, 3) for AlexNet
+        and (224, 224, 3) for VGG16
+    new_learn_rate_layers : list
+        of layer names whose weights will be initialized randomly
+        and then trained with the 'new_layer_learning_rate'.
+    epochs_list : list
+        of training epochs. Replicates will be trained for each
+        value in this list. Can also just be one value, but a list
+        is useful if you want to test whether effects depend on
+        number of training epochs.
+    batch_size : int
+        number of samples in a batch of training data
+    model_save_path : str
+        path to directory where model checkpoints should be saved
+    test_results_save_path : str
+        path to directory where results from measuring accuracy on test set should be saved
 
     Returns
     -------
@@ -31,31 +63,10 @@ def test(config):
             where keys are paths to model and values are array
             of predictions made by that model for test set
     """
-    # boilerplate to unpack config from DATA section
-    set_sizes = config['DATA']['SET_SIZES']
-    train_dir = config['DATA']['TRAIN_DIR']
-
     # get test data
-    data_dict = joblib.load(config['DATA']['GZ_FILENAME'])
+    data_dict = joblib.load(gz_filename)
     x_test = data_dict['x_test']
     y_test = data_dict['y_test']
-
-    # boilerplate to unpack config from TRAIN section
-    net_name = config['TRAIN']['NETNAME']
-    new_learn_rate_layers = ast.literal_eval(config['TRAIN']['NEW_LEARN_RATE_LAYERS'])
-    number_nets_to_train = int(config['TRAIN']['NUMBER_NETS_TO_TRAIN'])
-    input_shape = ast.literal_eval(config['TRAIN']['INPUT_SHAPE'])
-    batch_size = int(config['TRAIN']['BATCH_SIZE'])
-    epochs_list = ast.literal_eval(config['TRAIN']['EPOCHS'])
-    if type(epochs_list) is int:
-        epochs_list = [epochs_list]
-    elif type(epochs_list) is list:
-        pass
-    else:
-        raise TypeError("'EPOCHS' option in 'TRAIN' section of config.ini file parsed "
-                        f"as invalid type: {type(epochs_list)}")
-
-    model_save_path = config['TRAIN']['MODEL_SAVE_PATH']
 
     for epochs in epochs_list:
         print(f'measuring accuracy on test set for {net_name} model trained for {epochs} epochs')
@@ -125,10 +136,10 @@ def test(config):
         acc_per_set_size_per_model = np.asarray(acc_per_set_size_per_model)
         acc_per_set_size_per_model = np.squeeze(acc_per_set_size_per_model)
 
-        savepath = config['TEST']['TEST_RESULTS_SAVE_PATH']
-        if not os.path.isdir(savepath):
-            os.makedirs(savepath)
-        results_fname = os.path.join(savepath, f'test_{net_name}_trained_{epochs}_epochs.gz')
+        if not os.path.isdir(test_results_save_path):
+            os.makedirs(test_results_save_path)
+        results_fname = os.path.join(test_results_save_path,
+                                     f'test_{net_name}_trained_{epochs}_epochs.gz')
         results_dict = dict(acc_per_set_size_per_model=acc_per_set_size_per_model,
                             acc_per_set_size_model_dict=acc_per_set_size_model_dict,
                             predictions_per_model_dict=predictions_per_model_dict)
