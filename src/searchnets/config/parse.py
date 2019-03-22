@@ -1,7 +1,7 @@
 import ast
 import configparser
 
-from .classes import TrainConfig, DataConfig, TestConfig, Config
+from .classes import TrainConfig, DataConfig, TestConfig, LearnCurveConfig, Config
 
 
 def parse_config(config_fname):
@@ -74,7 +74,14 @@ def parse_config(config_fname):
 
     test_config = TestConfig(test_results_save_path)
 
+    # ------------- unpack [TRAIN] section of config.ini file ----------------------------------------------------------
+    if config.has_section('LEARNCURVE'):
+        train_size_list = ast.literal_eval(config['LEARNCURVE']['TRAIN_SIZE_LIST'])
+        learncurve_config = LearnCurveConfig(train_size_list)
+    else:
+        learncurve_config = None
+
     # ------------- make actual config object --------------------------------------------------------------------------
-    config_obj = Config(train_config, data_config, test_config)
+    config_obj = Config(train_config, data_config, test_config, learncurve_config)
 
     return config_obj
