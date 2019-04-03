@@ -291,5 +291,5 @@ def train(gz_filename,
                 saver.save(sess, ckpt_name, global_step=epochs)
                 # and save matrix with accuracy by epoch by set size
                 acc_savepath_this_epochs = os.path.join(acc_savepath,
-                                                        f'net_number_{net_number}_trained_{epochs}_epochs.txt')
+                                                        f'net_trained_{epochs}_epochs_number_{net_number}.txt')
                 np.savetxt(acc_savepath_this_epochs, acc_by_epoch_by_set_size, delimiter=',')
