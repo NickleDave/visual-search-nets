@@ -41,14 +41,17 @@ def batch_generator(X, y, batch_size=64,
     """
     idx = np.arange(y.shape[0])
 
+    X_for_batch = np.copy(X)
+    y_for_batch = np.copy(y)
+
     if shuffle:
         rng = np.random.RandomState(random_seed)
         rng.shuffle(idx)
-        X = X[idx]
-        y = y[idx]
+        X_for_batch = X_for_batch[idx]
+        y_for_batch = y_for_batch[idx]
 
     for i in range(0, X.shape[0], batch_size):
-        yield (X[i:i + batch_size, :], y[i:i + batch_size])
+        yield (X_for_batch[i:i + batch_size, :], y_for_batch[i:i + batch_size])
 
 
 def train(gz_filename,
