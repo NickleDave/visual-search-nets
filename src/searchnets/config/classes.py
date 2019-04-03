@@ -46,8 +46,12 @@ class TrainConfig:
     dropout_rate : float
         Probability that any unit in a layer will "drop out" during
         a training epoch, as a form of regularization. Default is 0.5.
-    val_size : int
-        number of samples in validation set. Default is None.
+    save_acc_by_set_size_by_epoch : bool
+        if True, compute accuracy on training set for each epoch separately
+        for each unique set size in the visual search stimuli. These values
+        are saved in a matrix where rows are epochs and columns are set sizes.
+        Useful for seeing whether accuracy converges for each individual
+        set size. Default is False.
     """
     net_name = attr.ib(validator=instance_of(str))
     number_nets_to_train = attr.ib(validator=instance_of(int))
@@ -81,6 +85,8 @@ class TrainConfig:
     random_seed = attr.ib(validator=instance_of(int))
     model_save_path = attr.ib(validator=instance_of(str))
     dropout_rate = attr.ib(validator=instance_of(float), default=0.5)
+
+    save_acc_by_set_size_by_epoch = attr.ib(validator=instance_of(bool), default=False)
 
 
 @attr.s
