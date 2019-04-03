@@ -71,7 +71,7 @@ class TestTrain(unittest.TestCase):
                     os.path.isfile(
                         os.path.join(config.train.model_save_path,
                                      'acc_by_epoch_by_set_size',
-                                     f'net_number_{net_number}_trained_{epochs}_epochs.txt'
+                                     f'net_trained_{epochs}_epochs_number_{net_number}.txt'
                                      )
                     )
                 )
