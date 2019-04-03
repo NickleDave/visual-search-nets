@@ -39,7 +39,8 @@ def _call_train(config):
           random_seed=config.train.random_seed,
           model_save_path=config.train.model_save_path,
           dropout_rate=config.train.dropout_rate,
-          val_size=config.data.val_size)
+          val_size=config.data.val_size,
+          save_acc_by_set_size_by_epoch=config.train.save_acc_by_set_size_by_epoch)
 
 
 def _call_test(config):
