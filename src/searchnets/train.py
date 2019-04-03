@@ -117,12 +117,18 @@ def train(gz_filename,
     data_dict = joblib.load(gz_filename)
     x_train = data_dict['x_train']
     y_train = data_dict['y_train']
+
     training_set = [x_train, y_train]
     if val_size:
         val_set = [data_dict['x_val'],
                    data_dict['y_val']]
     else:
         val_set = None
+
+    # get vecs for computing accuracy by set size below
+    # in training loop
+    set_size_vec_train = data_dict['set_size_vec_train']
+    set_sizes = np.unique(set_size_vec_train)
 
     if type(epochs_list) is int:
         epochs_list = [epochs_list]
@@ -192,6 +198,17 @@ def train(gz_filename,
                 y_data = np.array(training_set[1])
                 training_loss = []
 
+                savepath = os.path.join(model_save_path,
+                                        f'trained_{epochs}_epochs',
+                                        f'net_number_{net_number}')
+                if not os.path.isdir(savepath):
+                    os.makedirs(savepath, exist_ok=True)
+
+                acc_by_epoch_by_set_size = np.zeros(shape=(epochs, set_sizes.shape[0]))
+                acc_savepath = os.path.join(model_save_path,
+                                        f'acc_by_epoch_by_set_size_for_model_trained_{epochs}_epochs'
+                                        f'net_number_{net_number}')
+
                 # note that running global_variables_initializer() will initialize at random all the variables in the
                 # model that are in the `init_layer` list passed as an argument when the model was instantiated, **and**
                 # assign the pre-trained weights + biases to the other variables that are not in `init_layer`. This can
@@ -199,7 +216,8 @@ def train(gz_filename,
                 # pre-trained weights are in fact being loaded
                 sess.run(tf.global_variables_initializer())
 
-                for epoch in range(1, epochs + 1):
+
+                for epoch in range(epochs):
                     total = int(np.ceil(X_data.shape[0] / batch_size))
                     batch_gen = batch_generator(X_data, y_data,
                                                 batch_size=batch_size,
@@ -218,8 +236,7 @@ def train(gz_filename,
                         avg_loss += loss
 
                     training_loss.append(avg_loss / (i + 1))
-                    print('Epoch %02d Training Avg. Loss: %7.3f' % (
-                        epoch, avg_loss), end=' ')
+                    print(f'Epoch {epoch + 1}, Training Avg. Loss: {avg_loss:7.3f}')
                     if val_set is not None:
                         feed = {x: val_set[0],
                                 y: val_set[1]}
@@ -228,11 +245,20 @@ def train(gz_filename,
                     else:
                         print()
 
-                savepath = os.path.join(model_save_path,
-                                        f'trained_{epochs}_epochs',
-                                        f'net_number_{net_number}')
-                if not os.path.isdir(savepath):
-                    os.makedirs(savepath, exist_ok=True)
+                    # --- compute accuracy on whole training set, by set size, for this epoch
+                    feed = {x: x_train, rate: 0}
+                    y_pred = sess.run(predictions['labels'], feed_dict=feed)
+                    is_correct = np.equal(y_data, y_pred)
+
+                    for set_size_ind, set_size in enumerate(set_sizes):
+                        set_size_inds = np.where(set_size_vec_train == set_size)[0]
+                        is_correct_set_size = is_correct[set_size_inds]
+                        acc_this_set_size = np.sum(is_correct_set_size) / is_correct_set_size.shape[0]
+                        acc_by_epoch_by_set_size[epoch, set_size_ind] = acc_this_set_size
+
+                # after training all epochs, save model ...
                 print(f'Saving model in {savepath}')
                 ckpt_name = os.path.join(savepath, f'{net_name}-model.ckpt')
                 saver.save(sess, ckpt_name, global_step=epochs)
+                # and save matrix with accuracy by epoch by set size
+                np.savetxt(acc_savepath, acc_by_epoch_by_set_size, delimiter=',')
