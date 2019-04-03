@@ -141,12 +141,18 @@ def train(gz_filename,
     np.random.seed(random_seed)  # for shuffling in batch_generator
     tf.random.set_random_seed(random_seed)
 
+    acc_savepath = os.path.join(model_save_path,
+                                f'acc_by_epoch_by_set_size')
+    if not os.path.isdir(acc_savepath):
+        os.makedirs(acc_savepath, exist_ok=True)
+
     for epochs in epochs_list:
         print(f'training {net_name} model for {epochs} epochs')
         for net_number in range(number_nets_to_train):
             tf.reset_default_graph()
             graph = tf.Graph()
             with tf.Session(graph=graph) as sess:
+                # --------------- do a bunch of graph set-up stuff -----------------------------------------------------
                 x = tf.placeholder(tf.float32, (None,) + input_shape, name='x')
                 y = tf.placeholder(tf.int32, shape=[None], name='y')
                 y_onehot = tf.one_hot(indices=y, depth=len(np.unique(y_train)),
@@ -194,21 +200,6 @@ def train(gz_filename,
                     tf.cast(correct_predictions, tf.float32),
                     name='accuracy')
 
-                X_data = np.array(training_set[0])
-                y_data = np.array(training_set[1])
-                training_loss = []
-
-                savepath = os.path.join(model_save_path,
-                                        f'trained_{epochs}_epochs',
-                                        f'net_number_{net_number}')
-                if not os.path.isdir(savepath):
-                    os.makedirs(savepath, exist_ok=True)
-
-                acc_by_epoch_by_set_size = np.zeros(shape=(epochs, set_sizes.shape[0]))
-                acc_savepath = os.path.join(model_save_path,
-                                        f'acc_by_epoch_by_set_size_for_model_trained_{epochs}_epochs'
-                                        f'net_number_{net_number}')
-
                 # note that running global_variables_initializer() will initialize at random all the variables in the
                 # model that are in the `init_layer` list passed as an argument when the model was instantiated, **and**
                 # assign the pre-trained weights + biases to the other variables that are not in `init_layer`. This can
@@ -216,7 +207,21 @@ def train(gz_filename,
                 # pre-trained weights are in fact being loaded
                 sess.run(tf.global_variables_initializer())
 
+                # --------------- done with graph, now get data --------------------------------------------------------
+                X_data = np.array(training_set[0])
+                y_data = np.array(training_set[1])
+                training_loss = []
 
+                # --------------- make places to save checkpoints + accuracy -------------------------------------------
+                savepath = os.path.join(model_save_path,
+                                        f'trained_{epochs}_epochs',
+                                        f'net_number_{net_number}')
+                if not os.path.isdir(savepath):
+                    os.makedirs(savepath, exist_ok=True)
+
+                acc_by_epoch_by_set_size = np.zeros(shape=(epochs, set_sizes.shape[0]))
+
+                # --------------- finally start training ---------------------------------------------------------------
                 for epoch in range(epochs):
                     total = int(np.ceil(X_data.shape[0] / batch_size))
                     batch_gen = batch_generator(X_data, y_data,
@@ -256,9 +261,11 @@ def train(gz_filename,
                         acc_this_set_size = np.sum(is_correct_set_size) / is_correct_set_size.shape[0]
                         acc_by_epoch_by_set_size[epoch, set_size_ind] = acc_this_set_size
 
-                # after training all epochs, save model ...
+                # --------------- done training, save checkpoint + accuracy by epoch by set size -----------------------
                 print(f'Saving model in {savepath}')
                 ckpt_name = os.path.join(savepath, f'{net_name}-model.ckpt')
                 saver.save(sess, ckpt_name, global_step=epochs)
                 # and save matrix with accuracy by epoch by set size
-                np.savetxt(acc_savepath, acc_by_epoch_by_set_size, delimiter=',')
+                acc_savepath_this_epochs = os.path.join(acc_savepath,
+                                                        f'net_number_{net_number}_trained_{epochs}_epochs.txt')
+                np.savetxt(acc_savepath_this_epochs, acc_by_epoch_by_set_size, delimiter=',')
