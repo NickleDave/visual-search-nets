@@ -279,6 +279,12 @@ def train(gz_filename,
                         acc_this_set_size = np.sum(is_correct_set_size) / is_correct_set_size.shape[0]
                         acc_by_epoch_by_set_size[epoch, set_size_ind] = acc_this_set_size
 
+                    acc_set_size_str = ''
+                    acc_set_size_zip = zip(set_sizes, acc_by_epoch_by_set_size[epoch, :])
+                    for set_size, acc in acc_set_size_zip:
+                        acc_set_size_str += f'set size {set_size}: {acc}. '
+                    print(acc_set_size_str)
+
                 # --------------- done training, save checkpoint + accuracy by epoch by set size -----------------------
                 print(f'Saving model in {savepath}')
                 ckpt_name = os.path.join(savepath, f'{net_name}-model.ckpt')
