@@ -1,4 +1,4 @@
-.PHONY : clean all
+.PHONY : clean all tests-clean tests-all
 
 clean :
 	rm -rf ./data/checkpoints/*
@@ -9,4 +9,10 @@ clean :
 
 all :
 	cd ./src; bash runall.sh
+
+tests-clean :
+	rm test_data/visual_search_stimuli/*
+
+tests-all :
+	searchstims ./tests/test_data/configs/config_feature_alexnet.ini
 
