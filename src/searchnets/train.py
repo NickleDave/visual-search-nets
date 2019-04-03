@@ -66,7 +66,8 @@ def train(gz_filename,
           random_seed,
           model_save_path,
           dropout_rate=0.5,
-          val_size=None):
+          val_size=None,
+          save_acc_by_set_size_by_epoch=False):
     """train convolutional neural networks to perform visual search task.
     A fine tuning approach is used, as in Poder 2017 (https://arxiv.org/pdf/1707.09775.pdf)
 
@@ -111,6 +112,12 @@ def train(gz_filename,
         a training epoch, as a form of regularization. Default is 0.5.
     val_size : int
         number of samples in validation set. Default is None.
+    save_acc_by_set_size_by_epoch : bool
+        if True, compute accuracy on training set for each epoch separately
+        for each unique set size in the visual search stimuli. These values
+        are saved in a matrix where rows are epochs and columns are set sizes.
+        Useful for seeing whether accuracy converges for each individual
+        set size. Default is False.
 
     Returns
     -------
@@ -128,11 +135,6 @@ def train(gz_filename,
     else:
         val_set = None
 
-    # get vecs for computing accuracy by set size below
-    # in training loop
-    set_size_vec_train = data_dict['set_size_vec_train']
-    set_sizes = np.unique(set_size_vec_train)
-
     if type(epochs_list) is int:
         epochs_list = [epochs_list]
     elif type(epochs_list) is list:
@@ -144,10 +146,16 @@ def train(gz_filename,
     np.random.seed(random_seed)  # for shuffling in batch_generator
     tf.random.set_random_seed(random_seed)
 
-    acc_savepath = os.path.join(model_save_path,
-                                f'acc_by_epoch_by_set_size')
-    if not os.path.isdir(acc_savepath):
-        os.makedirs(acc_savepath, exist_ok=True)
+    if save_acc_by_set_size_by_epoch:
+        # get vecs for computing accuracy by set size below
+        # in training loop
+        set_size_vec_train = data_dict['set_size_vec_train']
+        set_sizes = np.unique(set_size_vec_train)
+
+        acc_savepath = os.path.join(model_save_path,
+                                    f'acc_by_epoch_by_set_size')
+        if not os.path.isdir(acc_savepath):
+            os.makedirs(acc_savepath, exist_ok=True)
 
     for epochs in epochs_list:
         print(f'training {net_name} model for {epochs} epochs')
@@ -222,7 +230,8 @@ def train(gz_filename,
                 if not os.path.isdir(savepath):
                     os.makedirs(savepath, exist_ok=True)
 
-                acc_by_epoch_by_set_size = np.zeros(shape=(epochs, set_sizes.shape[0]))
+                if save_acc_by_set_size_by_epoch:
+                    acc_by_epoch_by_set_size = np.zeros(shape=(epochs, set_sizes.shape[0]))
 
                 # --------------- finally start training ---------------------------------------------------------------
                 for epoch in range(epochs):
@@ -253,43 +262,46 @@ def train(gz_filename,
                     else:
                         print()
 
-                    # --- compute accuracy on whole training set, by set size, for this epoch
-                    print('Computing accuracy per visual search stimulus set size on training set')
-                    total = int(np.ceil(X_data.shape[0] / batch_size))
-                    y_pred = []
-                    y_true = []
-                    batch_gen = batch_generator(X_data, y_data,
-                                                batch_size=batch_size,
-                                                shuffle=False)
-                    pbar = tqdm(enumerate(batch_gen), total=total)
-                    for i, (batch_x, batch_y) in pbar:
-                        pbar.set_description(f'batch {i} of {total}')
-                        y_true.append(batch_y)
-                        feed = {x: batch_x, rate: 1.0}
-                        batch_y_pred = sess.run(predictions['labels'], feed_dict=feed)
-                        y_pred.append(batch_y_pred)
+                    if save_acc_by_set_size_by_epoch:
+                        # --- compute accuracy on whole training set, by set size, for this epoch
+                        print('Computing accuracy per visual search stimulus set size on training set')
+                        total = int(np.ceil(X_data.shape[0] / batch_size))
+                        y_pred = []
+                        y_true = []
+                        batch_gen = batch_generator(X_data, y_data,
+                                                    batch_size=batch_size,
+                                                    shuffle=False)
+                        pbar = tqdm(enumerate(batch_gen), total=total)
+                        for i, (batch_x, batch_y) in pbar:
+                            pbar.set_description(f'batch {i} of {total}')
+                            y_true.append(batch_y)
+                            feed = {x: batch_x, rate: 1.0}
+                            batch_y_pred = sess.run(predictions['labels'], feed_dict=feed)
+                            y_pred.append(batch_y_pred)
 
-                    y_pred = np.concatenate(y_pred)
-                    y_true = np.concatenate(y_true)
-                    is_correct = np.equal(y_true, y_pred)
+                        y_pred = np.concatenate(y_pred)
+                        y_true = np.concatenate(y_true)
+                        is_correct = np.equal(y_true, y_pred)
 
-                    for set_size_ind, set_size in enumerate(set_sizes):
-                        set_size_inds = np.where(set_size_vec_train == set_size)[0]
-                        is_correct_set_size = is_correct[set_size_inds]
-                        acc_this_set_size = np.sum(is_correct_set_size) / is_correct_set_size.shape[0]
-                        acc_by_epoch_by_set_size[epoch, set_size_ind] = acc_this_set_size
+                        for set_size_ind, set_size in enumerate(set_sizes):
+                            set_size_inds = np.where(set_size_vec_train == set_size)[0]
+                            is_correct_set_size = is_correct[set_size_inds]
+                            acc_this_set_size = np.sum(is_correct_set_size) / is_correct_set_size.shape[0]
+                            acc_by_epoch_by_set_size[epoch, set_size_ind] = acc_this_set_size
 
-                    acc_set_size_str = ''
-                    acc_set_size_zip = zip(set_sizes, acc_by_epoch_by_set_size[epoch, :])
-                    for set_size, acc in acc_set_size_zip:
-                        acc_set_size_str += f'set size {set_size}: {acc}. '
-                    print(acc_set_size_str)
+                        acc_set_size_str = ''
+                        acc_set_size_zip = zip(set_sizes, acc_by_epoch_by_set_size[epoch, :])
+                        for set_size, acc in acc_set_size_zip:
+                            acc_set_size_str += f'set size {set_size}: {acc}. '
+                        print(acc_set_size_str)
 
                 # --------------- done training, save checkpoint + accuracy by epoch by set size -----------------------
                 print(f'Saving model in {savepath}')
                 ckpt_name = os.path.join(savepath, f'{net_name}-model.ckpt')
                 saver.save(sess, ckpt_name, global_step=epochs)
-                # and save matrix with accuracy by epoch by set size
-                acc_savepath_this_epochs = os.path.join(acc_savepath,
-                                                        f'net_trained_{epochs}_epochs_number_{net_number}.txt')
-                np.savetxt(acc_savepath_this_epochs, acc_by_epoch_by_set_size, delimiter=',')
+
+                if save_acc_by_set_size_by_epoch:
+                    # and save matrix with accuracy by epoch by set size
+                    acc_savepath_this_epochs = os.path.join(acc_savepath,
+                                                            f'net_trained_{epochs}_epochs_number_{net_number}.txt')
+                    np.savetxt(acc_savepath_this_epochs, acc_by_epoch_by_set_size, delimiter=',')
