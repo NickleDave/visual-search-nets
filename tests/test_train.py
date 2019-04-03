@@ -36,7 +36,7 @@ class TestTrain(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp_output_dir)
 
-    def test_train_runs_without_crash(self):
+    def test_train(self):
         config = self.config_obj
         searchnets.train(gz_filename=config.data.gz_filename,
                          net_name=config.train.net_name,
@@ -51,6 +51,30 @@ class TestTrain(unittest.TestCase):
                          model_save_path=config.train.model_save_path,
                          dropout_rate=config.train.dropout_rate,
                          val_size=config.data.val_size)
+
+        self.assertTrue(
+            os.path.isdir(os.path.join(config.train.model_save_path, 'acc_by_epoch_by_set_size'))
+        )
+
+        for epochs in config.train.epochs_list:
+            for net_number in range(config.train.number_nets_to_train):
+                self.assertTrue(
+                    os.path.isdir(
+                        os.path.join(config.train.model_save_path,
+                                     f'trained_{epochs}_epochs',
+                                     f'net_number_{net_number}'
+                                     )
+                    )
+                )
+
+                self.assertTrue(
+                    os.path.isfile(
+                        os.path.join(config.train.model_save_path,
+                                     'acc_by_epoch_by_set_size',
+                                     f'net_number_{net_number}_trained_{epochs}_epochs.txt'
+                                     )
+                    )
+                )
 
 
 if __name__ == '__main__':
