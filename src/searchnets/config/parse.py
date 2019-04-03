@@ -30,14 +30,21 @@ def parse_config(config_fname):
     new_learn_rate_layers = ast.literal_eval(config['TRAIN']['NEW_LEARN_RATE_LAYERS'])
     base_learning_rate = float(config['TRAIN']['BASE_LEARNING_RATE'])
     new_layer_learning_rate = float(config['TRAIN']['NEW_LAYER_LEARNING_RATE'])
+
     epochs_list = ast.literal_eval(config['TRAIN']['EPOCHS'])
+    if type(epochs_list) == int:
+        epochs_list = [epochs_list]
+
     batch_size = int(config['TRAIN']['BATCH_SIZE'])
     random_seed = int(config['TRAIN']['RANDOM_SEED'])
+
     if config.has_option('TRAIN', 'DROPOUT_RATE'):
         dropout_rate = config['TRAIN']['DROPOUT_RATE']
     else:
         dropout_rate = 0.5
+
     model_save_path = config['TRAIN']['MODEL_SAVE_PATH']
+
     if config.has_option('TRAIN', 'SAVE_ACC_BY_SET_SIZE_BY_EPOCH'):
         save_acc_by_set_size_by_epoch = bool(strtobool(config['TRAIN']['SAVE_ACC_BY_SET_SIZE_BY_EPOCH']))
     else:
