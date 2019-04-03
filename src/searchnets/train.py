@@ -251,9 +251,24 @@ def train(gz_filename,
                         print()
 
                     # --- compute accuracy on whole training set, by set size, for this epoch
-                    feed = {x: x_train, rate: 0}
-                    y_pred = sess.run(predictions['labels'], feed_dict=feed)
-                    is_correct = np.equal(y_data, y_pred)
+                    print('Computing accuracy per visual search stimulus set size on training set')
+                    total = int(np.ceil(X_data.shape[0] / batch_size))
+                    y_pred = []
+                    y_true = []
+                    batch_gen = batch_generator(X_data, y_data,
+                                                batch_size=batch_size,
+                                                shuffle=False)
+                    pbar = tqdm(enumerate(batch_gen), total=total)
+                    for i, (batch_x, batch_y) in pbar:
+                        pbar.set_description(f'batch {i} of {total}')
+                        y_true.append(batch_y)
+                        feed = {x: batch_x, rate: 1.0}
+                        batch_y_pred = sess.run(predictions['labels'], feed_dict=feed)
+                        y_pred.append(batch_y_pred)
+
+                    y_pred = np.concatenate(y_pred)
+                    y_true = np.concatenate(y_true)
+                    is_correct = np.equal(y_true, y_pred)
 
                     for set_size_ind, set_size in enumerate(set_sizes):
                         set_size_inds = np.where(set_size_vec_train == set_size)[0]
