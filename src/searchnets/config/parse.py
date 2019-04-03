@@ -1,5 +1,6 @@
 import ast
 import configparser
+from distutils.util import strtobool
 
 from .classes import TrainConfig, DataConfig, TestConfig, LearnCurveConfig, Config
 
@@ -37,6 +38,10 @@ def parse_config(config_fname):
     else:
         dropout_rate = 0.5
     model_save_path = config['TRAIN']['MODEL_SAVE_PATH']
+    if config.has_option('TRAIN', 'SAVE_ACC_BY_SET_SIZE_BY_EPOCH'):
+        save_acc_by_set_size_by_epoch = bool(strtobool(config['TRAIN']['SAVE_ACC_BY_SET_SIZE_BY_EPOCH']))
+    else:
+        save_acc_by_set_size_by_epoch = False
 
     train_config = TrainConfig(net_name,
                                number_nets_to_train,
@@ -48,7 +53,8 @@ def parse_config(config_fname):
                                batch_size,
                                random_seed,
                                model_save_path,
-                               dropout_rate)
+                               dropout_rate,
+                               save_acc_by_set_size_by_epoch)
 
     # ------------- unpack [DATA] section of config.ini file -----------------------------------------------------------
     train_dir = config['DATA']['TRAIN_DIR']
