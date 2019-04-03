@@ -15,3 +15,6 @@ data/checkpoints/*/
 data/data_prepd_for_nets/*.gz
 data/for_figshare/*
 data/results/*/
+
+# tests
+tests/test_data/visual_search_stimuli
