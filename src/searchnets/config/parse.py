@@ -31,6 +31,11 @@ def parse_config(config_fname):
     base_learning_rate = float(config['TRAIN']['BASE_LEARNING_RATE'])
     new_layer_learning_rate = float(config['TRAIN']['NEW_LAYER_LEARNING_RATE'])
 
+    if config.has_option('TRAIN', 'FREEZE_TRAINED_WEIGHTS'):
+        freeze_trained_weights = bool(strtobool(config['TRAIN']['FREEZE_TRAINED_WEIGHTS']))
+    else:
+        freeze_trained_weights = False
+
     epochs_list = ast.literal_eval(config['TRAIN']['EPOCHS'])
     if type(epochs_list) == int:
         epochs_list = [epochs_list]
@@ -54,12 +59,13 @@ def parse_config(config_fname):
                                number_nets_to_train,
                                input_shape,
                                new_learn_rate_layers,
-                               base_learning_rate,
                                new_layer_learning_rate,
                                epochs_list,
                                batch_size,
                                random_seed,
                                model_save_path,
+                               base_learning_rate,
+                               freeze_trained_weights,
                                dropout_rate,
                                save_acc_by_set_size_by_epoch)
 
