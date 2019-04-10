@@ -20,8 +20,7 @@ def _call_data(config):
     data(train_dir=config.data.train_dir,
          train_size=config.data.train_size,
          val_size=config.data.val_size,
-         gz_filename=config.data.gz_filename
-         )
+         gz_filename=config.data.gz_filename)
 
 
 def _call_train(config):
@@ -32,13 +31,15 @@ def _call_train(config):
           number_nets_to_train=config.train.number_nets_to_train,
           input_shape=config.train.input_shape,
           new_learn_rate_layers=config.train.new_learn_rate_layers,
-          base_learning_rate=config.train.base_learning_rate,
           new_layer_learning_rate=config.train.new_layer_learning_rate,
           epochs_list=config.train.epochs_list,
           batch_size=config.train.batch_size,
           random_seed=config.train.random_seed,
           model_save_path=config.train.model_save_path,
+          base_learning_rate=config.train.base_learning_rate,
+          freeze_trained_weights=config.train.freeze_trained_weights,
           dropout_rate=config.train.dropout_rate,
+          save_acc_by_set_size_by_epoch=config.train.save_acc_by_set_size_by_epoch,
           val_size=config.data.val_size)
 
 
