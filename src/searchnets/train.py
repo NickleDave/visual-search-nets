@@ -59,6 +59,7 @@ def train(gz_filename,
           number_nets_to_train,
           input_shape,
           base_learning_rate,
+          freeze_trained_weights,
           new_learn_rate_layers,
           new_layer_learning_rate,
           epochs_list,
@@ -87,10 +88,6 @@ def train(gz_filename,
     new_learn_rate_layers : list
         of layer names whose weights will be initialized randomly
         and then trained with the 'new_layer_learning_rate'.
-    base_learning_rate : float
-        Applied to layers with weights loaded from training the
-        architecture on ImageNet. Should be a very small number
-        so the trained weights don't change much.
     new_layer_learning_rate : float
         Applied to `new_learn_rate_layers'. Should be larger than
         `base_learning_rate` but still smaller than the usual
@@ -107,17 +104,26 @@ def train(gz_filename,
         to seed random number generator
     model_save_path : str
         path to directory where model checkpoints should be saved
+    base_learning_rate : float
+        Applied to layers with weights loaded from training the
+        architecture on ImageNet. Should be a very small number
+        so the trained weights don't change much.
+    freeze_trained_weights : bool
+        if True, freeze weights in any layer not in "new_learn_rate_layers".
+        These are the layers that have weights pre-trained on ImageNet.
+        Default is False. Done by simply not applying gradients to these weights,
+        i.e. this will ignore a base_learning_rate if you set it to something besides zero.
     dropout_rate : float
         Probability that any unit in a layer will "drop out" during
         a training epoch, as a form of regularization. Default is 0.5.
-    val_size : int
-        number of samples in validation set. Default is None.
     save_acc_by_set_size_by_epoch : bool
         if True, compute accuracy on training set for each epoch separately
         for each unique set size in the visual search stimuli. These values
         are saved in a matrix where rows are epochs and columns are set sizes.
         Useful for seeing whether accuracy converges for each individual
         set size. Default is False.
+    val_size : int
+        number of samples in validation set. Default is None.
 
     Returns
     -------
@@ -194,14 +200,19 @@ def train(gz_filename,
                     else:
                         var_list1.append(train_var)
 
-                opt1 = tf.train.GradientDescentOptimizer(base_learning_rate)
-                opt2 = tf.train.GradientDescentOptimizer(new_layer_learning_rate)
-                grads = tf.gradients(cross_entropy_loss, var_list1 + var_list2)
-                grads1 = grads[:len(var_list1)]
-                grads2 = grads[len(var_list1):]
-                train_op1 = opt1.apply_gradients(zip(grads1, var_list1))
-                train_op2 = opt2.apply_gradients(zip(grads2, var_list2))
-                train_op = tf.group(train_op1, train_op2, name='train_op')
+                if freeze_trained_weights:
+                    opt = tf.train.GradientDescentOptimizer(new_layer_learning_rate)
+                    grads = tf.gradients(cross_entropy_loss, var_list2)
+                    train_op = opt.apply_gradients(zip(grads, var_list2), name='train_op')
+                else:
+                    opt1 = tf.train.GradientDescentOptimizer(base_learning_rate)
+                    opt2 = tf.train.GradientDescentOptimizer(new_layer_learning_rate)
+                    grads = tf.gradients(cross_entropy_loss, var_list1 + var_list2)
+                    grads1 = grads[:len(var_list1)]
+                    grads2 = grads[len(var_list1):]
+                    train_op1 = opt1.apply_gradients(zip(grads1, var_list1))
+                    train_op2 = opt2.apply_gradients(zip(grads2, var_list2))
+                    train_op = tf.group(train_op1, train_op2, name='train_op')
 
                 correct_predictions = tf.equal(predictions['labels'],
                                                y, name='correct_preds')
@@ -242,7 +253,6 @@ def train(gz_filename,
                     avg_loss = 0.0
                     pbar = tqdm(enumerate(batch_gen), total=total)
                     for i, (batch_x, batch_y) in pbar:
-                        pbar.set_description(f'batch {i} of {total}')
                         feed = {x: batch_x,
                                 y: batch_y,
                                 rate: dropout_rate}
@@ -250,6 +260,7 @@ def train(gz_filename,
                         loss, _ = sess.run(
                             [cross_entropy_loss, train_op],
                             feed_dict=feed)
+                        pbar.set_description(f'batch {i} of {total}, loss: {loss: 7.3f}')
                         avg_loss += loss
 
                     training_loss.append(avg_loss / (i + 1))
