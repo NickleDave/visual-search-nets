@@ -23,10 +23,6 @@ class TrainConfig:
     new_learn_rate_layers : list
         of layer names whose weights will be initialized randomly
         and then trained with the 'new_layer_learning_rate'.
-    base_learning_rate : float
-        Applied to layers with weights loaded from training the
-        architecture on ImageNet. Should be a very small number
-        so the trained weights don't change much.
     new_layer_learning_rate : float
         Applied to `new_learn_rate_layers'. Should be larger than
         `base_learning_rate` but still smaller than the usual
@@ -43,6 +39,15 @@ class TrainConfig:
         to seed random number generator
     model_save_path : str
         path to directory where model checkpoints should be saved
+    base_learning_rate : float
+        Applied to layers with weights loaded from training the
+        architecture on ImageNet. Should be a very small number
+        so the trained weights don't change much. Default is 0.0
+    freeze_trained_weights : bool
+        if True, freeze weights in any layer not in "new_learn_rate_layers".
+        These are the layers that have weights pre-trained on ImageNet.
+        Default is False. Done by simply not applying gradients to these weights,
+        i.e. this will ignore a base_learning_rate if you set it to something besides zero.
     dropout_rate : float
         Probability that any unit in a layer will "drop out" during
         a training epoch, as a form of regularization. Default is 0.5.
@@ -70,7 +75,6 @@ class TrainConfig:
             if type(layer_name) != str:
                 raise TypeError(f'new_learn_rate_layer names should be strings but got {layer_name}')
 
-    base_learning_rate = attr.ib(validator=instance_of(float))
     new_layer_learning_rate = attr.ib(validator=instance_of(float))
     epochs_list = attr.ib(validator=instance_of(list))
 
@@ -84,8 +88,11 @@ class TrainConfig:
     batch_size = attr.ib(validator=instance_of(int))
     random_seed = attr.ib(validator=instance_of(int))
     model_save_path = attr.ib(validator=instance_of(str))
-    dropout_rate = attr.ib(validator=instance_of(float), default=0.5)
 
+    # ------------------------ have defaults ------------------------------------------------
+    base_learning_rate = attr.ib(validator=instance_of(float), default=0.0)
+    freeze_trained_weights = attr.ib(validator=instance_of(bool), default=False)
+    dropout_rate = attr.ib(validator=instance_of(float), default=0.5)
     save_acc_by_set_size_by_epoch = attr.ib(validator=instance_of(bool), default=False)
 
 
