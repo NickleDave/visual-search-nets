@@ -126,6 +126,12 @@ def test(gz_filename,
                                          y_test[inds].shape)
                     acc_per_set_size.append(acc_this_set_size)
 
+                acc_set_size_str = ''
+                acc_set_size_zip = zip(set_sizes, acc_per_set_size)
+                for set_size, acc in acc_set_size_zip:
+                    acc_set_size_str += f'set size {set_size}: {acc}. '
+                print(acc_set_size_str)
+
                 # append to list of lists which we convert into matrix
                 acc_per_set_size_per_model.append(acc_per_set_size)
                 # and insert into dictionary where model name is key
