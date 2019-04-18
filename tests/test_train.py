@@ -16,8 +16,8 @@ class TestTrain(unittest.TestCase):
     def setUp(self):
         self.tmp_output_dir = tempfile.mkdtemp()
         # below, note that copyfile returns destination path
-        src = os.path.join(TEST_CONFIGS_DIR, 'searchnets_feature_search_alexnet.ini')
-        dst = os.path.join(self.tmp_output_dir, 'searchnets_feature_search_alexnet.ini')
+        src = os.path.join(TEST_CONFIGS_DIR, 'searchnets_feature_spatial_alexnet.ini')
+        dst = os.path.join(self.tmp_output_dir, 'searchnets_feature_spatial_alexnet.ini')
         self.tmp_config_file = shutil.copyfile(src, dst)
         self.config_obj = ConfigParser()
         self.config_obj.read(self.tmp_config_file)
