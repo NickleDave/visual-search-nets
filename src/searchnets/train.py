@@ -129,7 +129,7 @@ def train(gz_filename,
     -------
     None
     """
-    # get training data
+    print('loading training data')
     data_dict = joblib.load(gz_filename)
     x_train = data_dict['x_train']
     y_train = data_dict['y_train']
