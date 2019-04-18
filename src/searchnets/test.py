@@ -63,10 +63,20 @@ def test(gz_filename,
             where keys are paths to model and values are array
             of predictions made by that model for test set
     """
-    # get test data
+    print('loading testing data')
     data_dict = joblib.load(gz_filename)
     x_test = data_dict['x_test']
     y_test = data_dict['y_test']
+    set_sizes_by_stim_type = data_dict['set_sizes_by_stim_stype']
+    set_sizes = []
+    for stim_type, set_sizes_this_stim in set_sizes_by_stim_type.items():
+        if set_sizes == []:
+            set_sizes = set_sizes_this_stim
+        else:
+            if set_sizes_this_stim != set_sizes:
+                raise ValueError('set sizes are not the same across visual search stimuli')
+            else:
+                continue
 
     for epochs in epochs_list:
         print(f'measuring accuracy on test set for {net_name} model trained for {epochs} epochs')
@@ -116,7 +126,6 @@ def test(gz_filename,
                     y_pred = sess.run(predictions['labels'], feed_dict=feed)
                     y_pred_all.append(y_pred)
                 y_pred_all = np.concatenate(y_pred_all)
-                set_sizes = data_dict['set_sizes']
                 set_size_vec_test = data_dict['set_size_vec_test']
                 acc_per_set_size = []
                 for set_size in set_sizes:
