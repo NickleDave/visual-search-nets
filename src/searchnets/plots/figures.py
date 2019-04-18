@@ -20,6 +20,47 @@ plt.rcParams['legend.fontsize'] = 16
 plt.rcParams['figure.titlesize'] = 20
 
 
+def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), title=None, save_as=None, figsize=(10, 5)):
+    """plot accuracy as a function of visual search task set size
+    for models trained on a single task or dataset
+
+    Parameters
+    ----------
+    results
+        path to results.gz file saved after measuring accuracy of trained networks
+        on test set of visual search stimuli
+    set_sizes : list
+        of int, set sizes of visual search stimuli. Default is [1, 2, 4, 8].
+    title : str
+        string to use as title of figure. Default is None.
+    save_as : str
+        path to directory where figure should be saved. Default is None, in which
+        case figure is not saved.
+    figsize : tuple
+        (width, height) in inches. Default is (10, 5).
+
+    Returns
+    -------
+    None
+    """
+    accs = joblib.load(results)['acc_per_set_size_per_model']
+    accs = np.squeeze(accs)
+
+    fig, ax = plt.subplots()
+    fig.set_size_inches(figsize)
+
+    ax.plot(set_sizes, accs.T)
+    ax.set_xticks(set_sizes)
+    if title:
+        ax.set_title(title)
+    ax.set_xlabel('set size')
+    ax.set_ylabel('accuracy')
+    ax.set_ylim([0, 1.1])
+
+    if save_as:
+        plt.savefig(save_as)
+
+
 def ftr_v_spt_conj(ftr_results, spt_conj_results, epochs,
                 set_sizes=(1, 2, 4, 8), savefig=False, savedir=None,
                 figsize=(10, 5)):
