@@ -62,8 +62,8 @@ def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), title=None, save_as=None, fi
 
 
 def ftr_v_spt_conj(ftr_results, spt_conj_results, epochs,
-                set_sizes=(1, 2, 4, 8), savefig=False, savedir=None,
-                figsize=(10, 5)):
+                   set_sizes=(1, 2, 4, 8), savefig=False, savedir=None,
+                   figsize=(10, 5)):
     """plot accuracy of trained models on visual search task
     with separate plots for feature and spatial conjunction search stimuli
 
@@ -83,6 +83,8 @@ def ftr_v_spt_conj(ftr_results, spt_conj_results, epochs,
         if True, save figure. Default is False.
     savedir : str
         path to directory where figure should be saved. Default is None.
+    figsize : tuple
+        (width, height) in inches. Default is (10, 5).
 
     Returns
     -------
