@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/169021695.svg)](https://zenodo.org/badge/latestdoi/169021695)
+
 # visual-search-nets
 
 Experiments to measure the behavior of deep neural networks performing 
@@ -46,3 +48,7 @@ DARPA cooperative agreement HR0011-18-2-0019
 - David Nicholson was partially supported by the 
 2017 William K. and Katherine W. Estes Fund to F. Pestilli, 
 R. Goldstone and L. Smith, Indiana University Bloomington.
+
+## Citation
+Please cite the DOI for this code:
+[![DOI](https://zenodo.org/badge/169021695.svg)](https://zenodo.org/badge/latestdoi/169021695)
