@@ -14,7 +14,7 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-NAME = 'searchnets'
+NAME = 'visual-search-nets'
 DESCRIPTION = 'experiments measuring how convolutional neural networks perform a visual search task'
 URL = 'https://github.com/NickleDave/visual-search-nets'
 EMAIL = 'nicholdav@gmail.com'
