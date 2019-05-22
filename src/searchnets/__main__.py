@@ -5,6 +5,7 @@ The package is installed on the path by pip, so typing
 `$ searchnets --help` would have the same effect (i.e., no need
 to type the python -m)
 """
+import os
 import argparse
 
 from .config import parse_config
@@ -143,6 +144,10 @@ def get_parser():
 def main():
     parser = get_parser()
     args = parser.parse_args()
+    if not os.path.isfile(args.configfile):
+        raise FileNotFoundError(
+            f'specified config.ini file not found: {args.configfile}'
+        )
     cli(command=args.command,
         configfile=args.configfile)
 
