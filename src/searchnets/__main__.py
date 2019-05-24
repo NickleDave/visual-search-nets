@@ -21,6 +21,7 @@ def _call_data(config):
     data(train_dir=config.data.train_dir,
          train_size=config.data.train_size,
          val_size=config.data.val_size,
+         test_size=config.data.test_size,
          gz_filename=config.data.gz_filename)
 
 
