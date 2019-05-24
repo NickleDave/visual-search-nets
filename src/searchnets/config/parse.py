@@ -76,6 +76,11 @@ def parse_config(config_fname):
         val_size = int(config['DATA']['VALIDATION_SIZE'])
     else:
         val_size = None
+    if config.has_option('DATA', 'TEST_SIZE'):
+        test_size = int(config['DATA']['TEST_SIZE'])
+    else:
+        test_size = None
+
     if config.has_option('DATA', 'SET_SIZES'):
         set_sizes = ast.literal_eval(config['DATA']['SET_SIZES'])
     else:
@@ -86,6 +91,7 @@ def parse_config(config_fname):
                              train_size,
                              gz_filename,
                              val_size,
+                             test_size,
                              set_sizes)
 
     # ------------- unpack [TEST] section of config.ini file -----------------------------------------------------------
