@@ -1,6 +1,7 @@
 import os
 import json
 from glob import glob
+import random
 
 import numpy as np
 import imageio
@@ -11,7 +12,8 @@ from tqdm import tqdm
 def data(train_dir,
          train_size,
          gz_filename,
-         val_size=None):
+         val_size=None,
+         test_size=None):
     """prepare training, validation, and test datasets.
     Saves a compressed Python dictionary in the path specified
     by the GZ_FILENAME option in the DATA section of a config.ini file.
@@ -27,6 +29,9 @@ def data(train_dir,
     val_size : int
         number of samples to put in validation data set.
         Default is None, in which case there will be no validation set.
+    test_size : int
+        number of samples to put in test data set.
+        Default is None, in which case all samples not used in training and validation sets are used for test set.
 
     Returns
     -------
@@ -91,9 +96,6 @@ def data(train_dir,
     # i.e. np.array([1, 1, 1, ..., 4, 4, 4, ... 8, 8])
     set_size_vec_train = []
     stim_type_vec_train = []
-    test_set_files = []
-    set_size_vec_test = []
-    stim_type_vec_test = []
     if val_size:
         val_set_files = []
         set_size_vec_val = []
@@ -101,6 +103,9 @@ def data(train_dir,
     else:
         val_set_files = None
         set_size_vec_val = None
+    test_set_files = []
+    set_size_vec_test = []
+    stim_type_vec_test = []
 
     with open(fname_json) as f:
         fnames_dict = json.load(f)
@@ -123,9 +128,18 @@ def data(train_dir,
     else:
         val_size_per_stim_type = 0
 
+    if test_size:
+        test_size_per_stim_type = test_size / num_stim_types
+        if test_size_per_stim_type.is_integer():
+            test_size_per_stim_type=int(test_size_per_stim_type)
+        else:
+            raise TypeError('test_size_per_set_size is not a whole number, adjust '
+                            'total number of samples, or number of set sizes.')
+    else:
+        test_size_per_stim_type = -1
+
     set_sizes_by_stim_stype = {}
     # below, stim type will be visual search stimulus type from searchstims package
-    # (currently either 'rectangle' or 'number')
     for stim_type, stim_info_by_set_size in fnames_dict.items():
         # and this will be set sizes declared by user for this stimulus (could be diff't for each stimulus type).
         # First have to convert set size from char to int
@@ -152,6 +166,18 @@ def data(train_dir,
         else:
             val_size_per_set_size = 0
 
+        if test_size is None or test_size == -1:
+            test_size_per_set_size = -1
+        elif test_size > 0:
+            test_size_per_set_size = (test_size_per_stim_type / len(set_sizes)) / 2
+            if test_size_per_set_size.is_integer():
+                test_size_per_set_size = int(test_size_per_set_size)
+            else:
+                raise TypeError(f'test_size_per_set_size, {test_size_per_set_size},is not a whole number, adjust '
+                                'total number of samples, or number of set sizes.')
+        else:
+            raise ValueError(f'invalid test size: {test_size}')
+
         # the dict comprehension below contains some hard-to-comprehend unpacking
         # of 'stim_info_by_set_size', so we can just keep the filenames.
         # The structure of the .json file is a dict of dicts (see the searchstims
@@ -173,42 +199,41 @@ def data(train_dir,
         # and target absent stimuli for each "set size", in training and test datasets
         for set_size, stim_fnames_present_absent in stim_fnames_by_set_size.items():
             for present_or_absent, stim_fnames in stim_fnames_present_absent.items():
-                inds = np.arange(len(stim_fnames))
-                if val_size:
-                    size = train_size_per_set_size + val_size_per_set_size
-                    if size > len(stim_fnames):
-                        raise ValueError(
-                            f'number of samples for training + validation set, {size}, '
-                            f'is larger than number of samples in data set, {len(stim_fnames)}'
-                        )
-                    not_test_inds = np.random.choice(inds,
-                                                     size=size,
-                                                     replace=False)
-                    train_inds_bool = np.isin(inds, not_test_inds[:train_size_per_set_size])
-                    val_inds_bool = np.isin(inds, not_test_inds[-val_size_per_set_size:])
-                else:
-                    if train_size_per_set_size > len(stim_fnames):
-                        raise ValueError(
-                            f'number of samples for training set, {train_size_per_set_size}, '
-                            f'is larger than number of samples in data set, {len(stim_fnames)}'
-                        )
-                    not_test_inds = np.random.choice(inds,
-                                                     size=train_size_per_set_size,
-                                                     replace=False)
-                    train_inds_bool = np.isin(inds, not_test_inds)
-                test_inds_bool = np.isin(inds, not_test_inds, invert=True)
-
+                total_size = sum([size
+                                  for size in (train_size_per_set_size, val_size_per_set_size, test_size_per_set_size)
+                                  if size is not 0 and size is not -1])
+                if total_size > len(stim_fnames):
+                    raise ValueError(
+                        f'number of samples for training + validation set, {total_size}, '
+                        f'is larger than number of samples in data set, {len(stim_fnames)}'
+                    )
                 stim_fnames_arr = np.asarray(stim_fnames)
-                tmp_train_set_files = stim_fnames_arr[train_inds_bool].tolist()
+
+                inds = list(range(len(stim_fnames)))
+                random.shuffle(inds)
+                train_inds = np.asarray(
+                    [inds.pop() for _ in range(train_size_per_set_size)]
+                )
+                tmp_train_set_files = stim_fnames_arr[train_inds].tolist()
                 train_set_files.extend(tmp_train_set_files)
                 set_size_vec_train.extend([set_size] * len(tmp_train_set_files))
                 stim_type_vec_train.extend([stim_type] * len(tmp_train_set_files))
-                if val_size:
-                    tmp_val_set_files = stim_fnames_arr[val_inds_bool].tolist()
+
+                if val_size_per_set_size > 0:
+                    val_inds = np.asarray(
+                        [inds.pop() for _ in range(val_size_per_set_size)]
+                    )
+                    tmp_val_set_files = stim_fnames_arr[val_inds].tolist()
                     val_set_files.extend(tmp_val_set_files)
                     set_size_vec_val.extend([set_size] * len(tmp_val_set_files))
                     stim_type_vec_val.extend([stim_type] * len(tmp_val_set_files))
-                tmp_test_set_files = stim_fnames_arr[test_inds_bool].tolist()
+
+                if test_size_per_set_size > 0:
+                    test_inds = np.asarray([inds.pop() for _ in range(test_size_per_set_size)])
+                elif test_size_per_set_size == -1:
+                    test_inds = np.asarray([ind for ind in inds])
+
+                tmp_test_set_files = stim_fnames_arr[test_inds].tolist()
                 test_set_files.extend(tmp_test_set_files)
                 set_size_vec_test.extend([set_size] * len(tmp_test_set_files))
                 stim_type_vec_train.extend([stim_type] * len(tmp_test_set_files))
