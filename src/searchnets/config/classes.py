@@ -129,6 +129,7 @@ class DataConfig:
     train_size = attr.ib(validator=instance_of(int))
     gz_filename = attr.ib(validator=instance_of(str))
     val_size = attr.ib(validator=optional(instance_of(int)), default=None)
+    test_size = attr.ib(validator=optional(instance_of(int)), default=None)
     set_sizes = attr.ib(validator=instance_of(list), default=None)
 
     @set_sizes.validator
