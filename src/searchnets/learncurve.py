@@ -26,8 +26,8 @@ def learncurve(gz_filename,
                test_results_save_path,
                dropout_rate=0.5,
                val_size=None):
-    """train convolutional neural networks to perform visual search task.
-    A fine tuning approach is used, as in Poder 2017 (https://arxiv.org/pdf/1707.09775.pdf)
+    """generate a learning curve, training convolutional neural networks
+    to perform visual search task with a range of sizes of training set.
 
     Parameters
     ----------
@@ -220,6 +220,17 @@ def learncurve(gz_filename,
     # -------------------- now measure accuracy on test set ------------------------------------------------------------
     x_test = data_dict['x_test']
     y_test = data_dict['y_test']
+    # make sure there's only one 'set' of set sizes
+    set_sizes_by_stim_type = data_dict['set_sizes_by_stim_stype']
+    set_sizes = []
+    for stim_type, set_sizes_this_stim in set_sizes_by_stim_type.items():
+        if set_sizes == []:
+            set_sizes = set_sizes_this_stim
+        else:
+            if set_sizes_this_stim != set_sizes:
+                raise ValueError('set sizes are not the same across visual search stimuli')
+            else:
+                continue
 
     for train_size in train_size_list:
         for epochs in epochs_list:
@@ -270,7 +281,7 @@ def learncurve(gz_filename,
                         y_pred = sess.run(predictions['labels'], feed_dict=feed)
                         y_pred_all.append(y_pred)
                     y_pred_all = np.concatenate(y_pred_all)
-                    set_sizes = data_dict['set_sizes']
+
                     set_size_vec_test = data_dict['set_size_vec_test']
                     acc_per_set_size = []
                     for set_size in set_sizes:
