@@ -164,5 +164,3 @@ class AlexNet:
         fc8 = self.fc(dropout7, 4096, self.num_classes, relu=False, name='fc8')
 
         self.output = fc8
-
-
