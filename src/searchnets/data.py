@@ -307,4 +307,3 @@ def data(train_dir,
                      stim_type_vec_test=stim_type_vec_test,
                      )
     joblib.dump(data_dict, gz_filename)
-
