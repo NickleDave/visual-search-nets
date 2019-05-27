@@ -264,10 +264,24 @@ def train(gz_filename,
 
                     training_loss.append(avg_loss / (i + 1))
                     print(f'Epoch {epoch + 1}, Training Avg. Loss: {avg_loss:7.3f}')
+
                     if val_set is not None:
-                        feed = {x: val_set[0],
-                                y: val_set[1]}
-                        valid_acc = sess.run(accuracy, feed_dict=feed)
+                        batch_gen = batch_generator(val_set[0], val_set[1],
+                                                    batch_size=batch_size,
+                                                    shuffle=False)
+                        total = int(np.ceil(val_set[0].shape[0] / batch_size))
+                        pbar = tqdm(enumerate(batch_gen), total=total)
+
+                        valid_acc = []
+                        for i, (batch_x, batch_y) in pbar:
+                            pbar.set_description(f'batch {i} of {total}')
+                            feed = {x: batch_x,
+                                    y: batch_y,
+                                    rate: dropout_rate}
+
+                            valid_acc.append(sess.run(accuracy, feed_dict=feed))
+                        valid_acc = np.asarray(valid_acc).mean()
+
                         print(' Validation Acc: %7.3f' % valid_acc)
                     else:
                         print()
