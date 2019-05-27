@@ -84,12 +84,11 @@ def learncurve(gz_filename,
     data_dict = joblib.load(gz_filename)
     x_train = data_dict['x_train']
     y_train = data_dict['y_train']
-    training_set = [x_train, y_train]
     if val_size:
-        val_set = [data_dict['x_val'],
-                   data_dict['y_val']]
+        x_val = data_dict['x_val']
+        y_val = data_dict['y_val']
     else:
-        val_set = None
+        x_val, y_val = None, None
 
     if type(epochs_list) is int:
         epochs_list = [epochs_list]
@@ -198,10 +197,23 @@ def learncurve(gz_filename,
                         training_loss.append(avg_loss / (i + 1))
                         print('Epoch %02d Training Avg. Loss: %7.3f' % (
                             epoch, avg_loss), end=' ')
-                        if val_set is not None:
-                            feed = {x: val_set[0],
-                                    y: val_set[1]}
-                            valid_acc = sess.run(accuracy, feed_dict=feed)
+                        if x_val is not None:
+                            batch_gen = batch_generator(x_val, y_val,
+                                                        batch_size=batch_size,
+                                                        shuffle=False)
+                            total = int(np.ceil(x_val.shape[0] / batch_size))
+                            pbar = tqdm(enumerate(batch_gen), total=total)
+
+                            valid_acc = []
+                            for i, (batch_x, batch_y) in pbar:
+                                pbar.set_description(f'batch {i} of {total}')
+                                feed = {x: batch_x,
+                                        y: batch_y,
+                                        rate: dropout_rate}
+
+                                valid_acc.append(sess.run(accuracy, feed_dict=feed))
+                            valid_acc = np.asarray(valid_acc).mean()
+
                             print(' Validation Acc: %7.3f' % valid_acc)
                         else:
                             print()
