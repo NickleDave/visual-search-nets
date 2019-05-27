@@ -20,7 +20,11 @@ plt.rcParams['legend.fontsize'] = 16
 plt.rcParams['figure.titlesize'] = 20
 
 
-def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), title=None, save_as=None, figsize=(10, 5)):
+def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), ax=None,
+                   title=None, save_as=None, figsize=(10, 5),
+                   set_xlabel=False, set_ylabel=False, set_ylim=True,
+                   ylim=(0, 1.1), plot_mean=True, add_legend=False,
+                   task_name=None):
     """plot accuracy as a function of visual search task set size
     for models trained on a single task or dataset
 
@@ -31,13 +35,31 @@ def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), title=None, save_as=None, fi
         on test set of visual search stimuli
     set_sizes : list
         of int, set sizes of visual search stimuli. Default is [1, 2, 4, 8].
+    ax : matplotlib.Axis
+        axis on which to plot figure. Default is None, in which case a new figure with
+        a single axis is created for the plot.
     title : str
         string to use as title of figure. Default is None.
     save_as : str
         path to directory where figure should be saved. Default is None, in which
         case figure is not saved.
     figsize : tuple
-        (width, height) in inches. Default is (10, 5).
+        (width, height) in inches. Default is (10, 5). Only used if ax is None and a new
+        figure is created.
+    set_xlabel : bool
+        if True, set the value of xlabel to "set size". Default is False.
+    set_ylabel : bool
+        if True, set the value of ylabel to "accuracy". Default is False.
+    set_ylim : bool
+        if True, set the y-axis limits to the value of ylim.
+    ylim : tuple
+        with two elements, limits for y-axis. Default is (0, 1.1).
+    plot_mean : bool
+        if True, find mean accuracy and plot as a separate solid line. Default is True.
+    add_legend : bool
+        if True, add legend to axis. Default is False.
+    task_name : str
+
 
     Returns
     -------
@@ -46,16 +68,32 @@ def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), title=None, save_as=None, fi
     accs = joblib.load(results)['acc_per_set_size_per_model']
     accs = np.squeeze(accs)
 
-    fig, ax = plt.subplots()
-    fig.set_size_inches(figsize)
+    if ax is None:
+        fig, ax = plt.subplots()
+        fig.set_size_inches(figsize)
 
-    ax.plot(set_sizes, accs.T)
+    for net_num, acc in enumerate(accs):
+        label = f'net num. {net_num}'
+        if task_name:
+            label += ', task {task_name}'
+        ax.plot(set_sizes, acc, linestyle='--', label=label)
+    if plot_mean:
+        mn_acc = accs.mean(axis=0)
+        ax.plot(set_sizes, mn_acc, linewidth=3, label='mean', color='k')
+
     ax.set_xticks(set_sizes)
+
     if title:
         ax.set_title(title)
-    ax.set_xlabel('set size')
-    ax.set_ylabel('accuracy')
-    ax.set_ylim([0, 1.1])
+    if set_xlabel:
+        ax.set_xlabel('set size')
+    if set_ylabel:
+        ax.set_ylabel('accuracy')
+    if set_ylim:
+        ax.set_ylim(ylim)
+
+    if add_legend:
+        ax.legend()
 
     if save_as:
         plt.savefig(save_as)
