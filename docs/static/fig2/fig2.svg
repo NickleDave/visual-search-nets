@@ -10,13 +10,16 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="453.1525mm"
-   height="285.68188mm"
-   viewBox="0 0 1605.6585 1012.2586"
+   width="454.76523mm"
+   height="285.8508mm"
+   viewBox="0 0 1611.3729 1012.8571"
    id="svg4505"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="fig2.svg">
+   sodipodi:docname="fig2.svg"
+   inkscape:export-filename="/home/bart/Documents/repos/L2M/visual-search-nets/docs/static/fig2/fig2.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
   <defs
      id="defs4507" />
   <sodipodi:namedview
@@ -27,10 +30,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.7"
-     inkscape:cx="899.94418"
-     inkscape:cy="562.85714"
+     inkscape:cx="839.94418"
+     inkscape:cy="562.85716"
      inkscape:document-units="px"
-     inkscape:current-layer="layer4"
+     inkscape:current-layer="layer5"
      showgrid="false"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -54,10 +57,24 @@
     </rdf:RDF>
   </metadata>
   <g
+     inkscape:groupmode="layer"
+     id="layer5"
+     inkscape:label="bg_box"
+     sodipodi:insensitive="true"
+     transform="translate(5.7142859,0.59847641)">
+    <rect
+       style="fill:#ffffff;fill-opacity:1"
+       id="rect4755"
+       width="1611.3728"
+       height="1012.8571"
+       x="-5.7142859"
+       y="-0.59850693" />
+  </g>
+  <g
      inkscape:label="img"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(87.801318,-387.24643)"
+     transform="translate(93.515604,-386.64795)"
      sodipodi:insensitive="true">
     <image
        y="499.50507"
@@ -1491,7 +1508,7 @@ AAAAAOC9/wO480vVNtYcIQAAAABJRU5ErkJggg==
      inkscape:groupmode="layer"
      id="layer4"
      inkscape:label="text"
-     transform="translate(255.65847,112.25864)">
+     transform="translate(261.37276,112.85712)">
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
