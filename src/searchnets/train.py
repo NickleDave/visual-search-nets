@@ -70,7 +70,6 @@ def train(gz_filename,
           val_size=None,
           save_acc_by_set_size_by_epoch=False):
     """train convolutional neural networks to perform visual search task.
-    A fine tuning approach is used, as in Poder 2017 (https://arxiv.org/pdf/1707.09775.pdf)
 
     Parameters
     ----------
