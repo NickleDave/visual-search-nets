@@ -43,14 +43,14 @@ for window_size in ALEXNET_SIZE, VGG16_SIZE:
         vgg16_zip = zip(keys, vals)
 
 OUTPUT_DIR = Path('data/visual_search_stimuli')
-TARGET_PRESENT = 20000
-TARGET_ABSENT = 20000
-SET_SIZES = [3, 6, 12, 18]
+TARGET_PRESENT = 12100
+TARGET_ABSENT = 12100
+SET_SIZES = [1, 2, 4, 8]
 
 
 def main():
     for cnn, zipped in zip(
-        ['alexnet', 'vgg16'],
+        ['alexnet', 'VGG16'],
             [alexnet_zip, vgg16_zip]):
         for key, val in zipped:
             json_filename = f'{cnn}_{key}.json'
