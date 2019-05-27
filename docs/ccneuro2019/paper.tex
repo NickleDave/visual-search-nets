@@ -73,12 +73,28 @@ attention;visual search
 \subsection{Attention}
 Several attention mechanisms are currently used in machine learning 
 and artificial intelligence to improve classification accuracy and similar 
-metrics. Commonly used attention mechanisms consist essentially of learned 
-weightings, with some additionally using recurrence.
-This focus on attention as a mechanism to improve accuracy or other metrics 
-stands in contrast to studies of attention in psychology and neuroscience, 
-where typically it is experimental manipulations that impair behavior which 
-produce the results on which theories of the mechanisms of attention are built.
+metrics. Commonly used attention mechanisms consist essentially of weightings 
+that are learned by updating the weights so as to minimize a loss function, 
+with some additionally using recurrence
+[@huSqueezeandExcitationNetworks2017; @vaswaniAttentionAllYou2017].
+This understanding of attention as a mechanism to improve accuracy or other metrics 
+stands in contrast to studies of attention in psychology and neuroscience. 
+In these fields, theories of attention mechanisms are often built on 
+results produced by experimental manipulations that impair behavior.
+Perhaps the pre-eminent example of this approach to understanding attention is a 
+a long-established form of visual search task [@wolfeVisualSearch1998]. In this behavioral
+paradigm, subjects view a set of discrete items on a flat background and report whether a 
+target is present or absent among distractors. Classically, results from this paradigm 
+have been used to support different theories of \bf{selective covert visual attention}, 
+a term that requires some defintion. The term "selective" is simply supposed to mean 
+some mechanism that selects some visual inputs for further processing while necessarily 
+discarding others. The word "covert" in this context means any mechanism that occurs 
+"centrally", i.e. inside the brain, without overt orientation, i.e. without eye or head 
+movements.
+Our goal here is not to resolve the debate about whether selective covert visual 
+attention is serial or parallel. Rather our goal is to better understand attention as 
+defined in cognitive science and reconcile that with the definition used in artificial 
+intelligence.
 
 \subsection{visual search}
 \textbf{set size effects}
