@@ -45,20 +45,18 @@ A City, State 12345 A country}
 \section{Abstract}
 {
 \bf
-Selective attention mechanisms preferentially route some sensory inputs for further 
-processing, while necessarily discarding others. Researchers studying visual
-attention have often divided selective attention into overt and covert mechanisms. 
-Overt mechanisms involve orienting the eyes and/or head, while covert mechanisms 
-occur "centrally", in the brain, without overt orientation. Cognitive scientists have long
-used a new classic form of visual search task to investigate theoretical mechanisms of 
-selective covert visual attention. Here we build on previous studies that examine the 
-parallels between the visual system and convolutional neural networks (CNNs), by testing 
-whether CNNs exhibit human-like attentional effects while performing this visual search 
-task. Following a typical approach, we first show that CNNs trained 
-for image classification can show human-like attentional effects. Then we demonstrate 
-that, by changing how we train the networks and the statistics of the training data, 
-these effects can largely be eliminated, i.e., that CNNs are capable of performing the 
-task without explicit attention mechanisms. We go on to show that manipulating the 
+Convolutional neural networks (CNNs) trained to perform tasks such as image classification
+with human-like accuracy acquire representations similar to those in the primate 
+visual system. Do CNNs that are pre-trained to use such representations conversely exhibit 
+human-like behavior? We test this with a visual search task that has long been used to 
+investigate attention mechanisms. We first show that CNNs using weights trained for image 
+classification can exhibit human-like attentional effects when performing this visual 
+search task. However, we then demonstrate that these effects can be 
+eliminated, without changing the lower-level learned representations, by modifying other 
+parameters of training and the balance of classes in the training data. One explanation 
+for this finding is that we are only training networks to discriminate single types of 
+visual search stimuli. We further test CNNs trained to perform multiple tasks.
+We go on to show that manipulating the 
 discriminability of the target and distractors in the task can produce attentional 
 effects in spite of the changes we made to training. Based on these results, we conclude 
 that CNNs do not show attentional effects.
