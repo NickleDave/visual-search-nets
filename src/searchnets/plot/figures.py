@@ -2,11 +2,14 @@ import os
 import json
 from glob import glob
 
+import joblib
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import joblib
+import pandas as pd
 from scipy import stats
+import seaborn as sns
+
 
 mpl.style.use('bmh')
 
@@ -380,5 +383,24 @@ def train_history(acc_dir, set_sizes=(1, 2, 4, 8), save_as=None):
             ax[-ind].set_visible(False)
 
     fig.tight_layout()
+    if save_as:
+        plt.savefig(save_as)
+
+
+def learncurve(csv_fname, figsize=(15, 10), save_as=None):
+    """"""
+    df = pd.read_csv(csv_fname)
+    set_sizes = sorted(df.set_size.unique())
+
+    fig, ax = plt.subplots(1, len(set_sizes), figsize=figsize)
+    for ax_ind, set_size in enumerate(set_sizes):
+        df_this_ax = df.loc[df['set_size'] == set_size]
+        sns.scatterplot(x='train_size', y='err', hue='setname', data=df_this_ax, legend=False, ax=ax[ax_ind])
+        sns.lineplot(x='train_size', y='err', hue='setname', data=df_this_ax, ax=ax[ax_ind])
+        ax[ax_ind].set_ylim([0, 0.5])
+        ax[ax_ind].set_xticks(df.train_size.unique())
+        ax[ax_ind].set_xticklabels(df.train_size.unique(), rotation=45)
+        ax[ax_ind].set_title(f'set size: {set_size}')
+
     if save_as:
         plt.savefig(save_as)
