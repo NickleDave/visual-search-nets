@@ -6,8 +6,8 @@ import tensorflow as tf
 import joblib
 from tqdm import tqdm
 
-from searchnets.nets import AlexNet
-from searchnets.nets import VGG16
+from ..nets import AlexNet
+from ..nets import VGG16
 
 CSV_FIELDNAMES = ['setname', 'train_size', 'epochs', 'net_number', 'set_size', 'err']
 
