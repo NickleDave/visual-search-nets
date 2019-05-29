@@ -5,14 +5,79 @@ import tensorflow as tf
 import joblib
 from tqdm import tqdm
 
-from searchnets.nets import AlexNet
-from searchnets.nets import VGG16
-from searchnets.train import batch_generator
+from ..nets import AlexNet
+from ..nets import VGG16
+from ..train import batch_generator
 
 
-def train(x_train, y_train, train_size_list, epochs_list, net_name, number_nets_to_train, input_shape,
-          new_learn_rate_layers, batch_size, dropout_rate, model_save_path):
-    """train networks for a learning curve"""
+def train(x_train,
+          y_train,
+          net_name,
+          number_nets_to_train,
+          input_shape,
+          base_learning_rate,
+          freeze_trained_weights,
+          new_learn_rate_layers,
+          new_layer_learning_rate,
+          train_size_list,
+          epochs_list,
+          batch_size,
+          dropout_rate,
+          model_save_path):
+    """train networks for a learning curve
+
+    Parameters
+    ----------
+    x_train : numpy.ndarray
+        training data, visual search stimuli
+    y_train. numpy.ndarray
+        expected outputs, vector of 0s and 1s (for 'target absent' and 'target present')
+    net_name : str
+        name of convolutional neural net architecture to train.
+        One of {'alexnet', 'VGG16'}
+    number_nets_to_train : int
+        number of training "replicates"
+    input_shape : tuple
+        with 3 elements, (rows, columns, channels)
+        should be (227, 227, 3) for AlexNet
+        and (224, 224, 3) for VGG16
+    base_learning_rate : float
+        Applied to layers with weights loaded from training the
+        architecture on ImageNet. Should be a very small number
+        so the trained weights don't change much.
+    freeze_trained_weights : bool
+        if True, freeze weights in any layer not in "new_learn_rate_layers".
+        These are the layers that have weights pre-trained on ImageNet.
+        Default is False. Done by simply not applying gradients to these weights,
+        i.e. this will ignore a base_learning_rate if you set it to something besides zero.
+    new_learn_rate_layers : list
+        of layer names whose weights will be initialized randomly
+        and then trained with the 'new_layer_learning_rate'.
+    new_layer_learning_rate : float
+        Applied to `new_learn_rate_layers'. Should be larger than
+        `base_learning_rate` but still smaller than the usual
+        learning rate for a deep net trained with SGD,
+        e.g. 0.001 instead of 0.01
+    train_size_list : list
+        of number of samples in training set. Used to generate a learning curve
+        (where x axis is size of training set and y axis is accuracy)
+    epochs_list : list
+        of training epochs. Replicates will be trained for each
+        value in this list. Can also just be one value, but a list
+        is useful if you want to test whether effects depend on
+        number of training epochs.
+    batch_size : int
+        number of samples in a batch of training data
+    model_save_path : str
+        path to directory where model checkpoints should be saved
+    dropout_rate : float
+        Probability that any unit in a layer will "drop out" during
+        a training epoch, as a form of regularization. Default is 0.5.
+
+    Returns
+    -------
+    None
+    """
     all_train_inds = np.arange(x_train.shape[0])
 
     for train_size in train_size_list:
@@ -61,14 +126,19 @@ def train(x_train, y_train, train_size_list, epochs_list, net_name, number_nets_
                         else:
                             var_list1.append(train_var)
 
-                    opt1 = tf.train.GradientDescentOptimizer(base_learning_rate)
-                    opt2 = tf.train.GradientDescentOptimizer(new_layer_learning_rate)
-                    grads = tf.gradients(cross_entropy_loss, var_list1 + var_list2)
-                    grads1 = grads[:len(var_list1)]
-                    grads2 = grads[len(var_list1):]
-                    train_op1 = opt1.apply_gradients(zip(grads1, var_list1))
-                    train_op2 = opt2.apply_gradients(zip(grads2, var_list2))
-                    train_op = tf.group(train_op1, train_op2, name='train_op')
+                    if freeze_trained_weights:
+                        opt = tf.train.GradientDescentOptimizer(new_layer_learning_rate)
+                        grads = tf.gradients(cross_entropy_loss, var_list2)
+                        train_op = opt.apply_gradients(zip(grads, var_list2), name='train_op')
+                    else:
+                        opt1 = tf.train.GradientDescentOptimizer(base_learning_rate)
+                        opt2 = tf.train.GradientDescentOptimizer(new_layer_learning_rate)
+                        grads = tf.gradients(cross_entropy_loss, var_list1 + var_list2)
+                        grads1 = grads[:len(var_list1)]
+                        grads2 = grads[len(var_list1):]
+                        train_op1 = opt1.apply_gradients(zip(grads1, var_list1))
+                        train_op2 = opt2.apply_gradients(zip(grads2, var_list2))
+                        train_op = tf.group(train_op1, train_op2, name='train_op')
 
                     correct_predictions = tf.equal(predictions['labels'],
                                                    y, name='correct_preds')
