@@ -2,8 +2,8 @@ import numpy as np
 import tensorflow as tf
 import joblib
 
-from .train import train
-from .test import test
+from ._learncurve import train
+from ._learncurve import test
 
 
 def learncurve(gz_filename,

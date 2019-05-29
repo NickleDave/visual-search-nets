@@ -1,4 +1,3 @@
-import copy
 import csv
 import os
 
@@ -10,7 +9,7 @@ from tqdm import tqdm
 from searchnets.nets import AlexNet
 from searchnets.nets import VGG16
 
-CSV_FIELDNAMES = ['setname', 'train_size', 'epochs', 'net_number', 'err']
+CSV_FIELDNAMES = ['setname', 'train_size', 'epochs', 'net_number', 'set_size', 'err']
 
 
 def test(x_train, y_train, x_test, y_test, set_size_vec_train, set_size_vec_test,
@@ -75,22 +74,29 @@ def test(x_train, y_train, x_test, y_test, set_size_vec_train, set_size_vec_test
                             y_pred = sess.run(predictions['labels'], feed_dict=feed)
                             y_pred_all.append(y_pred)
                         y_pred_all = np.concatenate(y_pred_all)
-                        acc = np.sum(y_pred_all == y_data) / y_data.shape
+                        acc = np.asscalar(
+                            np.sum(y_pred_all == y_data) / y_data.shape
+                        )
                         err = 1.0 - acc
-                        row = [setname, train_size,  epochs, net_number, err]
+                        row = [setname, train_size,  epochs, net_number, 'all', err]
+                        csv_rows.append(row)
 
                         err_per_set_size = []
                         for set_size in set_sizes:
                             # in line below, [0] at end because np.where returns a tuple
                             inds = np.where(set_size_vec == set_size)[0]
-                            acc_this_set_size = (np.sum(y_pred_all[inds] == y_data[inds]) /
-                                                 y_data[inds].shape)
+                            acc_this_set_size = np.asscalar(
+                                np.sum(y_pred_all[inds] == y_data[inds]) / y_data[inds].shape
+                            )
                             err_this_set_size = 1.0 - acc_this_set_size
                             err_per_set_size.append(err_this_set_size)
-                        row.extend(err_per_set_size)
+                            row = [setname, train_size,  epochs, net_number, set_size, err_this_set_size]
+                            csv_rows.append(row)
 
-                        csv_rows.append(row)
-
+                        # insert into dictionary where model name is key
+                        # and list of accuracies per set size is the "value"
+                        err_per_set_size_model_dict[restore_path] = err_per_set_size
+                        predictions_per_model_dict[restore_path] = y_pred_all
                         # insert into dictionary where model name is key
                         # and list of accuracies per set size is the "value"
                         err_per_set_size_model_dict[restore_path] = err_per_set_size
@@ -115,14 +121,12 @@ def test(x_train, y_train, x_test, y_test, set_size_vec_train, set_size_vec_test
                                  f'learncurve_{net_name}.gz')
     joblib.dump(results_dict, results_fname)
 
-    csv_fieldnames = copy.deepcopy(CSV_FIELDNAMES)
-    for set_size in set_sizes:
-        csv_fieldnames.append(f'err_set_size_{set_size}')
     results_csv = os.path.join(test_results_save_path,
                                f'learncurve_{net_name}.csv')
 
     with open(results_csv, 'w') as f:
-        writer = csv.DictWriter(f=f, fieldnames=csv_fieldnames)
+        writer = csv.DictWriter(f=f, fieldnames=CSV_FIELDNAMES)
+        writer.writeheader()
         for row in csv_rows:
-            row_dict = dict(zip(csv_fieldnames, row))
+            row_dict = dict(zip(CSV_FIELDNAMES, row))
             writer.writerow(row_dict)
