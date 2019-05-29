@@ -84,6 +84,15 @@ def train(gz_filename,
         with 3 elements, (rows, columns, channels)
         should be (227, 227, 3) for AlexNet
         and (224, 224, 3) for VGG16
+    base_learning_rate : float
+        Applied to layers with weights loaded from training the
+        architecture on ImageNet. Should be a very small number
+        so the trained weights don't change much.
+    freeze_trained_weights : bool
+        if True, freeze weights in any layer not in "new_learn_rate_layers".
+        These are the layers that have weights pre-trained on ImageNet.
+        Default is False. Done by simply not applying gradients to these weights,
+        i.e. this will ignore a base_learning_rate if you set it to something besides zero.
     new_learn_rate_layers : list
         of layer names whose weights will be initialized randomly
         and then trained with the 'new_layer_learning_rate'.
@@ -103,15 +112,6 @@ def train(gz_filename,
         to seed random number generator
     model_save_path : str
         path to directory where model checkpoints should be saved
-    base_learning_rate : float
-        Applied to layers with weights loaded from training the
-        architecture on ImageNet. Should be a very small number
-        so the trained weights don't change much.
-    freeze_trained_weights : bool
-        if True, freeze weights in any layer not in "new_learn_rate_layers".
-        These are the layers that have weights pre-trained on ImageNet.
-        Default is False. Done by simply not applying gradients to these weights,
-        i.e. this will ignore a base_learning_rate if you set it to something besides zero.
     dropout_rate : float
         Probability that any unit in a layer will "drop out" during
         a training epoch, as a form of regularization. Default is 0.5.
