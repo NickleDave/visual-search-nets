@@ -1,6 +1,7 @@
 import ast
 import configparser
 from distutils.util import strtobool
+import os
 
 from .classes import TrainConfig, DataConfig, TestConfig, LearnCurveConfig, Config
 
@@ -20,6 +21,11 @@ def parse_config(config_fname):
         instance of searchstims.config.classes.Config,
         attrs-based class that represents all configuration parameters
     """
+    if not os.path.isfile(config_fname):
+        raise FileNotFoundError(
+            f'specified config.ini file not found: {configfile}'
+        )
+
     config = configparser.ConfigParser()
     config.read(config_fname)
 
