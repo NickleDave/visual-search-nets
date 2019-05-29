@@ -12,10 +12,73 @@ from ..nets import VGG16
 CSV_FIELDNAMES = ['setname', 'train_size', 'epochs', 'net_number', 'set_size', 'err']
 
 
-def test(x_train, y_train, x_test, y_test, set_size_vec_train, set_size_vec_test,
-         net_name, number_nets_to_train, set_sizes, input_shape, new_learn_rate_layers, epochs_list, train_size_list,
-         batch_size, model_save_path, test_results_save_path):
-    """test networks trained for a learning curve"""
+def test(x_train,
+         y_train,
+         x_test,
+         y_test,
+         set_size_vec_train,
+         set_size_vec_test,
+         set_sizes,
+         net_name,
+         number_nets_to_train,
+         input_shape,
+         new_learn_rate_layers,
+         epochs_list,
+         train_size_list,
+         batch_size,
+         model_save_path,
+         test_results_save_path):
+    """test networks trained for a learning curve
+
+    Parameters
+    ----------
+    x_train : numpy.ndarray
+        training data, visual search stimuli
+    y_train. numpy.ndarray
+        expected outputs, vector of 0s and 1s (for 'target absent' and 'target present')
+    x_test : numpy.ndarray
+        test, visual search stimuli
+    y_test. numpy.ndarray
+        expected outputs for test set
+    set_size_vec_train : numpy.ndarray
+        vector whose length is equal to number of samples in x_train, each value indicates (visual search) set size for
+        sample at corresponding index in x_train
+    set_size_vec_test : numpy.ndarray
+        vector whose length is equal to number of samples in x_test, each value indicates (visual search) set size for
+        sample at corresponding index in x_test
+    set_sizes : list
+        of int, unique set of set sizes in data
+    net_name : str
+        name of convolutional neural net architecture to train.
+        One of {'alexnet', 'VGG16'}
+    number_nets_to_train : int
+        number of training "replicates"
+    input_shape : tuple
+        with 3 elements, (rows, columns, channels)
+        should be (227, 227, 3) for AlexNet
+        and (224, 224, 3) for VGG16
+    new_learn_rate_layers : list
+        of layer names whose weights will be initialized randomly
+        and then trained with the 'new_layer_learning_rate'.
+    epochs_list : list
+        of training epochs. Replicates will be trained for each
+        value in this list. Can also just be one value, but a list
+        is useful if you want to test whether effects depend on
+        number of training epochs.
+    train_size_list : list
+        of number of samples in training set. Used to generate a learning curve
+        (where x axis is size of training set and y axis is accuracy)
+    batch_size : int
+        number of samples in a batch of training data
+    model_save_path : str
+        path to directory where model checkpoints should be saved
+    test_results_save_path : str
+        path to directory where results from measuring accuracy on test set should be saved
+
+    Returns
+    -------
+    None
+    """
     csv_rows = []
     results_dict = {}
 
