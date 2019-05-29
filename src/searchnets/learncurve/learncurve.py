@@ -2,22 +2,25 @@ import numpy as np
 import tensorflow as tf
 import joblib
 
-from ._learncurve import train
-from ._learncurve import test
+from .train import train
+from .test import test
 
 
-def learncurve(gz_filename,
-               net_name,
-               number_nets_to_train,
-               input_shape,
-               new_learn_rate_layers,
-               epochs_list,
-               train_size_list,
-               batch_size,
-               random_seed,
-               model_save_path,
-               test_results_save_path,
-               dropout_rate=0.5):
+def learning_curve(gz_filename,
+                   net_name,
+                   number_nets_to_train,
+                   input_shape,
+                   base_learning_rate,
+                   freeze_trained_weights,
+                   new_learn_rate_layers,
+                   new_layer_learning_rate,
+                   epochs_list,
+                   train_size_list,
+                   batch_size,
+                   random_seed,
+                   model_save_path,
+                   test_results_save_path,
+                   dropout_rate=0.5):
     """generate a learning curve, training convolutional neural networks
     to perform visual search task with a range of sizes of training set.
 
@@ -41,6 +44,14 @@ def learncurve(gz_filename,
         Applied to layers with weights loaded from training the
         architecture on ImageNet. Should be a very small number
         so the trained weights don't change much.
+    freeze_trained_weights : bool
+        if True, freeze weights in any layer not in "new_learn_rate_layers".
+        These are the layers that have weights pre-trained on ImageNet.
+        Default is False. Done by simply not applying gradients to these weights,
+        i.e. this will ignore a base_learning_rate if you set it to something besides zero.
+    new_learn_rate_layers : list
+        of layer names whose weights will be initialized randomly
+        and then trained with the 'new_layer_learning_rate'.
     new_layer_learning_rate : float
         Applied to `new_learn_rate_layers'. Should be larger than
         `base_learning_rate` but still smaller than the usual
@@ -101,9 +112,35 @@ def learncurve(gz_filename,
                 continue
 
     # -------------------- first train a bunch of models ---------------------------------------------------------------
-    train(x_train, y_train, train_size_list, net_name, number_nets_to_train, input_shape,
-          new_learn_rate_layers, batch_size, dropout_rate, model_save_path)
+    train(x_train,
+          y_train,
+          net_name,
+          number_nets_to_train,
+          input_shape,
+          base_learning_rate,
+          freeze_trained_weights,
+          new_learn_rate_layers,
+          new_layer_learning_rate,
+          train_size_list,
+          epochs_list,
+          batch_size,
+          dropout_rate,
+          model_save_path)
 
-    test(x_train, y_train, x_test, y_test, data_dict['set_size_vec_train'], data_dict['set_size_vec_test'],
-         net_name, number_nets_to_train, set_sizes, input_shape, new_learn_rate_layers, epochs_list, train_size_list,
-         batch_size, model_save_path, test_results_save_path)
+    # -------------------- then measure accuracy on test data ----------------------------------------------------------
+    test(x_train,
+         y_train,
+         x_test,
+         y_test,
+         data_dict['set_size_vec_train'],
+         data_dict['set_size_vec_test'],
+         set_sizes,
+         net_name,
+         number_nets_to_train,
+         input_shape,
+         new_learn_rate_layers,
+         epochs_list,
+         train_size_list,
+         batch_size,
+         model_save_path,
+         test_results_save_path)
