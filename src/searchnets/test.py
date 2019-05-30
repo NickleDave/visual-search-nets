@@ -6,6 +6,7 @@ import joblib
 from tqdm import tqdm
 
 from .nets import AlexNet, VGG16
+from .train import IMAGENET_MEAN
 
 
 def test(gz_filename,
@@ -65,6 +66,8 @@ def test(gz_filename,
     print('loading testing data')
     data_dict = joblib.load(gz_filename)
     x_test = data_dict['x_test']
+    # pre-process images
+    x_test = np.asarray([img[:, :, [2, 1, 0]] - IMAGENET_MEAN for img in x_test])
     y_test = data_dict['y_test']
     set_sizes_by_stim_type = data_dict['set_sizes_by_stim_stype']
     set_sizes = []
