@@ -387,7 +387,7 @@ def train_history(acc_dir, set_sizes=(1, 2, 4, 8), save_as=None):
         plt.savefig(save_as)
 
 
-def learncurve(csv_fname, figsize=(15, 10), save_as=None):
+def learncurve(csv_fname, figsize=(15, 10), ylim=(0, 0.5), suptitle=None, save_as=None):
     """"""
     df = pd.read_csv(csv_fname)
     set_sizes = sorted(df.set_size.unique())
@@ -397,10 +397,18 @@ def learncurve(csv_fname, figsize=(15, 10), save_as=None):
         df_this_ax = df.loc[df['set_size'] == set_size]
         sns.scatterplot(x='train_size', y='err', hue='setname', data=df_this_ax, legend=False, ax=ax[ax_ind])
         sns.lineplot(x='train_size', y='err', hue='setname', data=df_this_ax, ax=ax[ax_ind])
-        ax[ax_ind].set_ylim([0, 0.5])
+        ax[ax_ind].set_ylim(ylim)
         ax[ax_ind].set_xticks(df.train_size.unique())
         ax[ax_ind].set_xticklabels(df.train_size.unique(), rotation=45)
         ax[ax_ind].set_title(f'set size: {set_size}')
+        if ax_ind == 0:
+            ax[ax_ind].set_ylabel('error')
+        else:
+            ax[ax_ind].set_ylabel('')
+        ax[ax_ind].set_xlabel('num. training samples')
+
+    if suptitle:
+        fig.suptitle(suptitle)
 
     if save_as:
         plt.savefig(save_as)
