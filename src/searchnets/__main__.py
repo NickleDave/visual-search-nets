@@ -16,8 +16,7 @@ from .learncurve import learning_curve
 
 
 def _call_data(config):
-    """helper function to call searchstims.data
-    to achieve Don't Repeat Yourself within cli function"""
+    """helper function to call searchstims.data"""
     data(train_dir=config.data.train_dir,
          train_size=config.data.train_size,
          val_size=config.data.val_size,
@@ -26,8 +25,7 @@ def _call_data(config):
 
 
 def _call_train(config):
-    """helper function to call searchstims.train
-    to achieve Don't Repeat Yourself within cli function"""
+    """helper function to call searchstims.train"""
     train(gz_filename=config.data.gz_filename,
           net_name=config.train.net_name,
           number_nets_to_train=config.train.number_nets_to_train,
@@ -42,12 +40,13 @@ def _call_train(config):
           freeze_trained_weights=config.train.freeze_trained_weights,
           dropout_rate=config.train.dropout_rate,
           save_acc_by_set_size_by_epoch=config.train.save_acc_by_set_size_by_epoch,
-          val_size=config.data.val_size)
+          use_val=config.train.use_val,
+          val_step=config.train.val_step,
+          patience=config.train.patience)
 
 
 def _call_test(config):
-    """helper function to call searchstims.test
-    to achieve Don't Repeat Yourself within cli function"""
+    """helper function to call searchstims.test"""
     test(gz_filename=config.data.gz_filename,
          net_name=config.train.net_name,
          number_nets_to_train=config.train.number_nets_to_train,
@@ -60,8 +59,7 @@ def _call_test(config):
 
 
 def _call_learncurve(config):
-    """helper function to call searchstims.learncurve
-    to achieve Don't Repeat Yourself within cli function"""
+    """helper function to call searchstims.learncurve"""
     learning_curve(gz_filename=config.data.gz_filename,
                    net_name=config.train.net_name,
                    number_nets_to_train=config.train.number_nets_to_train,
