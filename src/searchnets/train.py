@@ -11,6 +11,7 @@ from .nets import AlexNet
 from .nets import VGG16
 
 IMAGENET_MEAN = [104.00698793, 116.66876762, 122.67891434]
+MOMENTUM = 0.9  # used for both Alexnet and VGG16
 
 
 def batch_generator(X, y, batch_size=64,
@@ -230,12 +231,15 @@ def train(gz_filename,
                         var_list1.append(train_var)
 
                 if freeze_trained_weights:
-                    opt = tf.train.GradientDescentOptimizer(new_layer_learning_rate)
+                    opt = tf.train.MomentumOptimizer(learning_rate=new_layer_learning_rate,
+                                                     momentum=MOMENTUM)
                     grads = tf.gradients(cross_entropy_loss, var_list2)
                     train_op = opt.apply_gradients(zip(grads, var_list2), name='train_op')
                 else:
-                    opt1 = tf.train.GradientDescentOptimizer(base_learning_rate)
-                    opt2 = tf.train.GradientDescentOptimizer(new_layer_learning_rate)
+                    opt1 = tf.train.MomentumOptimizer(learning_rate=base_learning_rate,
+                                                      momentum=MOMENTUM)
+                    opt2 = tf.train.GradientDescentOptimizer(learning_rate=new_layer_learning_rate,
+                                                             momentum=MOMENTUM)
                     grads = tf.gradients(cross_entropy_loss, var_list1 + var_list2)
                     grads1 = grads[:len(var_list1)]
                     grads2 = grads[len(var_list1):]
