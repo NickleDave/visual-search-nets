@@ -4,23 +4,12 @@ from glob import glob
 
 import joblib
 import numpy as np
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy import stats
 import seaborn as sns
 
-
-mpl.style.use('bmh')
-
-plt.rcParams['font.size'] = 18
-plt.rcParams['axes.labelsize'] = 18
-plt.rcParams['axes.labelweight'] = 'regular'
-plt.rcParams['axes.titlesize'] = 20
-plt.rcParams['xtick.labelsize'] = 16
-plt.rcParams['ytick.labelsize'] = 16
-plt.rcParams['legend.fontsize'] = 16
-plt.rcParams['figure.titlesize'] = 20
+sns.set_style("whitegrid")
 
 
 def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), ax=None,
