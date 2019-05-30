@@ -5,6 +5,17 @@ import attr
 from attr.validators import instance_of, optional
 
 
+def is_pos_int(instance, attribute, value):
+    if type(value) != int:
+        raise ValueError(
+            f'type of {attribute.name} must be an int'
+        )
+    if value < 1:
+        raise ValueError(
+            f'{attribute.name} must be a positive integer, but was: {value}'
+        )
+
+
 @attr.s
 class TrainConfig:
     """class to represent [TRAIN] section of config.ini file
@@ -57,6 +68,12 @@ class TrainConfig:
         are saved in a matrix where rows are epochs and columns are set sizes.
         Useful for seeing whether accuracy converges for each individual
         set size. Default is False.
+    use_val : bool
+        if True, use validation set.
+    val_step : int
+        if not None, accuracy on validation set will be measured every `val_step` steps
+    patience : int
+        if not None, training will stop if accuracy on validation set has not improved in `patience` steps
     """
     net_name = attr.ib(validator=instance_of(str))
     number_nets_to_train = attr.ib(validator=instance_of(int))
@@ -94,6 +111,9 @@ class TrainConfig:
     freeze_trained_weights = attr.ib(validator=instance_of(bool), default=False)
     dropout_rate = attr.ib(validator=instance_of(float), default=0.5)
     save_acc_by_set_size_by_epoch = attr.ib(validator=instance_of(bool), default=False)
+    use_val = attr.ib(validator=instance_of(bool), default=False)
+    val_step = attr.ib(validator=optional(is_pos_int), default=None)
+    patience = attr.ib(validator=optional(is_pos_int), default=None)
 
 
 @attr.s
