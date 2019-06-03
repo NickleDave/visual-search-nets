@@ -106,20 +106,6 @@ def train(gz_filename,
         if type(val_step) != int or patience < 1:
             raise TypeError('patience must be a positive integer')
 
-    print('loading training data')
-    data_dict = joblib.load(gz_filename)
-    train_ds = get_dataset(data_dict['x_train'], data_dict['y_train'], net_name, batch_size, shuffle=True)
-
-    if use_val:
-        try:
-            val_ds = get_dataset(data_dict['x_val'], data_dict['y_val'], net_name, batch_size, shuffle=False)
-        except KeyError:
-            raise KeyError(
-                f'use_val set to True but x_val not found in data file: {gz_filename}'
-            )
-    else:
-        val_ds = None
-
     if type(epochs_list) is int:
         epochs_list = [epochs_list]
     elif type(epochs_list) is list:
@@ -127,6 +113,9 @@ def train(gz_filename,
     else:
         raise TypeError("'EPOCHS' option in 'TRAIN' section of config.ini file parsed "
                         f"as invalid type: {type(epochs_list)}")
+
+    print('loading training data')
+    data_dict = joblib.load(gz_filename)
 
     np.random.seed(random_seed)  # for shuffling in batch_generator
     tf.random.set_random_seed(random_seed)
@@ -136,8 +125,6 @@ def train(gz_filename,
         # in training loop
         set_size_vec_train = data_dict['set_size_vec_train']
         set_sizes = np.unique(set_size_vec_train)
-        if val_ds is not None:
-            set_size_vec_val = data_dict['set_size_vec_val']
 
         acc_savepath = os.path.join(model_save_path,
                                     f'acc_by_epoch_by_set_size')
@@ -151,6 +138,20 @@ def train(gz_filename,
             graph = tf.Graph()
             with tf.Session(graph=graph) as sess:
                 # --------------- do a bunch of graph set-up stuff -----------------------------------------------------
+                # apparently it matters if we make the tf.data.Dataset in the same graph as the network
+                train_ds = get_dataset(data_dict['x_train'], data_dict['y_train'], net_name, batch_size, shuffle=True)
+
+                if use_val:
+                    try:
+                        val_ds = get_dataset(data_dict['x_val'], data_dict['y_val'], net_name, batch_size,
+                                             shuffle=False)
+                    except KeyError:
+                        raise KeyError(
+                            f'use_val set to True but x_val not found in data file: {gz_filename}'
+                        )
+                else:
+                    val_ds = None
+
                 x = tf.placeholder(tf.float32, (None,) + input_shape, name='x')
                 y = tf.placeholder(tf.int32, shape=[None], name='y')
                 y_onehot = tf.one_hot(indices=y, depth=len(np.unique(data_dict['y_train'])),
