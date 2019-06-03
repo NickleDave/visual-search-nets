@@ -91,7 +91,6 @@ def test(gz_filename,
                 test_ds = get_dataset(data_dict['x_test'], data_dict['y_test'], net_name, batch_size, shuffle=False)
 
                 x = tf.placeholder(tf.float32, (None,) + input_shape, name='x')
-                y = tf.placeholder(tf.int32, shape=[None], name='y')
                 rate = tf.placeholder_with_default(tf.constant(1.0, dtype=tf.float32), shape=(), name='dropout_rate')
 
                 if net_name == 'alexnet':
