@@ -1,3 +1,4 @@
+"""utility functions for getting files off figshare"""
 # utility function for fetching files
 # Adapted from MNE-Python under BSD-3 License
 # https://github.com/mne-tools/mne-python/blob/master/mne/utils.py#L1884
