@@ -115,7 +115,6 @@ def test(gz_filename,
                 saver.restore(sess, ckpt_path)
 
                 total = int(np.ceil(len(data_dict['x_test']) / batch_size))
-                total_loss = 0.0
                 iterator = test_ds.make_one_shot_iterator()
                 next_element = iterator.get_next()
 
