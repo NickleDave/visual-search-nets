@@ -230,6 +230,11 @@ def data(train_dir,
                 set_size_vec_test.extend([set_size] * len(tmp_x_test))
                 stim_type_vec_train.extend([stim_type] * len(tmp_x_test))
 
+    x_train = [os.path.join(os.path.abspath(train_dir), path) for path in x_train]
+    if x_val is not None:
+        x_val = [os.path.join(os.path.abspath(train_dir), path) for path in x_val]
+    x_test = [os.path.join(os.path.abspath(train_dir), path) for path in x_test]
+
     set_size_vec_train = np.asarray(set_size_vec_train)
     stim_type_vec_train = np.asarray(stim_type_vec_train)
     if val_size:
