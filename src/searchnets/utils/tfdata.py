@@ -31,7 +31,7 @@ def _generic_dataset(x, y, preprocess_func, batch_size, shuffle=True):
     if shuffle:
         ds = ds.shuffle(buffer_size=x.shape[-1])
     ds = ds.batch(batch_size)
-    ds = ds.prefetch(buffer_size=x.shape[-1])
+    ds = ds.prefetch(buffer_size=batch_size)
     return ds
 
 
