@@ -334,7 +334,7 @@ def train(gz_filename,
                 if patience is None:
                     # only save at end if we haven't already been saving checkpoints
                     print(f'Saving model in {savepath}')
-                    ckpt_name = os.path.join(savepath, f'{net_name}-model-epoch-{epoch}.ckpt')
+                    ckpt_name = os.path.join(savepath, f'{net_name}-model.ckpt')
                     saver.save(sess, ckpt_name, global_step=epochs)
 
                 stem = f'{net_name}_trained_{epochs}_epochs_number_{net_number}'
