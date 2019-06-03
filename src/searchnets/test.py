@@ -65,7 +65,6 @@ def test(gz_filename,
     """
     print('loading testing data')
     data_dict = joblib.load(gz_filename)
-    test_ds = get_dataset(data_dict['x_test'], data_dict['y_test'], net_name, batch_size, shuffle=False)
 
     set_sizes_by_stim_type = data_dict['set_sizes_by_stim_stype']
     set_sizes = []
@@ -89,6 +88,8 @@ def test(gz_filename,
             tf.reset_default_graph()
             graph = tf.Graph()
             with tf.Session(graph=graph) as sess:
+                test_ds = get_dataset(data_dict['x_test'], data_dict['y_test'], net_name, batch_size, shuffle=False)
+
                 x = tf.placeholder(tf.float32, (None,) + input_shape, name='x')
                 y = tf.placeholder(tf.int32, shape=[None], name='y')
                 rate = tf.placeholder_with_default(tf.constant(1.0, dtype=tf.float32), shape=(), name='dropout_rate')
