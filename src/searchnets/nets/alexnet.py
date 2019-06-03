@@ -53,7 +53,7 @@ class AlexNet:
         self.weights_path = weights_path
         with open(self.weights_path, "rb") as weights_fp:
             # use item to get dictionary saved in a numpy array
-            self.weights_dict = np.load(weights_fp, encoding="latin1").item()
+            self.weights_dict = np.load(weights_fp, encoding="latin1", allow_pickle=True).item()
 
         self.output = None  # will be set during call to self.create() below
 
