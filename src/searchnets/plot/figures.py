@@ -2,22 +2,14 @@ import os
 import json
 from glob import glob
 
-import numpy as np
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 import joblib
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
 from scipy import stats
+import seaborn as sns
 
-mpl.style.use('bmh')
-
-plt.rcParams['font.size'] = 18
-plt.rcParams['axes.labelsize'] = 18
-plt.rcParams['axes.labelweight'] = 'regular'
-plt.rcParams['axes.titlesize'] = 20
-plt.rcParams['xtick.labelsize'] = 16
-plt.rcParams['ytick.labelsize'] = 16
-plt.rcParams['legend.fontsize'] = 16
-plt.rcParams['figure.titlesize'] = 20
+sns.set_style("whitegrid")
 
 
 def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), ax=None,
@@ -380,5 +372,32 @@ def train_history(acc_dir, set_sizes=(1, 2, 4, 8), save_as=None):
             ax[-ind].set_visible(False)
 
     fig.tight_layout()
+    if save_as:
+        plt.savefig(save_as)
+
+
+def learncurve(csv_fname, figsize=(15, 10), ylim=(0, 0.5), suptitle=None, save_as=None):
+    """"""
+    df = pd.read_csv(csv_fname)
+    set_sizes = sorted(df.set_size.unique())
+
+    fig, ax = plt.subplots(1, len(set_sizes), figsize=figsize)
+    for ax_ind, set_size in enumerate(set_sizes):
+        df_this_ax = df.loc[df['set_size'] == set_size]
+        sns.scatterplot(x='train_size', y='err', hue='setname', data=df_this_ax, legend=False, ax=ax[ax_ind])
+        sns.lineplot(x='train_size', y='err', hue='setname', data=df_this_ax, ax=ax[ax_ind])
+        ax[ax_ind].set_ylim(ylim)
+        ax[ax_ind].set_xticks(df.train_size.unique())
+        ax[ax_ind].set_xticklabels(df.train_size.unique(), rotation=45)
+        ax[ax_ind].set_title(f'set size: {set_size}')
+        if ax_ind == 0:
+            ax[ax_ind].set_ylabel('error')
+        else:
+            ax[ax_ind].set_ylabel('')
+        ax[ax_ind].set_xlabel('num. training samples')
+
+    if suptitle:
+        fig.suptitle(suptitle)
+
     if save_as:
         plt.savefig(save_as)

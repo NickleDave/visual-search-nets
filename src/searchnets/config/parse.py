@@ -1,6 +1,7 @@
 import ast
 import configparser
 from distutils.util import strtobool
+import os
 
 from .classes import TrainConfig, DataConfig, TestConfig, LearnCurveConfig, Config
 
@@ -20,6 +21,11 @@ def parse_config(config_fname):
         instance of searchstims.config.classes.Config,
         attrs-based class that represents all configuration parameters
     """
+    if not os.path.isfile(config_fname):
+        raise FileNotFoundError(
+            f'specified config.ini file not found: {configfile}'
+        )
+
     config = configparser.ConfigParser()
     config.read(config_fname)
 
@@ -55,6 +61,21 @@ def parse_config(config_fname):
     else:
         save_acc_by_set_size_by_epoch = False
 
+    if config.has_option('TRAIN', 'USE_VAL'):
+        use_val = bool(strtobool(config['TRAIN']['USE_VAL']))
+    else:
+        use_val = True
+
+    if config.has_option('TRAIN', 'VAL_STEP'):
+        val_step = int(config['TRAIN']['VAL_STEP'])
+    else:
+        val_step = None
+
+    if config.has_option('TRAIN', 'PATIENCE'):
+        patience = int(config['TRAIN']['PATIENCE'])
+    else:
+        patience = None
+
     train_config = TrainConfig(net_name,
                                number_nets_to_train,
                                input_shape,
@@ -67,7 +88,10 @@ def parse_config(config_fname):
                                base_learning_rate,
                                freeze_trained_weights,
                                dropout_rate,
-                               save_acc_by_set_size_by_epoch)
+                               save_acc_by_set_size_by_epoch,
+                               use_val,
+                               val_step,
+                               patience)
 
     # ------------- unpack [DATA] section of config.ini file -----------------------------------------------------------
     train_dir = config['DATA']['TRAIN_DIR']

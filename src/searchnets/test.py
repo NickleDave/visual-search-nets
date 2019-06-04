@@ -6,6 +6,7 @@ import joblib
 from tqdm import tqdm
 
 from .nets import AlexNet, VGG16
+from .utils.tfdata import get_dataset
 
 
 def test(gz_filename,
@@ -64,8 +65,7 @@ def test(gz_filename,
     """
     print('loading testing data')
     data_dict = joblib.load(gz_filename)
-    x_test = data_dict['x_test']
-    y_test = data_dict['y_test']
+
     set_sizes_by_stim_type = data_dict['set_sizes_by_stim_stype']
     set_sizes = []
     for stim_type, set_sizes_this_stim in set_sizes_by_stim_type.items():
@@ -88,10 +88,12 @@ def test(gz_filename,
             tf.reset_default_graph()
             graph = tf.Graph()
             with tf.Session(graph=graph) as sess:
+                filenames_placeholder = tf.placeholder(tf.string, shape=[None])
+                labels_placeholder = tf.placeholder(tf.int64, shape=[None])
+                test_ds = get_dataset(filenames_placeholder, labels_placeholder, net_name, batch_size,
+                                      shuffle=True, shuffle_size=len(data_dict['x_test']))
+
                 x = tf.placeholder(tf.float32, (None,) + input_shape, name='x')
-                y = tf.placeholder(tf.int32, shape=[None], name='y')
-                y_onehot = tf.one_hot(indices=y, depth=len(np.unique(y_test)),
-                                      dtype=tf.float32, name='y_onehot')
                 rate = tf.placeholder_with_default(tf.constant(1.0, dtype=tf.float32), shape=(), name='dropout_rate')
 
                 if net_name == 'alexnet':
@@ -115,16 +117,24 @@ def test(gz_filename,
                 ckpt_path = os.path.join(restore_path, f'{net_name}-model.ckpt-{epochs}')
                 saver.restore(sess, ckpt_path)
 
+                total = int(np.ceil(len(data_dict['x_test']) / batch_size))
+                iterator = test_ds.make_initializable_iterator()
+                sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_test'],
+                                                          labels_placeholder: data_dict['y_test']})
+                next_element = iterator.get_next()
+
+                y_test = []
                 y_pred_all = []
-                batch_inds = np.arange(0, x_test.shape[0], batch_size)
-                total = len(batch_inds)
-                pbar = tqdm(enumerate(batch_inds), total=total)
-                for count, ind in pbar:
-                    pbar.set_description(f'predicting target present/absent for batch {count} of {total}')
-                    feed = {x: x_test[ind:ind + batch_size, :, :]}
+                pbar = tqdm(range(total))
+                for i in pbar:
+                    batch_x, batch_y = sess.run(next_element)
+                    pbar.set_description(f'predicting target present/absent for batch {i} of {total}')
+                    feed = {x: batch_x}
                     y_pred = sess.run(predictions['labels'], feed_dict=feed)
                     y_pred_all.append(y_pred)
+                    y_test.append(batch_y)
                 y_pred_all = np.concatenate(y_pred_all)
+                y_test = np.concatenate(y_test)
                 set_size_vec_test = data_dict['set_size_vec_test']
                 acc_per_set_size = []
                 for set_size in set_sizes:

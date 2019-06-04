@@ -10,7 +10,7 @@ import os
 import tensorflow as tf
 import numpy as np
 
-from ..utils.data import fetch
+from ..utils.figshare import fetch
 from ..utils.figshare_urls import VGG16_WEIGHTS_URL
 from .layers import max_pool, dropout
 

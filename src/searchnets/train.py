@@ -1,4 +1,5 @@
 # Approach to training based on https://arxiv.org/pdf/1707.09775.pdf
+import csv
 import os
 
 import numpy as np
@@ -8,50 +9,9 @@ from tqdm import tqdm
 
 from .nets import AlexNet
 from .nets import VGG16
+from .utils.tfdata import get_dataset
 
-
-def batch_generator(X, y, batch_size=64,
-                    shuffle=False, random_seed=None):
-    """generator that yields batches of training data and labels
-
-    Parameters
-    ----------
-    X : numpy.ndarray
-        training data, e.g., images with dimensions (number of samples, height, width, channels)
-    y : numpy.ndarray
-        labels for training data, e.g. vector of integers
-    batch_size : int
-        number of elements in each batch from X and y. Default is 64.
-    shuffle : bool
-        if True, shuffle data before creating generator. Default is False.
-    random_seed : int
-        integer to seed random number generator. Default is None.
-
-    Returns
-    -------
-    batch_x : numpy.ndarray
-        subset of X where first dimension is of size batch_size
-    batch_y : numpy.ndarray
-        subset of y where first dimension is of size batch_size
-
-    Notes
-    -----
-    adapted from code by Sebastian Raschka under MIT license
-    https://github.com/rasbt/python-machine-learning-book-2nd-edition/blob/master/LICENSE.txt
-    """
-    idx = np.arange(y.shape[0])
-
-    X_for_batch = np.copy(X)
-    y_for_batch = np.copy(y)
-
-    if shuffle:
-        rng = np.random.RandomState(random_seed)
-        rng.shuffle(idx)
-        X_for_batch = X_for_batch[idx]
-        y_for_batch = y_for_batch[idx]
-
-    for i in range(0, X.shape[0], batch_size):
-        yield (X_for_batch[i:i + batch_size, :], y_for_batch[i:i + batch_size])
+MOMENTUM = 0.9  # used for both Alexnet and VGG16
 
 
 def train(gz_filename,
@@ -67,7 +27,9 @@ def train(gz_filename,
           random_seed,
           model_save_path,
           dropout_rate=0.5,
-          val_size=None,
+          use_val=True,
+          val_step=None,
+          patience=None,
           save_acc_by_set_size_by_epoch=False):
     """train convolutional neural networks to perform visual search task.
 
@@ -84,6 +46,15 @@ def train(gz_filename,
         with 3 elements, (rows, columns, channels)
         should be (227, 227, 3) for AlexNet
         and (224, 224, 3) for VGG16
+    base_learning_rate : float
+        Applied to layers with weights loaded from training the
+        architecture on ImageNet. Should be a very small number
+        so the trained weights don't change much.
+    freeze_trained_weights : bool
+        if True, freeze weights in any layer not in "new_learn_rate_layers".
+        These are the layers that have weights pre-trained on ImageNet.
+        Default is False. Done by simply not applying gradients to these weights,
+        i.e. this will ignore a base_learning_rate if you set it to something besides zero.
     new_learn_rate_layers : list
         of layer names whose weights will be initialized randomly
         and then trained with the 'new_layer_learning_rate'.
@@ -103,15 +74,6 @@ def train(gz_filename,
         to seed random number generator
     model_save_path : str
         path to directory where model checkpoints should be saved
-    base_learning_rate : float
-        Applied to layers with weights loaded from training the
-        architecture on ImageNet. Should be a very small number
-        so the trained weights don't change much.
-    freeze_trained_weights : bool
-        if True, freeze weights in any layer not in "new_learn_rate_layers".
-        These are the layers that have weights pre-trained on ImageNet.
-        Default is False. Done by simply not applying gradients to these weights,
-        i.e. this will ignore a base_learning_rate if you set it to something besides zero.
     dropout_rate : float
         Probability that any unit in a layer will "drop out" during
         a training epoch, as a form of regularization. Default is 0.5.
@@ -121,24 +83,28 @@ def train(gz_filename,
         are saved in a matrix where rows are epochs and columns are set sizes.
         Useful for seeing whether accuracy converges for each individual
         set size. Default is False.
-    val_size : int
-        number of samples in validation set. Default is None.
+    use_val : bool
+        if True, use validation set.
+    val_step : int
+        if not None, accuracy on validation set will be measured every `val_step` steps
+    patience : int
+        if not None, training will stop if accuracy on validation set has not improved in `patience` steps
 
     Returns
     -------
     None
     """
-    print('loading training data')
-    data_dict = joblib.load(gz_filename)
-    x_train = data_dict['x_train']
-    y_train = data_dict['y_train']
+    if use_val and val_step is None or val_step < 1 or type(val_step) != int:
+        raise ValueError(
+            'invalid value for val_step: {val_step}. Validation step must be positive integer'
+        )
 
-    training_set = [x_train, y_train]
-    if val_size:
-        val_set = [data_dict['x_val'],
-                   data_dict['y_val']]
-    else:
-        val_set = None
+    if use_val is False and patience is not None:
+        raise ValueError('patience argument only works with a validation set')
+
+    if patience is not None:
+        if type(val_step) != int or patience < 1:
+            raise TypeError('patience must be a positive integer')
 
     if type(epochs_list) is int:
         epochs_list = [epochs_list]
@@ -147,6 +113,9 @@ def train(gz_filename,
     else:
         raise TypeError("'EPOCHS' option in 'TRAIN' section of config.ini file parsed "
                         f"as invalid type: {type(epochs_list)}")
+
+    print('loading training data')
+    data_dict = joblib.load(gz_filename)
 
     np.random.seed(random_seed)  # for shuffling in batch_generator
     tf.random.set_random_seed(random_seed)
@@ -169,9 +138,26 @@ def train(gz_filename,
             graph = tf.Graph()
             with tf.Session(graph=graph) as sess:
                 # --------------- do a bunch of graph set-up stuff -----------------------------------------------------
+                # apparently it matters if we make the tf.data.Dataset in the same graph as the network
+                filenames_placeholder = tf.placeholder(tf.string, shape=[None])
+                labels_placeholder = tf.placeholder(tf.int64, shape=[None])
+                train_ds = get_dataset(filenames_placeholder, labels_placeholder, net_name, batch_size,
+                                       shuffle=True, shuffle_size=len(data_dict['x_train']))
+
+                if use_val:
+                    try:
+                        val_ds = get_dataset(filenames_placeholder, labels_placeholder, net_name, batch_size,
+                                             shuffle=False, shuffle_size=len(data_dict['x_val']))
+                    except KeyError:
+                        raise KeyError(
+                            f'use_val set to True but x_val not found in data file: {gz_filename}'
+                        )
+                else:
+                    val_ds = None
+
                 x = tf.placeholder(tf.float32, (None,) + input_shape, name='x')
                 y = tf.placeholder(tf.int32, shape=[None], name='y')
-                y_onehot = tf.one_hot(indices=y, depth=len(np.unique(y_train)),
+                y_onehot = tf.one_hot(indices=y, depth=len(np.unique(data_dict['y_train'])),
                                       dtype=tf.float32, name='y_onehot')
                 rate = tf.placeholder_with_default(tf.constant(1.0, dtype=tf.float32), shape=(), name='dropout_rate')
 
@@ -200,12 +186,15 @@ def train(gz_filename,
                         var_list1.append(train_var)
 
                 if freeze_trained_weights:
-                    opt = tf.train.GradientDescentOptimizer(new_layer_learning_rate)
+                    opt = tf.train.MomentumOptimizer(learning_rate=new_layer_learning_rate,
+                                                     momentum=MOMENTUM)
                     grads = tf.gradients(cross_entropy_loss, var_list2)
                     train_op = opt.apply_gradients(zip(grads, var_list2), name='train_op')
                 else:
-                    opt1 = tf.train.GradientDescentOptimizer(base_learning_rate)
-                    opt2 = tf.train.GradientDescentOptimizer(new_layer_learning_rate)
+                    opt1 = tf.train.MomentumOptimizer(learning_rate=base_learning_rate,
+                                                      momentum=MOMENTUM)
+                    opt2 = tf.train.MomentumOptimizer(learning_rate=new_layer_learning_rate,
+                                                      momentum=MOMENTUM)
                     grads = tf.gradients(cross_entropy_loss, var_list1 + var_list2)
                     grads1 = grads[:len(var_list1)]
                     grads2 = grads[len(var_list1):]
@@ -228,11 +217,6 @@ def train(gz_filename,
                 # pre-trained weights are in fact being loaded
                 sess.run(tf.global_variables_initializer())
 
-                # --------------- done with graph, now get data --------------------------------------------------------
-                X_data = np.array(training_set[0])
-                y_data = np.array(training_set[1])
-                training_loss = []
-
                 # --------------- make places to save checkpoints + accuracy -------------------------------------------
                 savepath = os.path.join(model_save_path,
                                         f'trained_{epochs}_epochs',
@@ -244,14 +228,25 @@ def train(gz_filename,
                     acc_by_epoch_by_set_size = np.zeros(shape=(epochs, set_sizes.shape[0]))
 
                 # --------------- finally start training ---------------------------------------------------------------
+                train_loss = []
+                train_acc = []
+                if val_ds is not None:
+                    val_acc = []
+                    if patience is not None:
+                        best_val_acc = 0
+                        epochs_without_improvement = 0
+
                 for epoch in range(epochs):
-                    total = int(np.ceil(X_data.shape[0] / batch_size))
-                    batch_gen = batch_generator(X_data, y_data,
-                                                batch_size=batch_size,
-                                                shuffle=True)
-                    avg_loss = 0.0
-                    pbar = tqdm(enumerate(batch_gen), total=total)
-                    for i, (batch_x, batch_y) in pbar:
+                    total = int(np.ceil(len(data_dict['x_train']) / batch_size))
+                    total_loss = 0.0
+                    iterator = train_ds.make_initializable_iterator()
+                    sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_train'],
+                                                              labels_placeholder: data_dict['y_train']})
+                    next_element = iterator.get_next()
+
+                    pbar = tqdm(range(total))
+                    for i in pbar:
+                        batch_x, batch_y = sess.run(next_element)
                         feed = {x: batch_x,
                                 y: batch_y,
                                 rate: dropout_rate}
@@ -260,44 +255,69 @@ def train(gz_filename,
                             [cross_entropy_loss, train_op],
                             feed_dict=feed)
                         pbar.set_description(f'batch {i} of {total}, loss: {loss: 7.3f}')
-                        avg_loss += loss
+                        total_loss += loss
 
-                    training_loss.append(avg_loss / (i + 1))
-                    print(f'Epoch {epoch + 1}, Training Avg. Loss: {avg_loss:7.3f}')
+                    avg_loss = total_loss / total
+                    train_loss.append(avg_loss)
+                    print(f'\nEpoch {epoch + 1}, Training Avg. Loss: {avg_loss:7.3f}')
 
-                    if val_set is not None:
-                        batch_gen = batch_generator(val_set[0], val_set[1],
-                                                    batch_size=batch_size,
-                                                    shuffle=False)
-                        total = int(np.ceil(val_set[0].shape[0] / batch_size))
-                        pbar = tqdm(enumerate(batch_gen), total=total)
+                    if val_ds is not None:
+                        if epoch % val_step == 0:
+                            total = int(np.ceil(len(data_dict['x_val']) / batch_size))
+                            iterator = val_ds.make_initializable_iterator()
+                            sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_val'],
+                                                                      labels_placeholder: data_dict['y_val']})
+                            next_element = iterator.get_next()
+                            pbar = tqdm(range(total))
+                            val_acc_this_epoch = []
+                            for i in pbar:
+                                pbar.set_description(f'batch {i} of {total}')
+                                batch_x, batch_y = sess.run(next_element)
+                                feed = {x: batch_x,
+                                        y: batch_y,
+                                        rate: dropout_rate}
 
-                        valid_acc = []
-                        for i, (batch_x, batch_y) in pbar:
-                            pbar.set_description(f'batch {i} of {total}')
-                            feed = {x: batch_x,
-                                    y: batch_y,
-                                    rate: dropout_rate}
+                                val_acc_this_epoch.append(sess.run(accuracy, feed_dict=feed))
+                            val_acc_this_epoch = np.asarray(val_acc_this_epoch).mean()
+                            val_acc.append(val_acc_this_epoch)
 
-                            valid_acc.append(sess.run(accuracy, feed_dict=feed))
-                        valid_acc = np.asarray(valid_acc).mean()
+                            print(' Validation Acc: %7.3f' % val_acc_this_epoch)
 
-                        print(' Validation Acc: %7.3f' % valid_acc)
-                    else:
-                        print()
+                            if patience is not None:
+                                if val_acc_this_epoch > best_val_acc:
+                                    best_val_acc = val_acc_this_epoch
+                                    epochs_without_improvement = 0
+                                    print(f'Saving model in {savepath}')
+                                    ckpt_name = os.path.join(savepath, f'{net_name}-model-best-val-acc.ckpt')
+                                    saver.save(sess, ckpt_name, global_step=epochs)
+
+                                else:
+                                    epochs_without_improvement += 1
+                                    if epochs_without_improvement > patience:
+                                        print(
+                                            f'greater than {patience} epochs without improvement in validation '
+                                            'accuracy, stopping training')
+
+                                        break
+
+                        else:
+                            val_acc.append(None)
 
                     if save_acc_by_set_size_by_epoch:
                         # --- compute accuracy on whole training set, by set size, for this epoch
                         print('Computing accuracy per visual search stimulus set size on training set')
-                        total = int(np.ceil(X_data.shape[0] / batch_size))
+                        total = int(np.ceil(len(data_dict['x_train']) / batch_size))
+                        iterator = train_ds.make_initializable_iterator()
+                        sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_train'],
+                                                                  labels_placeholder: data_dict['y_train']})
+                        next_element = iterator.get_next()
                         y_pred = []
                         y_true = []
-                        batch_gen = batch_generator(X_data, y_data,
-                                                    batch_size=batch_size,
-                                                    shuffle=False)
-                        pbar = tqdm(enumerate(batch_gen), total=total)
-                        for i, (batch_x, batch_y) in pbar:
+
+                        pbar = tqdm(range(total))
+                        for i in pbar:
                             pbar.set_description(f'batch {i} of {total}')
+                            batch_x, batch_y = sess.run(next_element)
                             y_true.append(batch_y)
                             feed = {x: batch_x, rate: 1.0}
                             batch_y_pred = sess.run(predictions['labels'], feed_dict=feed)
@@ -319,13 +339,32 @@ def train(gz_filename,
                             acc_set_size_str += f'set size {set_size}: {acc}. '
                         print(acc_set_size_str)
 
-                # --------------- done training, save checkpoint + accuracy by epoch by set size -----------------------
-                print(f'Saving model in {savepath}')
-                ckpt_name = os.path.join(savepath, f'{net_name}-model.ckpt')
-                saver.save(sess, ckpt_name, global_step=epochs)
+                # --------------- done training, save checkpoint + training history info -------------------------------
+                if patience is None:
+                    # only save at end if we haven't already been saving checkpoints
+                    print(f'Saving model in {savepath}')
+                    ckpt_name = os.path.join(savepath, f'{net_name}-model.ckpt')
+                    saver.save(sess, ckpt_name, global_step=epochs)
+
+                stem = f'{net_name}_trained_{epochs}_epochs_number_{net_number}'
+
+                # make rows for csv file with training history
+                fieldnames = ['train_loss', 'train_acc']
+                ziprows = [train_loss, train_acc]
+                if val_ds is not None:
+                    fieldnames.append('val_acc')
+                    ziprows.append(val_acc)
+                # use * operator to unpack so we don't have to know how many elements are in ziprows
+                rows = [list(row) for row in zip(*ziprows)]
+
+                csv_fname = os.path.join(model_save_path, f'{stem}.training_history.csv')
+                with open(csv_fname, 'w') as f:
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writeheader()
+                    for row in rows:
+                        writer.writerow(dict(zip(fieldnames, row)))
 
                 if save_acc_by_set_size_by_epoch:
                     # and save matrix with accuracy by epoch by set size
-                    acc_savepath_this_epochs = os.path.join(acc_savepath,
-                                                            f'net_trained_{epochs}_epochs_number_{net_number}.txt')
+                    acc_savepath_this_epochs = os.path.join(acc_savepath, f'{stem}.txt')
                     np.savetxt(acc_savepath_this_epochs, acc_by_epoch_by_set_size, delimiter=',')

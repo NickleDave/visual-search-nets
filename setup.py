@@ -24,7 +24,8 @@ VERSION = '0.1.0'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'numpy', 'tensorflow', 'matplotlib', 'imageio', 'joblib', 'tqdm', 'attrs', 'searchstims>=1.2.0',
+    'numpy', 'scipy', 'tensorflow', 'matplotlib', 'pandas', 'seaborn', 'imageio', 'joblib', 'tqdm', 'attrs',
+    'searchstims>=1.2.0',
 ]
 
 # What packages are optional?

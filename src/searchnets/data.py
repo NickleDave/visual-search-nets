@@ -4,9 +4,7 @@ from glob import glob
 import random
 
 import numpy as np
-import imageio
 import joblib
-from tqdm import tqdm
 
 
 def data(train_dir,
@@ -41,24 +39,18 @@ def data(train_dir,
     -----
     The dictionary saved has the following key-value pairs:
         x_train : np.ndarray
-            images used as input to train neural network
+            filenames corresponding to images used as input to train neural network
         y_train : np.ndarray
             labels, expected output of neural network.
             Either element is either 1, meaning "target present", or 0, "target absent".
         x_val : np.ndarray
-            images for validation set used during training
+            filenames corresponding to images for validation set used during training
         y_val : np.ndarray
             labels for validation set
         x_test : np.ndarray
-            images for set used to test accuracy of trained network
+            filenames corresponding to images for set used to test accuracy of trained network
         y_test : np.ndarray
             labels for set used to test accuracy of trained network
-        train_set_files : np.ndarray
-            filenames corresponding to images in x_train
-        val_set_files : np.ndarray
-            filenames corresponding to images in x_val
-        test_set_files : np.ndarray
-            filenames corresponding to images in x_test
         set_size_vec_train : np.ndarray
             "set size" of each image in x_train,
             total number of targets + distractors.
@@ -89,7 +81,7 @@ def data(train_dir,
     else:
         fname_json = fname_json[0]
 
-    train_set_files = []
+    x_train = []
     # initialize list to convert into a
     # vector that will indicates set size
     # for each image (number of items present)
@@ -97,13 +89,13 @@ def data(train_dir,
     set_size_vec_train = []
     stim_type_vec_train = []
     if val_size:
-        val_set_files = []
+        x_val = []
         set_size_vec_val = []
         stim_type_vec_val = []
     else:
-        val_set_files = None
+        x_val = None
         set_size_vec_val = None
-    test_set_files = []
+    x_test = []
     set_size_vec_test = []
     stim_type_vec_test = []
 
@@ -214,29 +206,34 @@ def data(train_dir,
                 train_inds = np.asarray(
                     [inds.pop() for _ in range(train_size_per_set_size)]
                 )
-                tmp_train_set_files = stim_fnames_arr[train_inds].tolist()
-                train_set_files.extend(tmp_train_set_files)
-                set_size_vec_train.extend([set_size] * len(tmp_train_set_files))
-                stim_type_vec_train.extend([stim_type] * len(tmp_train_set_files))
+                tmp_x_train = stim_fnames_arr[train_inds].tolist()
+                x_train.extend(tmp_x_train)
+                set_size_vec_train.extend([set_size] * len(tmp_x_train))
+                stim_type_vec_train.extend([stim_type] * len(tmp_x_train))
 
                 if val_size_per_set_size > 0:
                     val_inds = np.asarray(
                         [inds.pop() for _ in range(val_size_per_set_size)]
                     )
-                    tmp_val_set_files = stim_fnames_arr[val_inds].tolist()
-                    val_set_files.extend(tmp_val_set_files)
-                    set_size_vec_val.extend([set_size] * len(tmp_val_set_files))
-                    stim_type_vec_val.extend([stim_type] * len(tmp_val_set_files))
+                    tmp_x_val = stim_fnames_arr[val_inds].tolist()
+                    x_val.extend(tmp_x_val)
+                    set_size_vec_val.extend([set_size] * len(tmp_x_val))
+                    stim_type_vec_val.extend([stim_type] * len(tmp_x_val))
 
                 if test_size_per_set_size > 0:
                     test_inds = np.asarray([inds.pop() for _ in range(test_size_per_set_size)])
                 elif test_size_per_set_size == -1:
                     test_inds = np.asarray([ind for ind in inds])
 
-                tmp_test_set_files = stim_fnames_arr[test_inds].tolist()
-                test_set_files.extend(tmp_test_set_files)
-                set_size_vec_test.extend([set_size] * len(tmp_test_set_files))
-                stim_type_vec_train.extend([stim_type] * len(tmp_test_set_files))
+                tmp_x_test = stim_fnames_arr[test_inds].tolist()
+                x_test.extend(tmp_x_test)
+                set_size_vec_test.extend([set_size] * len(tmp_x_test))
+                stim_type_vec_train.extend([stim_type] * len(tmp_x_test))
+
+    x_train = [os.path.join(os.path.abspath(train_dir), path) for path in x_train]
+    if x_val is not None:
+        x_val = [os.path.join(os.path.abspath(train_dir), path) for path in x_val]
+    x_test = [os.path.join(os.path.abspath(train_dir), path) for path in x_test]
 
     set_size_vec_train = np.asarray(set_size_vec_train)
     stim_type_vec_train = np.asarray(stim_type_vec_train)
@@ -246,43 +243,16 @@ def data(train_dir,
     set_size_vec_test = np.asarray(set_size_vec_test)
     stim_type_vec_test = np.asarray(stim_type_vec_test)
 
-    print('loading images for training set')
-    x_train = []
-    pbar = tqdm(train_set_files, total=len(train_set_files))
-    for fname in pbar:
-        path_to_file = os.path.join(train_dir, fname)
-        x_train.append(imageio.imread(path_to_file))
-    x_train = np.asarray(x_train)
-
-    if val_size:
-        print('loading images for validation set')
-        x_val = []
-        pbar = tqdm(val_set_files, total=len(val_set_files))
-        for fname in pbar:
-            path_to_file = os.path.join(train_dir, fname)
-            x_val.append(imageio.imread(path_to_file))
-        x_val = np.asarray(x_val)
-    else:
-        x_val = None
-
-    print('loading images for test set')
-    x_test = []
-    pbar = tqdm(test_set_files, total=len(test_set_files))
-    for fname in pbar:
-        path_to_file = os.path.join(train_dir, fname)
-        x_test.append(imageio.imread(path_to_file))
-    x_test = np.asarray(x_test)
-
-    y_train = np.asarray(['present' in fname for fname in train_set_files],
+    y_train = np.asarray(['present' in fname for fname in x_train],
                          dtype=int)
 
     if val_size:
-        y_val = np.asarray(['present' in fname for fname in val_set_files],
+        y_val = np.asarray(['present' in fname for fname in x_val],
                            dtype=int)
     else:
         y_val = None
 
-    y_test = np.asarray(['present' in fname for fname in test_set_files],
+    y_test = np.asarray(['present' in fname for fname in x_test],
                         dtype=int)
 
     gz_dirname = os.path.dirname(gz_filename)
@@ -295,9 +265,6 @@ def data(train_dir,
                      y_val=y_val,
                      x_test=x_test,
                      y_test=y_test,
-                     train_set_files=train_set_files,
-                     val_set_files=val_set_files,
-                     test_set_files=test_set_files,
                      set_size_vec_train=set_size_vec_train,
                      set_size_vec_val=set_size_vec_val,
                      set_size_vec_test=set_size_vec_test,
