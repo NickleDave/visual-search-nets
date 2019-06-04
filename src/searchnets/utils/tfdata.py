@@ -20,16 +20,16 @@ def preprocess(x, convert_bgr=True):
     return x
 
 
-def _generic_dataset(x, y, preprocess_func, batch_size, shuffle=True):
+def _generic_dataset(x, y, preprocess_func, batch_size, shuffle=False, shuffle_size=None):
     if type(x) == list:
         x = np.asarray(x)
     x_ds = tf.data.Dataset.from_tensor_slices(x)
-    x_ds = x_ds.map(load)
-    x_ds = x_ds.map(preprocess_func)
+    x_ds = x_ds.map(load, num_parallel_calls=24)
+    x_ds = x_ds.map(preprocess_func, num_parallel_calls=24)
     y_ds = tf.data.Dataset.from_tensor_slices(y)
     ds = tf.data.Dataset.zip((x_ds, y_ds))
     if shuffle:
-        ds = ds.shuffle(buffer_size=x.shape[-1])
+        ds = ds.shuffle(buffer_size=shuffle_size)
     ds = ds.batch(batch_size)
     ds = ds.prefetch(buffer_size=batch_size)
     return ds
@@ -41,8 +41,8 @@ def alexnet_preprocess():
     return anonymous
 
 
-def alexnet_dataset(x, y, batch_size, shuffle=True):
-    return _generic_dataset(x, y, alexnet_preprocess(), batch_size, shuffle)
+def alexnet_dataset(x, y, batch_size, shuffle=True, shuffle_size=None):
+    return _generic_dataset(x, y, alexnet_preprocess(), batch_size, shuffle, shuffle_size)
 
 
 def vgg16_preprocess():
@@ -51,12 +51,12 @@ def vgg16_preprocess():
     return anonymous
 
 
-def vgg16_dataset(x, y, batch_size, shuffle=True):
-    return _generic_dataset(x, y, vgg16_preprocess(), batch_size, shuffle)
+def vgg16_dataset(x, y, batch_size, shuffle=True, shuffle_size=None):
+    return _generic_dataset(x, y, vgg16_preprocess(), batch_size, shuffle, shuffle_size)
 
 
-def get_dataset(x, y, net_name, batch_size, shuffle=True):
+def get_dataset(x, y, net_name, batch_size, shuffle=True, shuffle_size=None):
     if net_name == 'alexnet':
-        return alexnet_dataset(x, y, batch_size, shuffle)
+        return alexnet_dataset(x, y, batch_size, shuffle, shuffle_size)
     elif net_name == 'VGG16':
-        return vgg16_dataset(x, y, batch_size, shuffle)
+        return vgg16_dataset(x, y, batch_size, shuffle, shuffle_size)
