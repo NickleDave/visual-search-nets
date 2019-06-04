@@ -20,4 +20,4 @@ def lrn(x, radius, alpha, beta, name, bias=1.0):
 
 def dropout(x, dropout_rate):
     """Create a dropout layer."""
-    return tf.nn.dropout(x, rate=dropout_rate)
+    return tf.nn.dropout(x, keep_prob=dropout_rate)
