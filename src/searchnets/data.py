@@ -138,7 +138,7 @@ def data(train_dir,
         stim_info_by_set_size = {int(k): v for k, v in stim_info_by_set_size.items()}
 
         set_sizes = [k for k in stim_info_by_set_size.keys()]
-        set_sizes_by_stim_stype[stim_type] = set_sizes
+        set_sizes_by_stim_type[stim_type] = set_sizes
 
         train_size_per_set_size = (train_size_per_stim_type / len(set_sizes)) / 2
         if train_size_per_set_size.is_integer():
@@ -268,7 +268,7 @@ def data(train_dir,
                      set_size_vec_train=set_size_vec_train,
                      set_size_vec_val=set_size_vec_val,
                      set_size_vec_test=set_size_vec_test,
-                     set_sizes_by_stim_stype=set_sizes_by_stim_stype,
+                     set_sizes_by_stim_type=set_sizes_by_stim_type,
                      stim_type_vec_train=stim_type_vec_train,
                      stim_type_vec_val=stim_type_vec_val,
                      stim_type_vec_test=stim_type_vec_test,
