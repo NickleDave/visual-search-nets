@@ -88,7 +88,10 @@ def test(gz_filename,
             tf.reset_default_graph()
             graph = tf.Graph()
             with tf.Session(graph=graph) as sess:
-                test_ds = get_dataset(data_dict['x_test'], data_dict['y_test'], net_name, batch_size, shuffle=False)
+                filenames_placeholder = tf.placeholder(tf.string, shape=[None])
+                labels_placeholder = tf.placeholder(tf.int64, shape=[None])
+                test_ds = get_dataset(filenames_placeholder, labels_placeholder, net_name, batch_size,
+                                      shuffle=True, shuffle_size=len(data_dict['x_test']))
 
                 x = tf.placeholder(tf.float32, (None,) + input_shape, name='x')
                 rate = tf.placeholder_with_default(tf.constant(1.0, dtype=tf.float32), shape=(), name='dropout_rate')
@@ -115,7 +118,9 @@ def test(gz_filename,
                 saver.restore(sess, ckpt_path)
 
                 total = int(np.ceil(len(data_dict['x_test']) / batch_size))
-                iterator = test_ds.make_one_shot_iterator()
+                iterator = test_ds.make_initializable_iterator()
+                sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_test'],
+                                                          labels_placeholder: data_dict['y_test']})
                 next_element = iterator.get_next()
 
                 y_test = []
