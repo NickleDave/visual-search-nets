@@ -26,8 +26,8 @@
 
 \graphicspath{ {../static/} }
 
-\title{Do convolutional neural networks exhibit human-like attentional effects? 
-Conflicting results from a visual search task}
+\title{Convolutional neural networks performing a visual search task show attention-like 
+limits on accuracy when trained to generalize across multiple search stimuli}
  
 \author{{\large \bf David Nicholson (dnicho4@emory.edu)} \\
   A Department, 1234 Example Street\\
@@ -45,21 +45,23 @@ A City, State 12345 A country}
 \section{Abstract}
 {
 \bf
-Convolutional neural networks (CNNs) trained to perform tasks such as image classification
-with human-like accuracy acquire representations similar to those in the primate 
-visual system. Do CNNs that are pre-trained to use such representations conversely exhibit 
-human-like behavior? We test this with a visual search task that has long been used to 
-investigate attention mechanisms. We first show that CNNs using weights trained for image 
-classification can exhibit human-like attentional effects when performing this visual 
-search task. However, we then demonstrate that these effects can be 
-eliminated, without changing the lower-level learned representations, by modifying other 
-parameters of training and the balance of classes in the training data. One explanation 
-for this finding is that we are only training networks to discriminate single types of 
-visual search stimuli. We further test CNNs trained to perform multiple tasks.
-We go on to show that manipulating the 
-discriminability of the target and distractors in the task can produce attentional 
-effects in spite of the changes we made to training. Based on these results, we conclude 
-that CNNs do not show attentional effects.
+What limits our ability to find what we are looking for in the cluttered noisy world we 
+see around us? A now classic form of visual search task has long been used to investigate 
+proposed mechanisms of selective attention. In spite of nearly half a century of studies 
+using this task, it remains unclear how best to relate different effects found using this 
+task to computations that take place in the visual system. A separate thread of research 
+has studied the visual system of humans and other primates using convolutional neural 
+networks (CNNs) as models. While CNNs have proven quite useful as models of the visual 
+system, it also remains unclear the extent to which their behavior mirrors that of 
+humans when performing vision-based tasks. Here we investigate whether the accuracy of 
+CNNs is affected by the same factors that affect human performance on the classic form of 
+visual search task used to investigate attention mechanisms. We first replicate and extend
+a previous study which did find that CNNs trained for image classification show human-like
+attentional limitations. Then we demonstrate that, by changing how we train the networks, 
+these effects can largely be eliminated. Lastly we show that accuracy is impaired when 
+single networks are trained to discriminate multiple types of visual search stimuli. Based
+on these findings, we suggest that the need to generalize across multiple tasks may be one 
+source of limitations on visual search for both CNNs and the primate visual system.
 }
 \begin{quote}
 \small
