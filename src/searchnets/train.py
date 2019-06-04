@@ -139,12 +139,15 @@ def train(gz_filename,
             with tf.Session(graph=graph) as sess:
                 # --------------- do a bunch of graph set-up stuff -----------------------------------------------------
                 # apparently it matters if we make the tf.data.Dataset in the same graph as the network
-                train_ds = get_dataset(data_dict['x_train'], data_dict['y_train'], net_name, batch_size, shuffle=True)
+                filenames_placeholder = tf.placeholder(tf.string, shape=[None])
+                labels_placeholder = tf.placeholder(tf.int64, shape=[None])
+                train_ds = get_dataset(filenames_placeholder, labels_placeholder, net_name, batch_size,
+                                       shuffle=True, shuffle_size=len(data_dict['x_train']))
 
                 if use_val:
                     try:
-                        val_ds = get_dataset(data_dict['x_val'], data_dict['y_val'], net_name, batch_size,
-                                             shuffle=False)
+                        val_ds = get_dataset(filenames_placeholder, labels_placeholder, net_name, batch_size,
+                                             shuffle=False, shuffle_size=len(data_dict['x_val']))
                     except KeyError:
                         raise KeyError(
                             f'use_val set to True but x_val not found in data file: {gz_filename}'
@@ -236,7 +239,9 @@ def train(gz_filename,
                 for epoch in range(epochs):
                     total = int(np.ceil(len(data_dict['x_train']) / batch_size))
                     total_loss = 0.0
-                    iterator = train_ds.make_one_shot_iterator()
+                    iterator = train_ds.make_initializable_iterator()
+                    sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_train'],
+                                                              labels_placeholder: data_dict['y_train']})
                     next_element = iterator.get_next()
 
                     pbar = tqdm(range(total))
@@ -259,9 +264,10 @@ def train(gz_filename,
                     if val_ds is not None:
                         if epoch % val_step == 0:
                             total = int(np.ceil(len(data_dict['x_val']) / batch_size))
-                            iterator = val_ds.make_one_shot_iterator()
+                            iterator = val_ds.make_initializable_iterator()
+                            sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_val'],
+                                                                      labels_placeholder: data_dict['y_val']})
                             next_element = iterator.get_next()
-
                             pbar = tqdm(range(total))
                             val_acc_this_epoch = []
                             for i in pbar:
@@ -301,7 +307,9 @@ def train(gz_filename,
                         # --- compute accuracy on whole training set, by set size, for this epoch
                         print('Computing accuracy per visual search stimulus set size on training set')
                         total = int(np.ceil(len(data_dict['x_train']) / batch_size))
-                        iterator = train_ds.make_one_shot_iterator()
+                        iterator = train_ds.make_initializable_iterator()
+                        sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_train'],
+                                                                  labels_placeholder: data_dict['y_train']})
                         next_element = iterator.get_next()
                         y_pred = []
                         y_true = []
