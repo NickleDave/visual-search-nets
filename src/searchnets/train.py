@@ -9,53 +9,9 @@ from tqdm import tqdm
 
 from .nets import AlexNet
 from .nets import VGG16
+from .utils.tfdata import get_dataset
 
-IMAGENET_MEAN = [104.00698793, 116.66876762, 122.67891434]
 MOMENTUM = 0.9  # used for both Alexnet and VGG16
-
-
-def batch_generator(X, y, batch_size=64,
-                    shuffle=False, random_seed=None):
-    """generator that yields batches of training data and labels
-
-    Parameters
-    ----------
-    X : numpy.ndarray
-        training data, e.g., images with dimensions (number of samples, height, width, channels)
-    y : numpy.ndarray
-        labels for training data, e.g. vector of integers
-    batch_size : int
-        number of elements in each batch from X and y. Default is 64.
-    shuffle : bool
-        if True, shuffle data before creating generator. Default is False.
-    random_seed : int
-        integer to seed random number generator. Default is None.
-
-    Returns
-    -------
-    batch_x : numpy.ndarray
-        subset of X where first dimension is of size batch_size
-    batch_y : numpy.ndarray
-        subset of y where first dimension is of size batch_size
-
-    Notes
-    -----
-    adapted from code by Sebastian Raschka under MIT license
-    https://github.com/rasbt/python-machine-learning-book-2nd-edition/blob/master/LICENSE.txt
-    """
-    idx = np.arange(y.shape[0])
-
-    X_for_batch = np.copy(X)
-    y_for_batch = np.copy(y)
-
-    if shuffle:
-        rng = np.random.RandomState(random_seed)
-        rng.shuffle(idx)
-        X_for_batch = X_for_batch[idx]
-        y_for_batch = y_for_batch[idx]
-
-    for i in range(0, X.shape[0], batch_size):
-        yield (X_for_batch[i:i + batch_size, :], y_for_batch[i:i + batch_size])
 
 
 def train(gz_filename,
@@ -150,25 +106,6 @@ def train(gz_filename,
         if type(val_step) != int or patience < 1:
             raise TypeError('patience must be a positive integer')
 
-    print('loading training data')
-    data_dict = joblib.load(gz_filename)
-    x_train = data_dict['x_train']
-    # pre-process images
-    x_train = np.asarray([img[:, :, [2, 1, 0]] - IMAGENET_MEAN for img in x_train])
-    y_train = data_dict['y_train']
-
-    if use_val:
-        try:
-            x_val = data_dict['x_val']
-        except KeyError:
-            raise KeyError(
-                f'use_val set to True but x_val not found in data file: {gz_filename}'
-            )
-        x_val = np.asarray([img[:, :, [2, 1, 0]] - IMAGENET_MEAN for img in x_val])
-        y_val = data_dict['y_val']
-    else:
-        x_val = None
-
     if type(epochs_list) is int:
         epochs_list = [epochs_list]
     elif type(epochs_list) is list:
@@ -176,6 +113,9 @@ def train(gz_filename,
     else:
         raise TypeError("'EPOCHS' option in 'TRAIN' section of config.ini file parsed "
                         f"as invalid type: {type(epochs_list)}")
+
+    print('loading training data')
+    data_dict = joblib.load(gz_filename)
 
     np.random.seed(random_seed)  # for shuffling in batch_generator
     tf.random.set_random_seed(random_seed)
@@ -185,8 +125,6 @@ def train(gz_filename,
         # in training loop
         set_size_vec_train = data_dict['set_size_vec_train']
         set_sizes = np.unique(set_size_vec_train)
-        if x_val is not None:
-            set_size_vec_val = data_dict['set_size_vec_val']
 
         acc_savepath = os.path.join(model_save_path,
                                     f'acc_by_epoch_by_set_size')
@@ -200,9 +138,26 @@ def train(gz_filename,
             graph = tf.Graph()
             with tf.Session(graph=graph) as sess:
                 # --------------- do a bunch of graph set-up stuff -----------------------------------------------------
+                # apparently it matters if we make the tf.data.Dataset in the same graph as the network
+                filenames_placeholder = tf.placeholder(tf.string, shape=[None])
+                labels_placeholder = tf.placeholder(tf.int64, shape=[None])
+                train_ds = get_dataset(filenames_placeholder, labels_placeholder, net_name, batch_size,
+                                       shuffle=True, shuffle_size=len(data_dict['x_train']))
+
+                if use_val:
+                    try:
+                        val_ds = get_dataset(filenames_placeholder, labels_placeholder, net_name, batch_size,
+                                             shuffle=False, shuffle_size=len(data_dict['x_val']))
+                    except KeyError:
+                        raise KeyError(
+                            f'use_val set to True but x_val not found in data file: {gz_filename}'
+                        )
+                else:
+                    val_ds = None
+
                 x = tf.placeholder(tf.float32, (None,) + input_shape, name='x')
                 y = tf.placeholder(tf.int32, shape=[None], name='y')
-                y_onehot = tf.one_hot(indices=y, depth=len(np.unique(y_train)),
+                y_onehot = tf.one_hot(indices=y, depth=len(np.unique(data_dict['y_train'])),
                                       dtype=tf.float32, name='y_onehot')
                 rate = tf.placeholder_with_default(tf.constant(1.0, dtype=tf.float32), shape=(), name='dropout_rate')
 
@@ -238,8 +193,8 @@ def train(gz_filename,
                 else:
                     opt1 = tf.train.MomentumOptimizer(learning_rate=base_learning_rate,
                                                       momentum=MOMENTUM)
-                    opt2 = tf.train.GradientDescentOptimizer(learning_rate=new_layer_learning_rate,
-                                                             momentum=MOMENTUM)
+                    opt2 = tf.train.MomentumOptimizer(learning_rate=new_layer_learning_rate,
+                                                      momentum=MOMENTUM)
                     grads = tf.gradients(cross_entropy_loss, var_list1 + var_list2)
                     grads1 = grads[:len(var_list1)]
                     grads2 = grads[len(var_list1):]
@@ -275,20 +230,23 @@ def train(gz_filename,
                 # --------------- finally start training ---------------------------------------------------------------
                 train_loss = []
                 train_acc = []
-                if x_val is not None:
+                if val_ds is not None:
                     val_acc = []
                     if patience is not None:
                         best_val_acc = 0
                         epochs_without_improvement = 0
 
                 for epoch in range(epochs):
-                    total = int(np.ceil(x_train.shape[0] / batch_size))
-                    batch_gen = batch_generator(x_train, y_train,
-                                                batch_size=batch_size,
-                                                shuffle=True)
+                    total = int(np.ceil(len(data_dict['x_train']) / batch_size))
                     total_loss = 0.0
-                    pbar = tqdm(enumerate(batch_gen), total=total)
-                    for i, (batch_x, batch_y) in pbar:
+                    iterator = train_ds.make_initializable_iterator()
+                    sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_train'],
+                                                              labels_placeholder: data_dict['y_train']})
+                    next_element = iterator.get_next()
+
+                    pbar = tqdm(range(total))
+                    for i in pbar:
+                        batch_x, batch_y = sess.run(next_element)
                         feed = {x: batch_x,
                                 y: batch_y,
                                 rate: dropout_rate}
@@ -299,21 +257,22 @@ def train(gz_filename,
                         pbar.set_description(f'batch {i} of {total}, loss: {loss: 7.3f}')
                         total_loss += loss
 
-                    avg_loss = np.mean(total_loss)
+                    avg_loss = total_loss / total
                     train_loss.append(avg_loss)
                     print(f'\nEpoch {epoch + 1}, Training Avg. Loss: {avg_loss:7.3f}')
 
-                    if x_val is not None:
+                    if val_ds is not None:
                         if epoch % val_step == 0:
-                            batch_gen = batch_generator(x_val, y_val,
-                                                        batch_size=batch_size,
-                                                        shuffle=False)
-                            total = int(np.ceil(x_val.shape[0] / batch_size))
-                            pbar = tqdm(enumerate(batch_gen), total=total)
-
+                            total = int(np.ceil(len(data_dict['x_val']) / batch_size))
+                            iterator = val_ds.make_initializable_iterator()
+                            sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_val'],
+                                                                      labels_placeholder: data_dict['y_val']})
+                            next_element = iterator.get_next()
+                            pbar = tqdm(range(total))
                             val_acc_this_epoch = []
-                            for i, (batch_x, batch_y) in pbar:
+                            for i in pbar:
                                 pbar.set_description(f'batch {i} of {total}')
+                                batch_x, batch_y = sess.run(next_element)
                                 feed = {x: batch_x,
                                         y: batch_y,
                                         rate: dropout_rate}
@@ -347,15 +306,18 @@ def train(gz_filename,
                     if save_acc_by_set_size_by_epoch:
                         # --- compute accuracy on whole training set, by set size, for this epoch
                         print('Computing accuracy per visual search stimulus set size on training set')
-                        total = int(np.ceil(x_train.shape[0] / batch_size))
+                        total = int(np.ceil(len(data_dict['x_train']) / batch_size))
+                        iterator = train_ds.make_initializable_iterator()
+                        sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_train'],
+                                                                  labels_placeholder: data_dict['y_train']})
+                        next_element = iterator.get_next()
                         y_pred = []
                         y_true = []
-                        batch_gen = batch_generator(x_train, y_train,
-                                                    batch_size=batch_size,
-                                                    shuffle=False)
-                        pbar = tqdm(enumerate(batch_gen), total=total)
-                        for i, (batch_x, batch_y) in pbar:
+
+                        pbar = tqdm(range(total))
+                        for i in pbar:
                             pbar.set_description(f'batch {i} of {total}')
+                            batch_x, batch_y = sess.run(next_element)
                             y_true.append(batch_y)
                             feed = {x: batch_x, rate: 1.0}
                             batch_y_pred = sess.run(predictions['labels'], feed_dict=feed)
@@ -381,7 +343,7 @@ def train(gz_filename,
                 if patience is None:
                     # only save at end if we haven't already been saving checkpoints
                     print(f'Saving model in {savepath}')
-                    ckpt_name = os.path.join(savepath, f'{net_name}-model-epoch-{epoch}.ckpt')
+                    ckpt_name = os.path.join(savepath, f'{net_name}-model.ckpt')
                     saver.save(sess, ckpt_name, global_step=epochs)
 
                 stem = f'{net_name}_trained_{epochs}_epochs_number_{net_number}'
@@ -389,7 +351,7 @@ def train(gz_filename,
                 # make rows for csv file with training history
                 fieldnames = ['train_loss', 'train_acc']
                 ziprows = [train_loss, train_acc]
-                if x_val is not None:
+                if val_ds is not None:
                     fieldnames.append('val_acc')
                     ziprows.append(val_acc)
                 # use * operator to unpack so we don't have to know how many elements are in ziprows

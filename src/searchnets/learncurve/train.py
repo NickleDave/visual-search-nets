@@ -7,7 +7,6 @@ from tqdm import tqdm
 
 from ..nets import AlexNet
 from ..nets import VGG16
-from ..train import batch_generator
 
 
 def train(x_train,
