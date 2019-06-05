@@ -117,13 +117,22 @@ def train(gz_filename,
     print('loading training data')
     data_dict = joblib.load(gz_filename)
 
+    if 'shard_train' in data_dict:
+        shard_train = data_dict['shard_train']
+    else:
+        shard_train = False
+
     np.random.seed(random_seed)  # for shuffling in batch_generator
     tf.random.set_random_seed(random_seed)
 
     if save_acc_by_set_size_by_epoch:
         # get vecs for computing accuracy by set size below
         # in training loop
-        set_size_vec_train = data_dict['set_size_vec_train']
+        if shard_train:
+            set_size_vec_train = np.concatenate(data_dict['set_size_vec_train'])
+        else:
+            set_size_vec_train = data_dict['set_size_vec_train']
+
         set_sizes = np.unique(set_size_vec_train)
 
         acc_savepath = os.path.join(model_save_path,
@@ -139,26 +148,41 @@ def train(gz_filename,
             with tf.Session(graph=graph) as sess:
                 # --------------- do a bunch of graph set-up stuff -----------------------------------------------------
                 # apparently it matters if we make the tf.data.Dataset in the same graph as the network
-                filenames_placeholder = tf.placeholder(tf.string, shape=[None])
-                labels_placeholder = tf.placeholder(tf.int64, shape=[None])
-                train_ds = get_dataset(filenames_placeholder, labels_placeholder, net_name, batch_size,
-                                       shuffle=True, shuffle_size=len(data_dict['x_train']))
+                filenames_placeholder_tr = tf.placeholder(tf.string, shape=[None])
+                labels_placeholder_tr = tf.placeholder(tf.int64, shape=[None])
+                if shard_train:
+                    shuffle_size = data_dict['shard_size']
+                else:
+                    shuffle_size = len(data_dict['x_train'])
+                train_ds = get_dataset(filenames_placeholder_tr, labels_placeholder_tr, net_name, batch_size,
+                                       shuffle=True, shuffle_size=shuffle_size)
 
                 if use_val:
-                    try:
-                        val_ds = get_dataset(filenames_placeholder, labels_placeholder, net_name, batch_size,
-                                             shuffle=False, shuffle_size=len(data_dict['x_val']))
-                    except KeyError:
+                    if 'x_val' not in data_dict:
                         raise KeyError(
                             f'use_val set to True but x_val not found in data file: {gz_filename}'
                         )
+
+                    filenames_placeholder_val = tf.placeholder(tf.string, shape=[None])
+                    labels_placeholder_val = tf.placeholder(tf.int64, shape=[None])
+                    val_ds = get_dataset(filenames_placeholder_val, labels_placeholder_val, net_name, batch_size,
+                                         shuffle=False, shuffle_size=None)
                 else:
                     val_ds = None
 
+                if save_acc_by_set_size_by_epoch:
+                    filenames_placeholder_acc = tf.placeholder(tf.string, shape=[None])
+                    labels_placeholder_acc = tf.placeholder(tf.int64, shape=[None])
+                    train_ds_no_shuffle = get_dataset(filenames_placeholder_acc, labels_placeholder_acc,
+                                                      net_name, batch_size, shuffle=False, shuffle_size=None)
+
                 x = tf.placeholder(tf.float32, (None,) + input_shape, name='x')
                 y = tf.placeholder(tf.int32, shape=[None], name='y')
-                y_onehot = tf.one_hot(indices=y, depth=len(np.unique(data_dict['y_train'])),
-                                      dtype=tf.float32, name='y_onehot')
+                if shard_train:
+                    depth = len(np.unique(np.concatenate(data_dict['y_train'])))
+                else:
+                    depth = len(np.unique(data_dict['y_train']))
+                y_onehot = tf.one_hot(indices=y, depth=depth, dtype=tf.float32, name='y_onehot')
                 rate = tf.placeholder_with_default(tf.constant(1.0, dtype=tf.float32), shape=(), name='dropout_rate')
 
                 if net_name == 'alexnet':
@@ -237,36 +261,50 @@ def train(gz_filename,
                         epochs_without_improvement = 0
 
                 for epoch in range(epochs):
-                    total = int(np.ceil(len(data_dict['x_train']) / batch_size))
+                    print(f'\nEpoch {epoch + 1}')
+                    if shard_train:
+                        shard_total = len(data_dict['x_train'])
+                        shards = zip(data_dict['x_train'], data_dict['y_train'])
+                    else:
+                        batch_total = int(np.ceil(len(data_dict['x_train']) / batch_size))
+                        shard_total = 1
+                        # wrap in list to iterate over (a list of length one)
+                        shards = zip([data_dict['x_train']], [data_dict['y_train']])
                     total_loss = 0.0
-                    iterator = train_ds.make_initializable_iterator()
-                    sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_train'],
-                                                              labels_placeholder: data_dict['y_train']})
-                    next_element = iterator.get_next()
+                    shard_pbar = tqdm(range(shard_total))
 
-                    pbar = tqdm(range(total))
-                    for i in pbar:
-                        batch_x, batch_y = sess.run(next_element)
-                        feed = {x: batch_x,
-                                y: batch_y,
-                                rate: dropout_rate}
+                    with shard_pbar:
+                        for shard_num, (x_shard, y_shard) in enumerate(shards):
+                            shard_pbar.update(shard_num)
+                            shard_pbar.set_description(f'shard {shard_num} of {shard_total}')
+                            iterator = train_ds.make_initializable_iterator()
+                            sess.run(iterator.initializer, feed_dict={filenames_placeholder_tr: x_shard,
+                                                                      labels_placeholder_tr: y_shard})
+                            next_element = iterator.get_next()
+                            batch_total = int(np.ceil(len(x_shard) / batch_size))
+                            batch_pbar = tqdm(range(batch_total))
+                            for i in batch_pbar:
+                                batch_x, batch_y = sess.run(next_element)
+                                feed = {x: batch_x,
+                                        y: batch_y,
+                                        rate: dropout_rate}
 
-                        loss, _ = sess.run(
-                            [cross_entropy_loss, train_op],
-                            feed_dict=feed)
-                        pbar.set_description(f'batch {i} of {total}, loss: {loss: 7.3f}')
-                        total_loss += loss
+                                loss, _ = sess.run(
+                                    [cross_entropy_loss, train_op],
+                                    feed_dict=feed)
+                                batch_pbar.set_description(f'batch {i} of {batch_total}, loss: {loss: 7.3f}')
+                                total_loss += loss
 
-                    avg_loss = total_loss / total
+                    avg_loss = total_loss / (batch_total * shard_total)
                     train_loss.append(avg_loss)
-                    print(f'\nEpoch {epoch + 1}, Training Avg. Loss: {avg_loss:7.3f}')
+                    print(f'\tTraining Avg. Loss: {avg_loss:7.3f}')
 
                     if val_ds is not None:
                         if epoch % val_step == 0:
                             total = int(np.ceil(len(data_dict['x_val']) / batch_size))
                             iterator = val_ds.make_initializable_iterator()
-                            sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_val'],
-                                                                      labels_placeholder: data_dict['y_val']})
+                            sess.run(iterator.initializer, feed_dict={filenames_placeholder_val: data_dict['x_val'],
+                                                                      labels_placeholder_val: data_dict['y_val']})
                             next_element = iterator.get_next()
                             pbar = tqdm(range(total))
                             val_acc_this_epoch = []
@@ -306,22 +344,36 @@ def train(gz_filename,
                     if save_acc_by_set_size_by_epoch:
                         # --- compute accuracy on whole training set, by set size, for this epoch
                         print('Computing accuracy per visual search stimulus set size on training set')
-                        total = int(np.ceil(len(data_dict['x_train']) / batch_size))
-                        iterator = train_ds.make_initializable_iterator()
-                        sess.run(iterator.initializer, feed_dict={filenames_placeholder: data_dict['x_train'],
-                                                                  labels_placeholder: data_dict['y_train']})
-                        next_element = iterator.get_next()
-                        y_pred = []
-                        y_true = []
+                        if shard_train:
+                            shard_total = len(data_dict['x_train'])
+                            shards = zip(data_dict['x_train'], data_dict['y_train'])
+                        else:
+                            batch_total = int(np.ceil(len(data_dict['x_train']) / batch_size))
+                            shard_total = 1
+                            # wrap in list to iterate over (a list of length one)
+                            shards = zip([data_dict['x_train']], [data_dict['y_train']])
+                        shard_pbar = tqdm(range(shard_total))
 
-                        pbar = tqdm(range(total))
-                        for i in pbar:
-                            pbar.set_description(f'batch {i} of {total}')
-                            batch_x, batch_y = sess.run(next_element)
-                            y_true.append(batch_y)
-                            feed = {x: batch_x, rate: 1.0}
-                            batch_y_pred = sess.run(predictions['labels'], feed_dict=feed)
-                            y_pred.append(batch_y_pred)
+                        with shard_pbar:
+                            for shard_num, (x_shard, y_shard) in enumerate(shards):
+                                shard_pbar.update(shard_num)
+                                shard_pbar.set_description(f'shard {shard_num} of {shard_total}')
+                                iterator = train_ds_no_shuffle.make_initializable_iterator()
+                                sess.run(iterator.initializer, feed_dict={filenames_placeholder_acc: x_shard,
+                                                                          labels_placeholder_acc: y_shard})
+                                next_element = iterator.get_next()
+
+                                y_pred = []
+                                y_true = []
+
+                                pbar = tqdm(range(batch_total))
+                                for i in pbar:
+                                    pbar.set_description(f'batch {i} of {batch_total}')
+                                    batch_x, batch_y = sess.run(next_element)
+                                    y_true.append(batch_y)
+                                    feed = {x: batch_x, rate: 1.0}
+                                    batch_y_pred = sess.run(predictions['labels'], feed_dict=feed)
+                                    y_pred.append(batch_y_pred)
 
                         y_pred = np.concatenate(y_pred)
                         y_true = np.concatenate(y_true)
