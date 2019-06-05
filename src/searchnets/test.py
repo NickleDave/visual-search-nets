@@ -91,7 +91,7 @@ def test(gz_filename,
                 filenames_placeholder = tf.placeholder(tf.string, shape=[None])
                 labels_placeholder = tf.placeholder(tf.int64, shape=[None])
                 test_ds = get_dataset(filenames_placeholder, labels_placeholder, net_name, batch_size,
-                                      shuffle=True, shuffle_size=len(data_dict['x_test']))
+                                      shuffle=False, shuffle_size=None)
 
                 x = tf.placeholder(tf.float32, (None,) + input_shape, name='x')
                 rate = tf.placeholder_with_default(tf.constant(1.0, dtype=tf.float32), shape=(), name='dropout_rate')
