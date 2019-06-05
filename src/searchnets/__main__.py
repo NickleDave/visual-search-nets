@@ -21,7 +21,12 @@ def _call_data(config):
          train_size=config.data.train_size,
          val_size=config.data.val_size,
          test_size=config.data.test_size,
-         gz_filename=config.data.gz_filename)
+         gz_filename=config.data.gz_filename,
+         train_size_per_set_size=config.data.train_size_per_set_size,
+         val_size_per_set_size=config.data.val_size_per_set_size,
+         test_size_per_set_size=config.data.test_size_per_set_size,
+         shard_train=config.data.shard_train,
+         shard_size=config.data.shard_size)
 
 
 def _call_train(config):
