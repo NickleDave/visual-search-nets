@@ -114,8 +114,12 @@ def test(gz_filename,
                                         f'trained_{epochs}_epochs',
                                         f'net_number_{net_number}')
                 print(f'Loading model from {restore_path}')
-                ckpt_path = os.path.join(restore_path, f'{net_name}-model.ckpt-{epochs}')
-                saver.restore(sess, ckpt_path)
+                try:
+                    ckpt_path = os.path.join(restore_path, f'{net_name}-model.ckpt-{epochs}')
+                    saver.restore(sess, ckpt_path)
+                except ValueError:
+                    ckpt_path = os.path.join(restore_path, f'{net_name}-model-best-val-acc.ckpt-{epochs}')
+                    saver.restore(sess, ckpt_path)
 
                 total = int(np.ceil(len(data_dict['x_test']) / batch_size))
                 iterator = test_ds.make_initializable_iterator()
