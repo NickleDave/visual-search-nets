@@ -116,6 +116,23 @@ class TrainConfig:
     patience = attr.ib(validator=optional(is_pos_int), default=None)
 
 
+def is_list_of_pos_int(instance, attribute, value):
+    if type(value) != list:
+        raise ValueError(
+            f'type of {attribute.name} must be a list'
+        )
+
+    for ind, item in enumerate(value):
+        if type(item) != int:
+            raise ValueError(
+                f'all elements in {attribute.name} must be int but item at index {ind} was: {type(item)}'
+            )
+        if item < 1:
+            raise ValueError(
+                f'all elements in {attribute.name} must be positive integer, but item at index {ind} was: {item}'
+            )
+
+
 @attr.s
 class DataConfig:
     """class to represent [DATA] section of config.ini file
@@ -158,6 +175,12 @@ class DataConfig:
             if type(set_size) != int:
                 raise TypeError('all values in set_sizes should be int but '
                                 f'got type {type(set_size)} for element {ind}')
+
+    train_size_per_set_size = attr.ib(validator=optional(is_list_of_pos_int), default=None)
+    val_size_per_set_size = attr.ib(validator=optional(is_list_of_pos_int), default=None)
+    test_size_per_set_size = attr.ib(validator=optional(is_list_of_pos_int), default=None)
+    shard_train = attr.ib(validator=instance_of(bool), default=True)
+    shard_size = attr.ib(validator=optional(instance_of(int)), default=None)
 
 
 @attr.s
