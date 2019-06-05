@@ -111,12 +111,41 @@ def parse_config(config_fname):
         set_sizes = None
     gz_filename = config['DATA']['GZ_FILENAME']
 
+    if config.has_option('DATA', 'TRAIN_SIZE_PER_SET_SIZE'):
+        train_size_per_set_size = ast.literal_eval(config['DATA']['TRAIN_SIZE_PER_SET_SIZE'])
+    else:
+        train_size_per_set_size = None
+    if config.has_option('DATA', 'VAL_SIZE_PER_SET_SIZE'):
+        val_size_per_set_size = ast.literal_eval(config['DATA']['VAL_SIZE_PER_SET_SIZE'])
+    else:
+        val_size_per_set_size = None
+    if config.has_option('DATA', 'TEST_SIZE_PER_SET_SIZE'):
+        test_size_per_set_size = ast.literal_eval(config['DATA']['TEST_SIZE_PER_SET_SIZE'])
+    else:
+        test_size_per_set_size = None
+
+    if config.has_option('DATA', 'SHARD_TRAIN'):
+        shard_train = bool(strtobool(config['DATA']['SHARD_TRAIN']))
+    else:
+        shard_train = False
+    if config.has_option('DATA', 'SHARD_SIZE'):
+        shard_size = int(config['DATA']['SHARD_SIZE'])
+    else:
+        if shard_train:
+            raise ValueError('shard_train set to True inf config.ini file but shard_size not specified')
+        shard_size = None
+
     data_config = DataConfig(train_dir,
                              train_size,
                              gz_filename,
                              val_size,
                              test_size,
-                             set_sizes)
+                             set_sizes,
+                             train_size_per_set_size,
+                             val_size_per_set_size,
+                             test_size_per_set_size,
+                             shard_train,
+                             shard_size)
 
     # ------------- unpack [TEST] section of config.ini file -----------------------------------------------------------
     test_results_save_path = config['TEST']['TEST_RESULTS_SAVE_PATH']
