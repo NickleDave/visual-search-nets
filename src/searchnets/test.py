@@ -66,7 +66,7 @@ def test(gz_filename,
     print('loading testing data')
     data_dict = joblib.load(gz_filename)
 
-    set_sizes_by_stim_type = data_dict['set_sizes_by_stim_stype']
+    set_sizes_by_stim_type = data_dict['set_sizes_by_stim_type']
     set_sizes = []
     for stim_type, set_sizes_this_stim in set_sizes_by_stim_type.items():
         if set_sizes == []:
