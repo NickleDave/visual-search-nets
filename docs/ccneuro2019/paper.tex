@@ -70,36 +70,63 @@ attention;visual search
 \end{quote}
 
 \section{Introduction}
-\subsection{Attention}
-Multiple converging lines of evidence seem to suggest that training neural networks to 
-perform tasks with human-like abilities causes them to acquire brain-like representations.
+\subsection{What are the factors that limit visual search?}
+What limits our ability to find what we are looking for in the cluttered noisy world we 
+see around us? One of the principle tasks that has been used to investigate this question
+is a classic form of visual search task, in which subjects view a stimulus on each trial, 
+made up of discrete sets of items on a solid-colored background, and report whether a 
+target is present among distractors [@wolfeVisualSearch1998]. 
+Most studies experimentally manipulate factors such as features of the targets and 
+distractors, in order to identify those factors limit visual search 
+[@ecksteinVisualSearchRetrospective2011]. Importantly, these factors that *limit* visual 
+search performance form the basis of seminal theories of selective visual attention. 
+As we review briefly below for context, there are essentially two families of selective 
+attention mechanisms. The results supporting both mechanisms remain unreconciled, in spite
+of nearly half a century of studies based on this task. The core question is: to what 
+extent can the limitations on visual search be attributed to some computation that is 
+required to bind features into items, and to what extent can those limitations be 
+explained by other aspects of computation, such as noisy internal representations and 
+decision-making criteria? Another way of stating this problem is to ask: if there 
+was some algorithm that could produce an ideal observer capable of maximally utilizing 
+the available information to carry out the task, would that ideal observer still be 
+subject to some ceiling of performance, due simply to the constraints of the task?
 
-- If brain-like representations are both necessary and sufficient for human-like 
-intelligence, then shouldn't the converse also be true? Shouldn't neural networks that 
-have acquired brain-like representations behave like humans when asked to perform related 
-tasks? We test this 
+For context, we briefly review the two competing theoretical mechanisms of selective 
+attention, and describe how they depend in part on how the visual search task is 
+performed. The first family consists of serial mechanisms. One of the most influential 
+early incarnations is known as Feature Integration Theory (FIT) 
+[@treismanFeatureintegrationAttention1980]. Essentially, FIT posits that the visual system
+can process single "features", such as color or orientation, in parallel, but when 
+required to utilize multiple features, it uses some sort of serial computation, i.e. one 
+that takes time. Evidence for this theory came from visual search experiments where 
+subjects were shown stimuli until responding, and their reaction time was measured. 
+Plotting reaction time as a function of set size revealed 
+lines whose slope were near zero when a single feature distinguished the target from 
+distractors (e.g., "red" v. "green"). The slope of reaction time v. set size increased 
+sharply, though, when distinguishing the target from distractors required finding a 
+conjunction of features (such as "red vertical" v. "red horizontal or green vertical"). 
+However, subsequent studies showed that slopes could not be cleanly segregated in a way 
+that supported distinct parallel and serial mechanisms [@wolfeWhatCanMillion1998]. This 
+led to a more general model of visual search which seeks to account for results from 
+multiple tasks, but still features at its core a serial processing step
+[@wolfeGuidedSearchRevised1994].
+The second family of search mechanisms are parallel, and arose in large part in reaction 
+to the way the visual search task was carried out when investigating
+serial mechanisms. Early studies that measured reaction times left several factors 
+uncontrolled, such as target-distractor similarity [@duncanVisualSearchStimulus1989], 
+drops in acuity outside the fovea, eye movements, and effects resulting from visual 
+crowding [@bergenRapidDiscriminationVisual1983; @ecksteinLowerVisualSearch1998]. 
+Hence researchers designed versions of the visual search task that controlled for such 
+factors[@palmerPsychophysicsVisualSearch2000]. Crucially, they showed subjects the 
+stimulus only briefly, to prevent eye movements, and measured accuracy instead of reaction
+time. These researchers argued that set size-dependent decreases in accuracy could be 
+explained by totally parallel mechanisms of attention, where performance was impaired by 
+noise. Computational models of parallel mechanisms succesfully explained results from 
+single feature and conjunction search stimuli, in terms of distributions and 
+discrimination thresholds borrowed from signal detection theory that psychophysicists 
+often employ.
 
-In these fields, theories of attention mechanisms are often built on 
-results produced by experimental manipulations that impair behavior.
-Perhaps the pre-eminent example of this approach to understanding attention is a 
-a long-established form of visual search task [@wolfeVisualSearch1998]. In this behavioral
-paradigm, subjects view a set of discrete items on a flat background and report whether a 
-target is present or absent among distractors. Classically, results from this paradigm 
-have been used to support different theories of \bf{selective covert visual attention}, 
-a term that requires some defintion. The term "selective" is simply supposed to mean 
-some mechanism that selects some visual inputs for further processing while necessarily 
-discarding others. The word "covert" in this context means any mechanism that occurs 
-"centrally", i.e. inside the brain, without overt orientation, i.e. without eye or head 
-movements.
-- here we do not 
 
-Our goal here is not to resolve the debate about whether selective covert visual 
-attention is serial or parallel. Rather our goal is to better understand attention as 
-defined in cognitive science and reconcile that with the definition used in artificial 
-intelligence.
-
-\subsection{visual search}
-\textbf{set size effects}
 
 \begin{figure}[ht]
 \begin{center}
