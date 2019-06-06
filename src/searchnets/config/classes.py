@@ -133,6 +133,19 @@ def is_list_of_pos_int(instance, attribute, value):
             )
 
 
+def is_list_of_str(instance, attribute, value):
+    if type(value) != list:
+        raise ValueError(
+            f'type of {attribute.name} must be a list'
+        )
+
+    for ind, item in enumerate(value):
+        if type(item) != str:
+            raise ValueError(
+                f'all elements in {attribute.name} must be str but item at index {ind} was: {type(item)}'
+            )
+
+
 @attr.s
 class DataConfig:
     """class to represent [DATA] section of config.ini file
@@ -165,6 +178,7 @@ class DataConfig:
 
     train_size = attr.ib(validator=instance_of(int))
     gz_filename = attr.ib(validator=instance_of(str))
+    stim_types = attr.ib(validator=optional(is_list_of_str), default=None)
     val_size = attr.ib(validator=optional(instance_of(int)), default=None)
     test_size = attr.ib(validator=optional(instance_of(int)), default=None)
     set_sizes = attr.ib(validator=instance_of(list), default=None)
@@ -181,7 +195,6 @@ class DataConfig:
     test_size_per_set_size = attr.ib(validator=optional(is_list_of_pos_int), default=None)
     shard_train = attr.ib(validator=instance_of(bool), default=True)
     shard_size = attr.ib(validator=optional(instance_of(int)), default=None)
-
 
 @attr.s
 class TestConfig:
