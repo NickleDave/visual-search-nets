@@ -47,7 +47,7 @@ A City, State 12345 A country}
 \bf
 What limits our ability to find what we are looking for in the cluttered noisy world we 
 see around us? A now classic form of visual search task has long been used to investigate 
-proposed mechanisms of selective attention. In spite of nearly half a century of studies 
+this question. In spite of nearly half a century of studies 
 using this task, it remains unclear how best to relate different effects found using this 
 task to computations that take place in the visual system. A separate thread of research 
 has studied the visual system of humans and other primates using convolutional neural 
@@ -55,10 +55,10 @@ networks (CNNs) as models. While CNNs have proven quite useful as models of the 
 system, it also remains unclear the extent to which their behavior mirrors that of 
 humans when performing vision-based tasks. Here we investigate whether the accuracy of 
 CNNs is affected by the same factors that affect human performance on the classic form of 
-visual search task used to investigate attention mechanisms. We first replicate and extend
+a task used to investigate capacity limitations in visual search. We first replicate and extend
 a previous study which did find that CNNs trained for image classification show human-like
 attentional limitations. Then we demonstrate that, by changing how we train the networks, 
-these effects can largely be eliminated. Lastly we show that accuracy is impaired when 
+these effects can be almost completely eliminated. Lastly we show that accuracy is impaired when 
 single networks are trained to discriminate multiple types of visual search stimuli. Based
 on these findings, we suggest that the need to generalize across multiple tasks may be one 
 source of limitations on visual search for both CNNs and the primate visual system.
@@ -75,16 +75,25 @@ What limits our ability to find what we are looking for in the cluttered noisy w
 see around us? One of the principle tasks that has been used to investigate this question
 is a classic form of visual search task (Figure~\ref{fig1}), in which subjects view a stimulus on each trial, 
 made up of discrete sets of items on a solid-colored background, and report whether a 
-target is present among distractors [@wolfeVisualSearch1998]. 
+target is present among distractors \cite{wolfeVisualSearch1998}. 
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=\columnwidth]{fig1/fig1.eps}
+\end{center}
+\caption{A classic form of visual search task.} 
+\label{fig1}
+\end{figure}
+
 Most studies experimentally manipulate factors such as features of the targets and 
 distractors in order to identify the factors limit visual search 
-[@ecksteinVisualSearchRetrospective2011; @wolfeFiveFactorsThat2017].
+\cite{ecksteinVisualSearchRetrospective2011,wolfeFiveFactorsThat2017}.
 Importantly, it is these factors that *limit* visual search performance that form the 
 basis of seminal theories of selective visual attention, although authors differ in the 
 extent to which they identify limitations on visual search as synonymous with selective 
 attention. To remain neutral, we will use the term "capacity limitations". 
 As we review briefly below for context, there are essentially two competing proposed 
-sources of capacity limitations [@palmerSignalDetectionEvidence2011]. 
+sources of capacity limitations \cite{palmerSignalDetectionEvidence2011}. 
 The results supporting both remain unreconciled, in spite of nearly half a century of 
 studies based on this task. The core question is: to 
 what extent can limitations on visual search be attributed to an attention-like 
@@ -96,24 +105,24 @@ to ask: if some algorithm could produce a statistical model capable of learning 
 to classify visual search stimuli as "target present" or "target absent" with high 
 accuracy, would the accuracy still be subject to some ceiling, due simply to the 
 constraints of the task? This way of posing the question bears some similarity to a 
-well-established framework in vision research known as ideal observer analsyis 
-[@geislerIdealObserverAnalysis2003]. However, few ideal observer models have take the 
+well-established framework in vision research known as ideal observer analysis 
+\cite{geislerIdealObserverAnalysis2003}. However, few ideal observer models have take the 
 form of "pixel-in, behavior-out", and the few that have do not generalize to many 
 different types of visual search stimuli, so their predictive power is limited 
-[@geislerModelsOvertAttention2011].
+\cite{geislerModelsOvertAttention2011}.
 
 Before we discuss how to address this gap in models, we briefly review the two competing 
 proposed sources of capacity limitations, and describe how they depend in part on the 
 way the visual search task is performed. Adopting the terms of other researchers, we will 
 call the first family "attention-limited", and the second "noise-limited" 
-[@palmerSignalDetectionEvidence2011]. Both attention-limited and noise-limited models 
+\cite{palmerSignalDetectionEvidence2011}. Both attention-limited and noise-limited models 
 depend on what are known as *set-size effects* seem when using visual search stimuli, 
 which we will define in terms of how the visual search task is carried out. 
 Attention-limited models posit two-stage theories of visual processing, a first 
 *preattentive* stage which can process single features, such as color or orientation, 
 in parallel, and a second *attentive* stage that binds features to objects that processes 
-serially, which results in a bottleneck [@treismanFeatureintegrationAttention1980; 
-@wolfeGuidedSearchRevised1994]. Evidence for this theory came from visual search 
+serially, which results in a bottleneck 
+\cite{treismanFeatureintegrationTheoryAttention1980,wolfeGuidedSearchAlternative1989,wolfeGuidedSearchRevised1994}. Evidence for this theory came from visual search 
 experiments where subjects were shown stimuli until responding, and their reaction time 
 was measured. Plotting reaction time as a function of set size revealed 
 lines whose slope were near zero when a single feature distinguished the target from 
@@ -122,16 +131,16 @@ sharply, though, when distinguishing the target from distractors required findin
 conjunction of features (such as "red vertical" v. "red horizontal or green vertical"). 
 This sort of set size effect has been replicated hundreds of times, although it remains 
 unclear why some search stimuli seem to be processed effectively in parallel while others 
-face a bottleneck [@wolfeWhatCanMillion1998; @wolfeFiveFactorsThat2017].
+face a bottleneck \cite{wolfeWhatCanMillion1998,wolfeFiveFactorsThat2017}.
 The second family of capacity limitations can be conceived of as completely parallel but 
 noisy processing. These models arose in large part in reaction 
 to the way the visual search task was carried out when investigating
 serial mechanisms. Early studies that measured reaction times left several factors 
 uncontrolled, such as target-distractor similarity [@duncanVisualSearchStimulus1989], 
 drops in acuity outside the fovea, eye movements, and effects resulting from visual 
-crowding [@bergenRapidDiscriminationVisual1983; @ecksteinLowerVisualSearch1998]. 
+crowding \cite{bergenRapidDiscriminationVisual1983, ecksteinLowerVisualSearch1998}. 
 Hence researchers designed versions of the visual search task that controlled for such 
-factors [@palmerPsychophysicsVisualSearch2000]. Crucially, they showed subjects the 
+factors \cite{palmerPsychophysicsVisualSearch2000}. Crucially, they showed subjects the 
 stimulus only briefly, to prevent eye movements, and measured accuracy instead of reaction
 time. Computational models of parallel mechanisms successfully explained results from 
 single feature and conjunction search stimuli. These models borrowed ideas from signal 
@@ -141,18 +150,21 @@ What both attention-limited and noise-limited models have in common is that they
 both highly abstracted models of the visual system, in which low-level features pass 
 through a hierarchy until reaching a final stage consisting of a simple decision rule.
 
+
+
 \subsection{CNNs as models of the visual system}
 Similarly, the architecture of convolutional neural networks (CNNs) now routinely used for
 computer vision tasks represents a highly abstracted view of the visual system.
 Many researchers have drawn parallels between the architecture of CNNs and the 
-architecture of the visual system in the brain [@kriegeskorteDeepNeuralNetworks2015], 
+architecture of the visual system in the brain \cite{kriegeskorteDeepNeuralNetworks2015}, 
 in particular in humans and other primates where this system has been most thoroughly 
 studied. Like CNNs, the visual system has a hierarchical structure, and is thought to 
 function in part by performing transformations at each level of this hierarchy so that 
 high-dimensional, low-level features are mapped into low-dimensional abstract 
 representations. Several recent studies in the realm of cognitive neuroscience 
 have measured representations in more directly tested the similarities between CNNs and 
-the visual system, by comparing representations in both [@khaligh-razaviDeepSupervisedNot2014; @yaminsPerformanceoptimizedHierarchicalModels2014; @yaminsUsingGoaldrivenDeep2016]. Representations 
+the visual system, by comparing representations in both 
+\cite{khaligh-razaviDeepSupervisedNot2014, yaminsUsingGoaldrivenDeep2016, yaminsPerformanceoptimizedHierarchicalModels2014}. Representations 
 can be easily extracted from CNNs because they are "transparent box" models--i.e. we have 
 access to the "activity" of the individual units from which these models are built when 
 we "show" the CNNs a stimulus.
@@ -165,16 +177,6 @@ especially when targets and distractors are easily discriminated by single featu
 dimensions such as color. While there have been previous studies of neural networks 
 performing visual search tasks, we are aware of only one that employed architectures 
 which have been used in studies of the visual system referenced above.
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics[width=\columnwidth]{fig1/fig1.eps}
-\end{center}
-\caption{A classic form of visual search task.} 
-\label{fig1}
-\end{figure}
-
-
 
 \section{Results}
 
@@ -324,22 +326,12 @@ by 1/8~inch. Below are example references for a conference paper, book
 chapter, journal article, dissertation, book, technical report, and
 edited volume, respectively.
 
-\nocite{ChalnickBillman1988a}
-\nocite{Feigenbaum1963a}
-\nocite{Hill1983a}
-\nocite{OhlssonLangley1985a}
-% \nocite{Lewis1978a}
-\nocite{Matlock2001}
-\nocite{NewellSimon1972a}
-\nocite{ShragerLangley1990a}
-
-
 \bibliographystyle{apacite}
 
 \setlength{\bibleftmargin}{.125in}
 \setlength{\bibindent}{-\bibleftmargin}
 
-\bibliography{ccn_style}
+\bibliography{ccneuro2019}
 
 
 \end{document}
