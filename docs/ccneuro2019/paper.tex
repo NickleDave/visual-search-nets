@@ -24,44 +24,48 @@
 \usepackage{apacite}
 \usepackage{graphicx}
 
+
 \graphicspath{ {../static/} }
 
 \title{Convolutional neural networks performing a visual search task show attention-like 
 limits on accuracy when trained to generalize across multiple search stimuli}
  
-\author{{\large \bf David Nicholson (dnicho4@emory.edu)} \\
-  A Department, 1234 Example Street\\
-A City, State 12345 A country
-  \AND {\large \bf Astrid Prinz (AnotherPerson@this.planet.edu)} \\
-  A Department, 1234 Example Street\\
-A City, State 12345 A country}
+\author{{\large \bf David A. Nicholson (dnicho4@emory.edu)} \\
+  \AND {\large \bf Astrid A. Prinz (astrid.prinz@emory.edu)} \\
+  Emory University Department Of Biology, 1510 Clifton Road, Atlanta, GA 30322}
 
 
 \begin{document}
 
 \maketitle
 
-
 \section{Abstract}
 {
 \bf
-What limits our ability to find what we are looking for in the cluttered noisy world we 
-see around us? A now classic form of visual search task has long been used to investigate 
-this question. In spite of nearly half a century of studies 
-using this task, it remains unclear how best to relate different effects found using this 
-task to computations that take place in the visual system. A separate thread of research 
+What limits our ability to find what we are looking for in the cluttered noisy world? 
+To investigate this, cognitive scientists have long used a 
+visual search task in which subjects view a display of discrete items on each trial, 
+and report whether a target is present among distractors. 
+In spite of hundreds of studies, it remains unclear how to relate 
+effects found using the discrete item display search task to computations 
+in the visual system. A separate thread of research 
 has studied the visual system of humans and other primates using convolutional neural 
-networks (CNNs) as models. While CNNs have proven quite useful as models of the visual 
-system, it also remains unclear the extent to which their behavior mirrors that of 
-humans when performing vision-based tasks. Here we investigate whether the accuracy of 
-CNNs is affected by the same factors that affect human performance on the classic form of 
-a task used to investigate capacity limitations in visual search. We first replicate and extend
-a previous study which did find that CNNs trained for image classification show human-like
-attentional limitations. Then we demonstrate that, by changing how we train the networks, 
-these effects can be almost completely eliminated. Lastly we show that accuracy is impaired when 
-single networks are trained to discriminate multiple types of visual search stimuli. Based
-on these findings, we suggest that the need to generalize across multiple tasks may be one 
-source of limitations on visual search for both CNNs and the primate visual system.
+networks (CNNs) as models. CNNs have a hierarchical structure similar to 
+the visual system, and multiple lines of evidence suggest that training CNNs to 
+perform tasks such as image classification causes them to learn  
+representations similar to those used by the visual system.
+These studies raise the question of whether CNNs that have learned such 
+representations behave similarly to humans performing other vision-based tasks. 
+Here we address this by measuring the behavior of CNNs trained for image classification 
+while they perform the discrete item display search task.
+We first show how a fine-tuning approach often used to adapt pre-trained CNNs to new 
+tasks can produce models that show human-like limitations on this task. However we 
+then demonstrate that we can greatly reduce these effects by changing training,
+without changing the learned representations. Lastly we show that accuracy is 
+impaired when single networks are trained to discriminate multiple types of visual 
+search stimuli. Based on these findings, we suggest that the need to generalize across
+multiple tasks may be one source of limitations on visual search for both CNNs and 
+the primate visual system.
 }
 \begin{quote}
 \small
@@ -70,89 +74,95 @@ attention;visual search
 \end{quote}
 
 \section{Introduction}
-\subsection{What are the factors that limit visual search?}
-What limits our ability to find what we are looking for in the cluttered noisy world we 
-see around us? One of the principle tasks that has been used to investigate this question
-is a classic form of visual search task (Figure~\ref{fig1}), in which subjects view a stimulus on each trial, 
-made up of discrete sets of items on a solid-colored background, and report whether a 
-target is present among distractors \cite{wolfeVisualSearch1998}. 
 
-\begin{figure}[ht]
+\begin{figure}[!ht]
 \begin{center}
-\includegraphics[width=\columnwidth]{fig1/fig1.eps}
+\includegraphics[width=\columnwidth]{fig1/fig1.png}
 \end{center}
-\caption{A classic form of visual search task.} 
+\caption{
+\textbf{The discrete item display search task}. On each trial, subjects view  
+ a display (example images, panel a) of discrete items on a flat background. Subjects 
+respond whether the target is present or absent (condition varies across rows 
+of panel a). Another condition that varies across trials is the set size, that is, 
+the total number of targets and distractors (varies across rows in a). Many studies 
+focus on set size effects. Typical effects are an increase in reaction time 
+or a decrease in accuracy as set size increases (depicted schematically in panel b, 
+redrawn from \cite{wolfeReactionTimeDistributions2010} and \cite{ecksteinLowerVisualSearch1998a}). 
+Effects vary based on the features that distinguish targets from distractors 
+(shown in columns). Details in introduction. Accuracy for spatial configuration-type 
+stimuli not shown in panel b because this has been less studied (but see 
+\cite{palmerSignalDetectionEvidence2011}).
+}
 \label{fig1}
 \end{figure}
 
-Most studies experimentally manipulate factors such as features of the targets and 
-distractors in order to identify the factors limit visual search 
-\cite{ecksteinVisualSearchRetrospective2011,wolfeFiveFactorsThat2017}.
-Importantly, it is these factors that *limit* visual search performance that form the 
-basis of seminal theories of selective visual attention, although authors differ in the 
-extent to which they identify limitations on visual search as synonymous with selective 
-attention. To remain neutral, we will use the term "capacity limitations". 
-As we review briefly below for context, there are essentially two competing proposed 
-sources of capacity limitations \cite{palmerSignalDetectionEvidence2011}. 
-The results supporting both remain unreconciled, in spite of nearly half a century of 
-studies based on this task. The core question is: to 
-what extent can limitations on visual search be attributed to an attention-like 
+What limits our ability to find what we are looking for in the cluttered noisy world we 
+see around us? One of the principle tasks that has been used to investigate this question 
+is a visual search task (Figure~\ref{fig1}) \cite{wolfeVisualSearch1998}
+we will refer to as the \emph{discrete item display search} task. 
+Most studies using this task experimentally manipulate factors such as features of the targets and 
+distractors in order to identify those factors that limit visual search 
+\cite{ecksteinVisualSearchRetrospective2011,wolfeFiveFactorsThat2017}, known as 
+\emph{capacity limitations}. There are essentially two models of capacity limitations: 
+\emph{attention-limited} and \emph{noise-limited} models \cite{palmerSignalDetectionEvidence2011}. 
+Briefly, we review these and describe how they depend in part on the 
+way the visual search task is performed. Both models 
+depend on what are known as \emph{set-size effects} seen when using visual search stimuli, 
+depicted schematically in \ref{fig1}\textbf{b}).
+Attention-limited models posit two-stage theories of visual processing, a first 
+\emph{preattentive} stage which can process single features such as color or orientation 
+in parallel, and a second \emph{attentive} stage which requires a serial computation to 
+binds features, resulting in a bottleneck 
+\cite{treismanFeatureintegrationTheoryAttention1980,wolfeGuidedSearchAlternative1989,wolfeGuidedSearchRevised1994}. 
+Evidence for this theory came from visual search 
+experiments where subjects were shown stimuli until responding, and their reaction time 
+was measured. Plotting reaction time as a function of set size revealed 
+lines whose slope were near zero (\ref{fig1}\textbf{b}, top row, left plot) 
+when a single feature distinguished the target from 
+distractors (\ref{fig1}, panel a, left column). 
+The slope of reaction time versus set size increased though (\ref{fig1}\textbf{b}, top row, middle plot), 
+when distinguishing the target from distractors required finding a 
+conjunction of features (\ref{fig1}, panel a, middle column). Slopes became 
+even steeper (\ref{fig1}\textbf{b}, top row, right plot) 
+when targets and distractors shared features and could only be 
+distinguished by their spatial configuration (\ref{fig1}\textbf{a}, right column). 
+This sort of set size effect has been replicated hundreds of times, although it remains 
+unclear why some search stimuli are processed effectively in parallel while others 
+face a bottleneck \cite{wolfeWhatCanMillion1998,wolfeFiveFactorsThat2017}.
+The second family of capacity limitations conceives of visual search as completely parallel but 
+noisy. These models arose in large part in reaction 
+to the way the visual search task was carried out when investigating
+serial mechanisms. Early studies that measured reaction times left several factors 
+uncontrolled, such as target-distractor similarity \cite{duncanVisualSearchStimulus1989}, 
+drops in acuity outside the fovea, eye movements, and effects resulting from visual 
+crowding \cite{bergenRapidDiscriminationVisual1983,ecksteinLowerVisualSearch1998a}. 
+Hence researchers designed versions of the visual search task that controlled for such 
+factors. Crucially, they showed subjects the 
+stimulus only briefly, to prevent eye movements, and measured accuracy instead of reaction
+time (shown schematically in \ref{fig1}\textbf{b}, bottom row). 
+Computational models of parallel mechanisms, based on signal detection theory, 
+successfully explained results from feature and conjunction search stimuli 
+(\ref{fig1}, panel a, left and middle columns) 
+\cite{palmerPsychophysicsVisualSearch2000,ecksteinVisualSearchRetrospective2011}.
+
+In spite of nearly half a century of studies based on the discrete item display search task,
+this core question remains unresolved: to what extent can limitations be attributed to an attention-like 
 computation, e.g. binding features into items, and to what extent can those limitations be 
-attributed to other computations, e.g. a decision-making process subject to  
-noisy internal representations?
-To foreshadow our approach below, we suggest that another way of posing this question is 
-to ask: if some algorithm could produce a statistical model capable of learning from data 
-to classify visual search stimuli as "target present" or "target absent" with high 
-accuracy, would the accuracy still be subject to some ceiling, due simply to the 
-constraints of the task? This way of posing the question bears some similarity to a 
+attributed to other computations, e.g. a decision-making process subject to noisy internal representations?
+To foreshadow our approach, we suggest another way of posing this question: 
+if some algorithm could produce a statistical model capable of learning from data 
+to classify visual search stimuli as target present or absent with high 
+accuracy, would that accuracy still be subject to some ceiling, due simply to the 
+constraints of the task? This framing bears some similarity to a 
 well-established framework in vision research known as ideal observer analysis 
-\cite{geislerIdealObserverAnalysis2003}. However, few ideal observer models have take the 
-form of "pixel-in, behavior-out", and the few that have do not generalize to many 
+\cite{geislerIdealObserverAnalysis2003}. However, few ideal observer models have taken the 
+form of "pixel-in, behavior-out", and therefore do not generalize to many 
 different types of visual search stimuli, so their predictive power is limited 
 \cite{geislerModelsOvertAttention2011}.
 
-Before we discuss how to address this gap in models, we briefly review the two competing 
-proposed sources of capacity limitations, and describe how they depend in part on the 
-way the visual search task is performed. Adopting the terms of other researchers, we will 
-call the first family "attention-limited", and the second "noise-limited" 
-\cite{palmerSignalDetectionEvidence2011}. Both attention-limited and noise-limited models 
-depend on what are known as *set-size effects* seem when using visual search stimuli, 
-which we will define in terms of how the visual search task is carried out. 
-Attention-limited models posit two-stage theories of visual processing, a first 
-*preattentive* stage which can process single features, such as color or orientation, 
-in parallel, and a second *attentive* stage that binds features to objects that processes 
-serially, which results in a bottleneck 
-\cite{treismanFeatureintegrationTheoryAttention1980,wolfeGuidedSearchAlternative1989,wolfeGuidedSearchRevised1994}. Evidence for this theory came from visual search 
-experiments where subjects were shown stimuli until responding, and their reaction time 
-was measured. Plotting reaction time as a function of set size revealed 
-lines whose slope were near zero when a single feature distinguished the target from 
-distractors (e.g., "red" v. "green"). The slope of reaction time v. set size increased 
-sharply, though, when distinguishing the target from distractors required finding a 
-conjunction of features (such as "red vertical" v. "red horizontal or green vertical"). 
-This sort of set size effect has been replicated hundreds of times, although it remains 
-unclear why some search stimuli seem to be processed effectively in parallel while others 
-face a bottleneck \cite{wolfeWhatCanMillion1998,wolfeFiveFactorsThat2017}.
-The second family of capacity limitations can be conceived of as completely parallel but 
-noisy processing. These models arose in large part in reaction 
-to the way the visual search task was carried out when investigating
-serial mechanisms. Early studies that measured reaction times left several factors 
-uncontrolled, such as target-distractor similarity [@duncanVisualSearchStimulus1989], 
-drops in acuity outside the fovea, eye movements, and effects resulting from visual 
-crowding \cite{bergenRapidDiscriminationVisual1983, ecksteinLowerVisualSearch1998}. 
-Hence researchers designed versions of the visual search task that controlled for such 
-factors \cite{palmerPsychophysicsVisualSearch2000}. Crucially, they showed subjects the 
-stimulus only briefly, to prevent eye movements, and measured accuracy instead of reaction
-time. Computational models of parallel mechanisms successfully explained results from 
-single feature and conjunction search stimuli. These models borrowed ideas from signal 
-detection theory that psychophysicists often employ, where sensory representations are
-imagined as distributions, and decisions are seen as thresholds on those distributions.
-What both attention-limited and noise-limited models have in common is that they are 
-both highly abstracted models of the visual system, in which low-level features pass 
-through a hierarchy until reaching a final stage consisting of a simple decision rule.
-
-
-
-\subsection{CNNs as models of the visual system}
+Both attention-limited and noise-limited models are highly abstracted models of the visual system,
+in which low-level features pass through a hierarchy until reaching a final stage consisting of
+a simple decision rule.
 Similarly, the architecture of convolutional neural networks (CNNs) now routinely used for
 computer vision tasks represents a highly abstracted view of the visual system.
 Many researchers have drawn parallels between the architecture of CNNs and the 
@@ -161,83 +171,145 @@ in particular in humans and other primates where this system has been most thoro
 studied. Like CNNs, the visual system has a hierarchical structure, and is thought to 
 function in part by performing transformations at each level of this hierarchy so that 
 high-dimensional, low-level features are mapped into low-dimensional abstract 
-representations. Several recent studies in the realm of cognitive neuroscience 
-have measured representations in more directly tested the similarities between CNNs and 
-the visual system, by comparing representations in both 
-\cite{khaligh-razaviDeepSupervisedNot2014, yaminsUsingGoaldrivenDeep2016, yaminsPerformanceoptimizedHierarchicalModels2014}. Representations 
-can be easily extracted from CNNs because they are "transparent box" models--i.e. we have 
-access to the "activity" of the individual units from which these models are built when 
-we "show" the CNNs a stimulus.
-A natural question to ask, for someone interested in visual search and models of the visual 
-system, is how CNNs perform this task. If CNNs are excellent models of the visual system, 
+representations. Several recent studies have found that that, when optimized to perform 
+tasks such as image classification, CNNs learn representations similar to those 
+observed in the visual system
+\cite{khaligh-razaviDeepSupervisedNot2014, yaminsUsingGoaldrivenDeep2016, 
+yaminsPerformanceoptimizedHierarchicalModels2014}. 
+These studies raise the question of whether CNNs that have learned such 
+representations behave similarly to humans performing other vision-based tasks. 
+Here we address this by measuring the behavior of CNNs trained for image classification 
+while they perform the discrete item display search task.
+If CNNs function similarly to the visual system, 
 one might expect them to be subject to the same limitations on visual search. Alternatively, 
 if CNNs are simply function approximators, one might expect that they would be able to 
 very easily learn to map the exclusive-or function of "target present or target absent", 
 especially when targets and distractors are easily discriminated by single feature 
 dimensions such as color. While there have been previous studies of neural networks 
-performing visual search tasks, we are aware of only one that employed architectures 
-which have been used in studies of the visual system referenced above.
+performing visual search tasks, we are aware of only one study \cite{poderCapacityLimitationsVisual2017} 
+that employed the sort of CNN architectures used in studies of the visual system referenced above.
+We replicate the methods from that study, and extend that author's results.
+In the interest of replicability, we have made the code and summary results \footnote{https://github.com/NickleDave/visual-search-nets} 
+available, and will release the raw data upon publication \footnote{at https://figshare.com/articles/visual-search-nets/7688840}.
 
 \section{Results}
 
-\subsection{CNNs trained for image classification show set size effects}
+\subsection{Fine-tuning CNNs trained for image classification results in human-like limits on accuracy in the discrete item display search task}
 
-\begin{figure}[ht]
+\begin{figure}[!ht]
 \begin{center}
 \includegraphics[width=\columnwidth]{fig2/fig2.png}
 \end{center}
-\caption{CNNs trained for image classification show set size effects.} 
-\label{sample-figure}
+\caption{
+\textbf{Human-like limits on accuracy of CNNs performing the discrete item display search task}
+As described in the text, when using weights pre-trained on ImageNet in convolutional layers, 
+and fine-tuning weights in fully-connected layers so AlexNet could perform the task, 
+this CNN showed decreases in accuracy as set size increased (\textbf{a}). This decrease was 
+smallest for feature search stimuli (left plot), intermediate for conjunction stimuli (middle plot), 
+and largest for spatial configuration stimuli (right plot). The same approach produced similar 
+results with the VGG16 architecture (\textbf{b}).
+} 
+\label{fig2}
 \end{figure}
 
+As referenced above, previous work suggests that optimizing CNNs to perform image 
+classification causes them to acquire representations which resemble those that can 
+be identified in the brain. We first tested whether the CNN architecture AlexNet 
+\cite{krizhevskyImagenetClassificationDeep2012}
+would be subject to human-like limits on the discrete item display search task, 
+when utilizing representations learned by optimizing the weights for image classification 
+on the ImageNet dataset \cite{dengImagenetLargescaleHierarchical2009}. 
+To do so, we used a \emph{fine-tuning} approach, in which we used pre-trained weights in earlier 
+convolutional layers of AlexNet, but randomly initialized weights in the later 
+fully-connected layers \cite{yosinskiHowTransferableAre2014}.
+More specifically, we replicated the training method described in
+\cite{poderCapacityLimitationsVisual2017}, where we trained each network that we tested with 
+6400 samples of \emph{one} of the visual search stimuli (e.g. feature search), and then 
+measured accuracy on a separate test set of 800 samples. Stimuli were generated with a 
+small Python package \footnote{https://github.com/NickleDave/searchstims} 
+which produced images the same size as the images used to train on 
+ImageNet, and were pre-processed in the same way as those images, 
+except that no re-sizing was done.
+This training method produced AlexNet models whose accuracy showed set-size dependence 
+similar to human subjects (Figure \ref{fig2}\textbf{a}). 
+For the three types of visual search stimuli that we used, there was a set size effect,
+where accuracy decreased as the set size increased. 
+This effect was smallest for feature search (left column), slightly 
+larger for conjunction search (middle column), and largest for spatial configuration 
+search. To test whether this effect was unique to AlexNet, we also used the same approach 
+with the VGG16 architecture, and produced similar results (Figure \ref{fig2}\textbf{b}). 
+In addition to finding set size effects that were qualitatively 
+similar to those seen in human subjects, we also noted that accuracy was always higher 
+for the "target absent" condition. We do not find reports of similar differences between 
+target present and target absent conditions in human subjects.
 
-\subsection{Changing hyperparameters and balancing the dataset largely 
-eliminates set size effects}
 
-Because we defined set size with effects in terms of accuracy, it could 
-be the case that our results do not arise because of a similarity between 
-how CNNs and brains process images. Instead they could be an artifact of 
-how we trained networks. As discussed below, we see this as a general issue 
-for studies that compare cognitive science and artificial intelligence, and 
-so here we report results that might otherwise be considered methodological 
-troubleshooting.
-To determine whether our results were an artifact of training, we considered aspects of 
-training that can impair accuracy: the amount of training data, the hyperparameters 
-used to train the network, and the statistics of the dataset. As shown in 
-figure two, we found that all three factors contributed to the effect we saw.
-We generated learning curves where we plotted accuracy on the training and 
-test set as a function of the training set size. These learning curves revealed 
-that the original size we chose for the training set was far from where 
-accuracy on training and test set converged. This result indicates that the 
-network can improve accuracy with increased training data. To gain insight 
-about how accuracy depended on the learning rate, a key hyperparameter, and 
-the balance of the data set, we plotted accuracy on the training set 
-\emph{separately for each set size in the visual search stimuli}. As shown in 
-figure 2b, these plots revealed (1) that accuracy had not yet reached some asymptotic 
-value, and (2) that there was an inverse relationship between the set size of 
-a visual search stimulus and the rate that its accuracy increased.
-To test whether we could improve the learning rate, we used random search, and 
-did find we were able to improve accuracy and decrease training time by 
-abandoning the fine-tuning approach and instead using a typical learning rate 
-on the fully-connected layers (and simply freezing the pre-trained weights in other layers). 
 
-Use standard APA citation format. Citations within the text should
-include the author's last name and year. If the authors' names are
-included in the sentence, place only the year in parentheses, as in
-\citeA{NewellSimon1972a}, but otherwise place the entire reference in
-parentheses with the authors and year separated by a comma
-\cite{NewellSimon1972a}. List multiple references alphabetically and
-separate them by semicolons
-\cite{ChalnickBillman1988a,NewellSimon1972a}. Use the
-``et~al.'' construction only after listing all the authors to a
-publication in an earlier reference and for citations with four or
-more authors.
+\subsection{Changing training greatly reduces set size effects}
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=\columnwidth]{fig3/fig3.png}
+\end{center}
+\caption{
+\textbf{Changing training greatly reduces set size effects.}
+} 
+\label{fig3}
+\end{figure}
+
+Because accuracy of CNNs depends in part on training, it could be the case that 
+the results just described are an artifact of how we trained the networks. 
+To gain insight into how our results depended on training, 
+we plotted training histories where we measured accuracy on the training set 
+at each epoch \emph{separately for each set size in the visual search stimuli}.
+These plots revealed (1) that accuracy had not yet approached some asymptotic 
+value by the end of training, and (2) that there was an inverse relationship between 
+the set size of a visual search stimulus and the rate that its accuracy increased, 
+e.g. accuracy on set size 1 reached its highest value within a few epochs, while accuracy on 
+set size 8 never converged on an asymptotic value (figure \ref{fig3}, panel a).
+Because these plots showed accuracy had not converged when we stopped training, we 
+used random search to find an optimal learning rate (a key hyperparameter).
+We did find we were able to improve accuracy and decrease training time by 
+using a typical learning rate on the fully-connected layers, while simply 
+freezing the pre-trained weights in earlier convolutional layers.
+Based on the the observation that different set sizes converged at different rates, we 
+also augmented the number of samples for larger set sizes.
+It may seem counterintuitive to "unbalance" the dataset this way, until one considers 
+that there are many more combinations of displays of set size 8 then of set size 1. 
+For example, if items are located on a 5-by-5 grid, then for set size 1 there are 25-pick-1
+combinations, i.e. 25,  while for set size 8 there are 25-pick-8 combinations (approximately 100k).
+(Note that the library we used to generate images ensures that there are no repeats; for set size 1, 
+jitter is added to produce more than 25 possible displays; this is typically done in experiments 
+with human subjects, and acts as a form of data augmentation for neural networks.)
+We simply multiplied the number of samples by the set size, since scaling 
+by the number of possible combinations would have produced prohibitively large datasets.
+After making these changes to the learning rate and the statistics of the dataset, 
+
+\begin{figure}[!ht]
+\begin{center}
+\includegraphics[width=\columnwidth]{fig4/fig4.png}
+\end{center}
+\caption{
+\textbf{Human-like limits on accuracy of CNNs performing the discrete item display search task}
+As described in the text, when using weights pre-trained on ImageNet in convolutional layers, 
+and fine-tuning weights in fully-connected layers so AlexNet could perform the task, 
+this CNN showed decreases in accuracy as set size increased (\textbf{a}). This decrease was 
+smallest for feature search stimuli (left plot), intermediate for conjunction stimuli (middle plot), 
+and largest for spatial configuration stimuli (right plot). The same approach produced similar 
+results with the VGG16 architecture (\textbf{b}).
+} 
+\label{fig2}
+\end{figure}
 
 \section{Discussion}
 
 \subsection{Implications for comparative studies of neuroscience and 
 artificial intelligence}
 - problem for any 
+we see this as a general issue 
+for studies that compare cognitive science and artificial intelligence, and 
+so here we report results that might otherwise be considered methodological 
+troubleshooting.
 
 - e.g. Bengio study of gestalt fx
 
@@ -246,85 +318,15 @@ artificial intelligence}
 - brain optimized for something else besides classifying static images
 - in this sense, consistent with findings that recurrent
 
-\subsection{Footnotes}
-
-Indicate footnotes with a number\footnote{Sample of the first
-footnote.} in the text. Place the footnotes in 9~point type at the
-bottom of the column on which they appear. Precede the footnote block
-with a horizontal rule.\footnote{Sample of the second footnote.}
-
-
-\subsection{Tables}
-
-Number tables consecutively. Place the table number and title (in
-10~point) above the table with one line space above the caption and
-one line space below it, as in Table~\ref{sample-table}. You may float
-tables to the top or bottom of a column, or set wide tables across
-both columns.
-
-\begin{table}[!ht]
-\begin{center} 
-\caption{Sample table title.} 
-\label{sample-table} 
-\vskip 0.12in
-\begin{tabular}{ll} 
-\hline
-Error type    &  Example \\
-\hline
-Take smaller        &   63 - 44 = 21 \\
-Always borrow~~~~   &   96 - 42 = 34 \\
-0 - N = N           &   70 - 47 = 37 \\
-0 - N = 0           &   70 - 47 = 30 \\
-\hline
-\end{tabular} 
-\end{center} 
-\end{table}
-
-
-\subsection{Figures}
-
-Make sure that the artwork can be printed well (e.g. dark colors) and that 
-the figures make understanding the paper easy.
- Number figures sequentially, placing the figure
-number and caption, in 10~point, after the figure with one line space
-above the caption and one line space below it, as in
-Figure~\ref{sample-figure}. If necessary, leave extra white space at
-the bottom of the page to avoid splitting the figure and figure
-caption. You may float figures to the top or bottom of a column, or
-set wide figures across both columns.
-
-\begin{figure}[ht]
-\begin{center}
-\includegraphics{fig1}
-\end{center}
-\caption{This is a figure.} 
-\label{sample-figure}
-\end{figure}
-
-
 \section{Acknowledgments}
-
-Place acknowledgments (including funding information) in a section at
-the end of the paper.
-
-
-\section{References Instructions}
-
-Follow the APA Publication Manual for citation format, both within the
-text and in the reference list, with the following exceptions: (a) do
-not cite the page numbers of any book, including chapters in edited
-volumes; (b) use the same format for unpublished references as for
-published ones. Alphabetize references by the surnames of the authors,
-with single author entries preceding multiple author entries. Order
-references by the same authors by the year of publication, with the
-earliest first.
-
-Use a first level section heading, ``{\bf References}'', as shown
-below. Use a hanging indent style, with the first line of the
-reference flush against the left margin and subsequent lines indented
-by 1/8~inch. Below are example references for a conference paper, book
-chapter, journal article, dissertation, book, technical report, and
-edited volume, respectively.
+Research funded by the Lifelong Learning Machines program, 
+DARPA/Microsystems Technology Office, DARPA cooperative agreement HR0011-18-2-0019.
+David Nicholson was partially supported by the 2017 William K. and Katherine W. Estes Fund
+to F. Pestilli, R. Goldstone and L. Smith, Indiana University Bloomington.
+Thank you to Zsolt Kira and Yen-Chang Hsu for feedback on results,
+and for suggesting changes to training methods.
+Thank you also to Constantine Dovrolis and Sarah Pallas for feedback on earlier versions 
+of this work.
 
 \bibliographystyle{apacite}
 
