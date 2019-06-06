@@ -11,6 +11,7 @@ import joblib
 def data(train_dir,
          train_size,
          gz_filename,
+         stim_types=None,
          val_size=None,
          test_size=None,
          train_size_per_set_size=None,
@@ -27,15 +28,24 @@ def data(train_dir,
     train_dir : str
         path to directory where training data is saved
     train_size : int
-        number of samples to put in training data set
+        number of samples to put in training data set.
+        Note that if there is more than on stimulus type in the source data set, then the number of stimuli from
+        each type will be train_size / number of types.
     gz_filename : str
         name of .gz file in which to save dataset
+    stim_types : list
+        of strings; specifies which visual search stimulus types to use when creating dataset. Strings must be keys in
+        .json file within train_dir. Default is None, in which case all types found in .json file will be used.
     val_size : int
         number of samples to put in validation data set.
         Default is None, in which case there will be no validation set.
+        Note that if there is more than on stimulus type in the source data set, then the number of stimuli from
+        each type will be val_size / number of types.
     test_size : int
         number of samples to put in test data set.
         Default is None, in which case all samples not used in training and validation sets are used for test set.
+        Note that if there is more than on stimulus type in the source data set, then the number of stimuli from
+        each type will be test_size / number of types.
 
     Returns
     -------
@@ -108,7 +118,20 @@ def data(train_dir,
     with open(fname_json) as f:
         fnames_dict = json.load(f)
 
-    num_stim_types = len(fnames_dict)  # number of keys in fnames_dict will be number of stim
+    if stim_types:
+        if type(stim_types) != list or not all([type(stim_type) == str for stim_type in stim_types]):
+            raise TypeError('stim_types must be a list of strings')
+        if not all([stim_type in fnames_dict for stim_type in stim_types]):
+            not_in_fnames_dict = [stim_type for stim_type in stim_types if stim_type not in fnames_dict]
+            raise ValueError(
+                f'the following stimulus types were not found in {fname_json}: {not_in_fnames_dict}'
+            )
+        # just keep the stimuli specified in stim_types
+        fnames_dict = {k: v for k, v in fnames_dict.items() if k in stim_types}
+    else:
+        stim_types = list(fnames_dict.keys())  # number of keys in fnames_dict will be number of stim
+    num_stim_types = len(stim_types)
+
     train_size_per_stim_type = train_size / num_stim_types
     if train_size_per_stim_type.is_integer():
         train_size_per_stim_type = int(train_size_per_stim_type)
@@ -116,10 +139,20 @@ def data(train_dir,
         raise TypeError(f'train_size_per_stim_type, {train_size_per_stim_type}, is is not a whole number.\n'
                         'It is calculated as: (train_size / number of visual search stimulus types))\n'
                         'Adjust total number of samples, or number of stimulus types.')
+
+    if train_size_per_set_size:
+        total_train_size_from_per_set_size = sum(train_size_per_set_size)
+        if total_train_size_from_per_set_size != train_size_per_stim_type:
+            raise ValueError(
+                f'total number of training samples specified in '
+                f'train_size_per_set_size, {total_train_size_from_per_set_size} does not equal number determined '
+                f'by dividing train_size up by number of stim_types: {train_size_per_stim_type}'
+            )
+
     if val_size:
         val_size_per_stim_type = val_size / num_stim_types
         if val_size_per_stim_type.is_integer():
-            val_size_per_stim_type=int(val_size_per_stim_type)
+            val_size_per_stim_type = int(val_size_per_stim_type)
         else:
             raise TypeError('val_size_per_set_size is not a whole number, adjust '
                             'total number of samples, or number of set sizes.')
@@ -138,7 +171,7 @@ def data(train_dir,
         test_size_per_stim_type = -1
 
     set_sizes_by_stim_type = {}
-    # below, stim type will be visual search stimulus type from searchstims package
+
     for stim_type, stim_info_by_set_size in fnames_dict.items():
         # and this will be set sizes declared by user for this stimulus (could be diff't for each stimulus type).
         # First have to convert set size from char to int
@@ -148,10 +181,10 @@ def data(train_dir,
         set_sizes_by_stim_type[stim_type] = set_sizes
 
         if train_size_per_set_size is None:
-            train_size_per_set_size = (train_size_per_stim_type / len(set_sizes)) / 2
-            if train_size_per_set_size.is_integer():
-                train_size_per_set_size = int(train_size_per_set_size)
-                train_size_per_set_size = [train_size_per_set_size for _ in set_sizes]
+            train_size_per_set_size_this_stim = (train_size_per_stim_type / len(set_sizes)) / 2
+            if train_size_per_set_size_this_stim.is_integer():
+                train_size_per_set_size_this_stim = int(train_size_per_set_size_this_stim)
+                train_size_per_set_size_this_stim = [train_size_per_set_size_this_stim for _ in set_sizes]
             else:
                 raise TypeError(f'train_size_per_set_size, {train_size_per_set_size}, is is not a whole number.\n'
                                 'It is calculated as: (train_size_per_stim_type / len(set_sizes)) / 2\n'
@@ -159,43 +192,41 @@ def data(train_dir,
                                 'Adjust total number of samples, or number of set sizes.')
         else:
             # if train_size_per_set_size is not None, divide each element in two (for target present / absent)
-            train_size_per_set_size = [item // 2 if item % 2 == 0 else item / 2
-                                       for item in train_size_per_set_size]
+            train_size_per_set_size_this_stim = [item // 2 if item % 2 == 0 else item / 2
+                                                 for item in train_size_per_set_size]
 
         if val_size:
             if val_size_per_set_size is None:
-                val_size_per_set_size = (val_size_per_stim_type / len(set_sizes)) / 2
-                if val_size_per_set_size.is_integer():
-                    val_size_per_set_size = int(val_size_per_set_size)
-                    val_size_per_set_size = [val_size_per_set_size for _ in set_sizes]
+                val_size_per_set_size_this_stim = (val_size_per_stim_type / len(set_sizes)) / 2
+                if val_size_per_set_size_this_stim.is_integer():
+                    val_size_per_set_size_this_stim = int(val_size_per_set_size_this_stim)
+                    val_size_per_set_size_this_stim = [val_size_per_set_size_this_stim for _ in set_sizes]
                 else:
                     raise TypeError(f'val_size_per_set_size, {val_size_per_set_size},is not a whole number, adjust '
                                     'total number of samples, or number of set sizes.')
             else:
                 # if val_size_per_set_size is not None, divide each element in two (for target present / absent)
-                val_size_per_set_size = [item // 2 if item % 2 == 0 else item / 2
-                                         for item in val_size_per_set_size
-                                         ]
+                val_size_per_set_size_this_stim = [item // 2 if item % 2 == 0 else item / 2
+                                                   for item in val_size_per_set_size]
         else:
-            val_size_per_set_size = [0 for _ in set_sizes]
+            val_size_per_set_size_this_stim = [0 for _ in set_sizes]
 
         if test_size is None or test_size == -1:
             # "-1" means "use the remaining samples for the test set"
-            test_size_per_set_size = [-1 for _ in set_sizes]
+            test_size_per_set_size_this_stim = [-1 for _ in set_sizes]
         elif test_size > 0:
             if test_size_per_set_size is None:
-                test_size_per_set_size = (test_size_per_stim_type / len(set_sizes)) / 2
-                if test_size_per_set_size.is_integer():
-                    test_size_per_set_size = int(test_size_per_set_size)
-                    test_size_per_set_size = [test_size_per_set_size for _ in set_sizes]
+                test_size_per_set_size_this_stim = (test_size_per_stim_type / len(set_sizes)) / 2
+                if test_size_per_set_size_this_stim.is_integer():
+                    test_size_per_set_size_this_stim = int(test_size_per_set_size_this_stim)
+                    test_size_per_set_size_this_stim = [test_size_per_set_size_this_stim for _ in set_sizes]
                 else:
                     raise TypeError(f'test_size_per_set_size, {test_size_per_set_size},is not a whole number, adjust '
                                     'total number of samples, or number of set sizes.')
             else:
                 # if test_size_per_set_size is not None, divide each element in two (for target present / absent)
-                test_size_per_set_size = [item // 2 if item % 2 == 0 else item / 2
-                                          for item in test_size_per_set_size]
-
+                test_size_per_set_size_this_stim = [item // 2 if item % 2 == 0 else item / 2
+                                                    for item in test_size_per_set_size]
         else:
             raise ValueError(f'invalid test size: {test_size}')
 
@@ -222,9 +253,9 @@ def data(train_dir,
              train_size,
              val_size,
              test_size) in zip(stim_fnames_by_set_size.items(),
-                               train_size_per_set_size,
-                               val_size_per_set_size,
-                               test_size_per_set_size):
+                               train_size_per_set_size_this_stim,
+                               val_size_per_set_size_this_stim,
+                               test_size_per_set_size_this_stim):
             for (present_or_absent, stim_fnames) in stim_fnames_present_absent.items():
                 total_size = sum([size
                                   for size in (train_size, val_size, test_size)
@@ -246,7 +277,7 @@ def data(train_dir,
                 set_size_vec_train.extend([set_size] * len(tmp_x_train))
                 stim_type_vec_train.extend([stim_type] * len(tmp_x_train))
 
-                if val_size> 0:
+                if val_size > 0:
                     val_inds = np.asarray(
                         [inds.pop() for _ in range(val_size)]
                     )
