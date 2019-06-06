@@ -91,6 +91,115 @@ def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), ax=None,
         plt.savefig(save_as)
 
 
+MN_ACC_TARGET_PRESENT_LABEL = 'mean acc.\ntarget present'
+MN_ACC_TARGET_ABSENT_LABEL = 'mean acc.\ntarget absent'
+
+
+def acc_v_set_size_df(df, net_name, train_type, stimulus, ax=None,
+                      title=None, save_as=None, figsize=(10, 5),
+                      set_xlabel=False, set_ylabel=False, set_ylim=True,
+                      ylim=(0, 1.1), plot_mean=True, add_legend=False):
+    """plot accuracy as a function of visual search task set size
+    for models trained on a single task or dataset
+
+    Accepts a Pandas dataframe and column names that determine what to plot.
+    Dataframe is produces by searchstims.utils.general.results_csv function.
+
+    Parameters
+    ----------
+    df : pandas.Dataframe
+        path to results.gz file saved after measuring accuracy of trained networks
+        on test set of visual search stimuli
+    set_sizes : list
+        of int, set sizes of visual search stimuli. Default is [1, 2, 4, 8].
+    ax : matplotlib.Axis
+        axis on which to plot figure. Default is None, in which case a new figure with
+        a single axis is created for the plot.
+    title : str
+        string to use as title of figure. Default is None.
+    save_as : str
+        path to directory where figure should be saved. Default is None, in which
+        case figure is not saved.
+    figsize : tuple
+        (width, height) in inches. Default is (10, 5). Only used if ax is None and a new
+        figure is created.
+    set_xlabel : bool
+        if True, set the value of xlabel to "set size". Default is False.
+    set_ylabel : bool
+        if True, set the value of ylabel to "accuracy". Default is False.
+    set_ylim : bool
+        if True, set the y-axis limits to the value of ylim.
+    ylim : tuple
+        with two elements, limits for y-axis. Default is (0, 1.1).
+    plot_mean : bool
+        if True, find mean accuracy and plot as a separate solid line. Default is True.
+    add_legend : bool
+        if True, add legend to axis. Default is False.
+    task_name : str
+
+
+    Returns
+    -------
+    None
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+        fig.set_size_inches(figsize)
+
+    df = df.loc[(df['net_name'] == net_name) & (df['train_type'] == train_type) & (df['stimulus'] == stimulus)]
+
+    acc_target_present = []
+    acc_target_absent = []
+    set_sizes = None
+    net_nums = df['net_number'].unique()
+    for net_num in net_nums:
+        df_this_net_num = df.loc[(df['net_number'] == net_num)]
+        for targ_cond in ['present', 'absent']:
+            df_this_cond = df_this_net_num.loc[(df_this_net_num['target_condition'] == targ_cond)]
+            acc = df_this_cond['accuracy'].values
+            if targ_cond == 'present':
+                acc_target_present.append(acc)
+            elif targ_cond == 'absent':
+                acc_target_absent.append(acc)
+
+            set_size = df_this_cond['set_size'].values
+            if set_sizes is None:
+                set_sizes = set_size
+            else:
+                assert np.array_equal(set_sizes, set_size)
+
+    for arr_acc_present, arr_acc_absent in zip(acc_target_present, acc_target_absent):
+        ax.plot(set_sizes, arr_acc_present, color='violet', linestyle='--', marker='o', label=None)
+        ax.plot(set_sizes, arr_acc_absent, color='lightgreen', linestyle='--', marker='o', label=None)
+
+    if plot_mean:
+        mn_acc_present = np.asarray(acc_target_present).mean(axis=0)
+        mn_acc_present_line, = ax.plot(set_sizes, mn_acc_present, color='magenta', linewidth=2,
+                                       label=MN_ACC_TARGET_PRESENT_LABEL)
+        mn_acc_absent = np.asarray(acc_target_absent).mean(axis=0)
+        mn_acc_absent_line, = ax.plot(set_sizes, mn_acc_absent, color='lawngreen', linewidth=2,
+                                      label=MN_ACC_TARGET_ABSENT_LABEL)
+
+    ax.set_xticks(set_sizes)
+
+    if title:
+        ax.set_title(title)
+    if set_xlabel:
+        ax.set_xlabel('set size')
+    if set_ylabel:
+        ax.set_ylabel('accuracy')
+    if set_ylim:
+        ax.set_ylim(ylim)
+
+    if add_legend:
+        ax.legend(handles=(mn_acc_present_line, mn_acc_absent_line),
+                  labels=(MN_ACC_TARGET_PRESENT_LABEL, MN_ACC_TARGET_ABSENT_LABEL),
+                  loc='lower left')
+
+    if save_as:
+        plt.savefig(save_as)
+
+
 def ftr_v_spt_conj(ftr_results, spt_conj_results, epochs,
                    set_sizes=(1, 2, 4, 8), savefig=False, savedir=None,
                    figsize=(10, 5)):
