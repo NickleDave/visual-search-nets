@@ -19,6 +19,7 @@ def _call_data(config):
     """helper function to call searchstims.data"""
     data(train_dir=config.data.train_dir,
          train_size=config.data.train_size,
+         stim_types=config.data.stim_types,
          val_size=config.data.val_size,
          test_size=config.data.test_size,
          gz_filename=config.data.gz_filename,
