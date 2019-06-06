@@ -96,6 +96,12 @@ def parse_config(config_fname):
     # ------------- unpack [DATA] section of config.ini file -----------------------------------------------------------
     train_dir = config['DATA']['TRAIN_DIR']
     train_size = int(config['DATA']['TRAIN_SIZE'])
+
+    if config.has_option('DATA', 'STIM_TYPES'):
+        stim_types = ast.literal_eval(config['DATA']['STIM_TYPES'])
+    else:
+        stim_types = None
+
     if config.has_option('DATA', 'VALIDATION_SIZE'):
         val_size = int(config['DATA']['VALIDATION_SIZE'])
     else:
@@ -138,6 +144,7 @@ def parse_config(config_fname):
     data_config = DataConfig(train_dir,
                              train_size,
                              gz_filename,
+                             stim_types,
                              val_size,
                              test_size,
                              set_sizes,
