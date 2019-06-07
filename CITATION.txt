@@ -1,0 +1,11 @@
+If you use this software for any published work, please cite it using the reference
+below:
+
+@Misc{,
+  author = {David Nicholson},
+  doi = {10.5281/zenodo.3171396}
+  title = {visual-search-nets},
+  year = {2019},
+  url = "https://github.com/NickleDave/visual-search-nets"
+}
+
