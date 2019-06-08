@@ -181,16 +181,18 @@ def acc_v_set_size_df(df, net_name, train_type, stimulus, ax=None,
                 assert np.array_equal(set_sizes, set_size)
 
     for arr_acc_present, arr_acc_absent in zip(acc_target_present, acc_target_absent):
-        ax.plot(set_sizes, arr_acc_present, color='violet', linestyle='--', marker='o', label=None)
-        ax.plot(set_sizes, arr_acc_absent, color='lightgreen', linestyle='--', marker='o', label=None)
+        ax.plot(set_sizes, arr_acc_present, color='violet', linewidth=2, linestyle='--',
+                marker='o', zorder=1, alpha=0.85, label=None)
+        ax.plot(set_sizes, arr_acc_absent, color='lightgreen', linewidth=2, linestyle='--',
+                marker='o', zorder=1, alpha=0.85, label=None)
 
     if plot_mean:
         mn_acc_present = np.asarray(acc_target_present).mean(axis=0)
-        mn_acc_present_line, = ax.plot(set_sizes, mn_acc_present, color='magenta', linewidth=2,
-                                       label=MN_ACC_TARGET_PRESENT_LABEL)
+        mn_acc_present_line, = ax.plot(set_sizes, mn_acc_present, color='magenta', linewidth=4,
+                                       zorder=0, label=MN_ACC_TARGET_PRESENT_LABEL)
         mn_acc_absent = np.asarray(acc_target_absent).mean(axis=0)
-        mn_acc_absent_line, = ax.plot(set_sizes, mn_acc_absent, color='lawngreen', linewidth=2,
-                                      label=MN_ACC_TARGET_ABSENT_LABEL)
+        mn_acc_absent_line, = ax.plot(set_sizes, mn_acc_absent, color='lawngreen', linewidth=4,
+                                      zorder=0, label=MN_ACC_TARGET_ABSENT_LABEL)
 
     ax.set_xticks(set_sizes)
 
