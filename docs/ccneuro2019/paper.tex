@@ -42,30 +42,7 @@ limits on accuracy when trained to generalize across multiple search stimuli}
 \section{Abstract}
 {
 \bf
-What limits our ability to find what we are looking for in the cluttered noisy world? 
-To investigate this, cognitive scientists have long used a 
-visual search task in which subjects view a display of discrete items on each trial, 
-and report whether a target is present among distractors. 
-In spite of hundreds of studies, it remains unclear how to relate 
-effects found using the discrete item display search task to computations 
-in the visual system. A separate thread of research 
-has studied the visual system of humans and other primates using convolutional neural 
-networks (CNNs) as models. CNNs have a hierarchical structure similar to 
-the visual system, and multiple lines of evidence suggest that training CNNs to 
-perform tasks such as image classification causes them to learn  
-representations similar to those used by the visual system.
-These studies raise the question of whether CNNs that have learned such 
-representations behave similarly to humans performing other vision-based tasks. 
-Here we address this by measuring the behavior of CNNs trained for image classification 
-while they perform the discrete item display search task.
-We first show how a fine-tuning approach often used to adapt pre-trained CNNs to new 
-tasks can produce models that show human-like limitations on this task. However we 
-then demonstrate that we can greatly reduce these effects by changing training,
-without changing the learned representations. Lastly we show that accuracy is 
-impaired when single networks are trained to discriminate multiple types of visual 
-search stimuli. Based on these findings, we suggest that the need to generalize across
-multiple tasks may be one source of limitations on visual search for both CNNs and 
-the primate visual system.
+What limits our ability to find what we are looking for in the cluttered noisy world? To investigate this, cognitive scientists have long used visual search. In spite of hundreds of studies, it remains unclear how to relate effects found using the discrete item display search task to computations in the visual system. A separate thread of research has studied the visual system of humans and other primates using convolutional neural networks (CNNs) as models. Multiple lines of evidence suggest that training CNNs to perform tasks such as image classification causes them to learn  representations similar to those used by the visual system. These studies raise the question of whether CNNs that have learned such representations behave similarly to humans performing other vision-based tasks. Here we address this by measuring the behavior of CNNs trained for image classification while they perform the discrete item display search task. We first show how a fine-tuning approach often used to adapt pre-trained CNNs to new tasks can produce models that show human-like limitations on this task. However we then demonstrate that we can greatly reduce these effects by changing training,without changing the learned representations. Lastly we show that accuracy is not impaired when single networks are trained to discriminate multiple types of visual search stimuli. Based on these findings, we suggest that CNNs are not necessarily subject to the same limitations as the primate visual system.
 }
 \begin{quote}
 \small
@@ -81,16 +58,16 @@ attention;visual search
 \end{center}
 \caption{
 \textbf{The discrete item display search task}. On each trial, subjects view  
- a display (example images, panel a) of discrete items on a flat background. Subjects 
+ a display (example images, \textbf{a}) of discrete items on a flat background. Subjects 
 respond whether the target is present or absent (condition varies across rows 
-of panel a). Another condition that varies across trials is the set size, that is, 
-the total number of targets and distractors (varies across rows in a). Many studies 
+of \textbf{a}). Another condition that varies across trials is the set size, that is, 
+the total number of targets and distractors (varies across rows in \textbf{a}). Many studies 
 focus on set size effects. Typical effects are an increase in reaction time 
-or a decrease in accuracy as set size increases (depicted schematically in panel b, 
+or a decrease in accuracy as set size increases (depicted schematically in \textbf{b}, 
 redrawn from \cite{wolfeReactionTimeDistributions2010} and \cite{ecksteinLowerVisualSearch1998a}). 
 Effects vary based on the features that distinguish targets from distractors 
 (shown in columns). Details in introduction. Accuracy for spatial configuration-type 
-stimuli not shown in panel b because this has been less studied (but see 
+stimuli not shown in \textbf{b} because this has been less studied (but see 
 \cite{palmerSignalDetectionEvidence2011}).
 }
 \label{fig1}
@@ -119,10 +96,10 @@ experiments where subjects were shown stimuli until responding, and their reacti
 was measured. Plotting reaction time as a function of set size revealed 
 lines whose slope were near zero (\ref{fig1}\textbf{b}, top row, left plot) 
 when a single feature distinguished the target from 
-distractors (\ref{fig1}, panel a, left column). 
+distractors (\ref{fig1}, \textbf{a}, left column). 
 The slope of reaction time versus set size increased though (\ref{fig1}\textbf{b}, top row, middle plot), 
 when distinguishing the target from distractors required finding a 
-conjunction of features (\ref{fig1}, panel a, middle column). Slopes became 
+conjunction of features (\ref{fig1}\textbf{a}, middle column). Slopes became 
 even steeper (\ref{fig1}\textbf{b}, top row, right plot) 
 when targets and distractors shared features and could only be 
 distinguished by their spatial configuration (\ref{fig1}\textbf{a}, right column). 
@@ -135,14 +112,14 @@ to the way the visual search task was carried out when investigating
 serial mechanisms. Early studies that measured reaction times left several factors 
 uncontrolled, such as target-distractor similarity \cite{duncanVisualSearchStimulus1989}, 
 drops in acuity outside the fovea, eye movements, and effects resulting from visual 
-crowding \cite{bergenRapidDiscriminationVisual1983,ecksteinLowerVisualSearch1998a}. 
+crowding \cite{ecksteinLowerVisualSearch1998a}. 
 Hence researchers designed versions of the visual search task that controlled for such 
 factors. Crucially, they showed subjects the 
 stimulus only briefly, to prevent eye movements, and measured accuracy instead of reaction
 time (shown schematically in \ref{fig1}\textbf{b}, bottom row). 
 Computational models of parallel mechanisms, based on signal detection theory, 
 successfully explained results from feature and conjunction search stimuli 
-(\ref{fig1}, panel a, left and middle columns) 
+(\ref{fig1}\textbf{a}, left and middle columns) 
 \cite{palmerPsychophysicsVisualSearch2000,ecksteinVisualSearchRetrospective2011}.
 
 In spite of nearly half a century of studies based on the discrete item display search task,
@@ -174,18 +151,12 @@ high-dimensional, low-level features are mapped into low-dimensional abstract
 representations. Several recent studies have found that that, when optimized to perform 
 tasks such as image classification, CNNs learn representations similar to those 
 observed in the visual system
-\cite{khaligh-razaviDeepSupervisedNot2014, yaminsUsingGoaldrivenDeep2016, 
-yaminsPerformanceoptimizedHierarchicalModels2014}. 
+\cite{yaminsUsingGoaldrivenDeep2016, yaminsPerformanceoptimizedHierarchicalModels2014}. 
 These studies raise the question of whether CNNs that have learned such 
 representations behave similarly to humans performing other vision-based tasks. 
 Here we address this by measuring the behavior of CNNs trained for image classification 
 while they perform the discrete item display search task.
-If CNNs function similarly to the visual system, 
-one might expect them to be subject to the same limitations on visual search. Alternatively, 
-if CNNs are simply function approximators, one might expect that they would be able to 
-very easily learn to map the exclusive-or function of "target present or target absent", 
-especially when targets and distractors are easily discriminated by single feature 
-dimensions such as color. While there have been previous studies of neural networks 
+While there have been previous studies of neural networks 
 performing visual search tasks, we are aware of only one study \cite{poderCapacityLimitationsVisual2017} 
 that employed the sort of CNN architectures used in studies of the visual system referenced above.
 We replicate the methods from that study, and extend that author's results.
@@ -193,8 +164,6 @@ In the interest of replicability, we have made the code and summary results \foo
 available, and will release the raw data upon publication \footnote{at https://figshare.com/articles/visual-search-nets/7688840}.
 
 \section{Results}
-
-\subsection{Fine-tuning CNNs trained for image classification results in human-like limits on accuracy in the discrete item display search task}
 
 \begin{figure}[!ht]
 \begin{center}
@@ -243,16 +212,20 @@ similar to those seen in human subjects, we also noted that accuracy was always 
 for the "target absent" condition. We do not find reports of similar differences between 
 target present and target absent conditions in human subjects.
 
-
-
-\subsection{Changing training greatly reduces set size effects}
-
 \begin{figure}[ht]
 \begin{center}
 \includegraphics[width=\columnwidth]{fig3/fig3.png}
 \end{center}
 \caption{
 \textbf{Changing training greatly reduces set size effects.}
+Training histories showed that the accuracy of models trained 
+with the fine tuning approach did not converge
+on some asymptotic value, and 
+varied depending on the set size of the search stimuli (\textbf{a}, left plot). 
+Increasing the learning rate and including more examples of stimuli with 
+larger set sizes greatly sped up convergence (\textbf{a}, right plot).
+AlexNet models trained with this higher learning rate and larger training set
+showed reduced set size effects (\textbf{b}).
 } 
 \label{fig3}
 \end{figure}
@@ -266,9 +239,9 @@ These plots revealed (1) that accuracy had not yet approached some asymptotic
 value by the end of training, and (2) that there was an inverse relationship between 
 the set size of a visual search stimulus and the rate that its accuracy increased, 
 e.g. accuracy on set size 1 reached its highest value within a few epochs, while accuracy on 
-set size 8 never converged on an asymptotic value (figure \ref{fig3}, panel a).
+set size 8 never converged on an asymptotic value (figure \ref{fig3}\textbf{a}).
 Because these plots showed accuracy had not converged when we stopped training, we 
-used random search to find an optimal learning rate (a key hyperparameter).
+used random search to find an optimal learning rate, a key hyperparameter.
 We did find we were able to improve accuracy and decrease training time by 
 using a typical learning rate on the fully-connected layers, while simply 
 freezing the pre-trained weights in earlier convolutional layers.
@@ -284,39 +257,35 @@ with human subjects, and acts as a form of data augmentation for neural networks
 We simply multiplied the number of samples by the set size, since scaling 
 by the number of possible combinations would have produced prohibitively large datasets.
 After making these changes to the learning rate and the statistics of the dataset, 
+we saw that the set size effects were greatly reduced \ref{fig3}\textbf{b}. This indicates 
+that these effects are due in least at part to how we trained the networks.
+
+Because neural networks, including CNNs, act as function approximators, it could also be the case 
+that they were able to perform the discrete item display search task with relatively high 
+accuracy simply by learning an exclusive-or function for the single search stimulus that we trained 
+them to classify. A more rigorous test would be to train single networks to classify multiple 
+stimuli, in the same way that humans do in discrete item display search experiments. 
+As a final test, we trained two instances of Alexnet on very large datasets containing 
+all three stimuli used in this study \ref{fig4}. We found similar accuracy as shown in \ref{fig3}, 
+even when single networks were challenged to perform this task with multiple stimuli.
 
 \begin{figure}[!ht]
 \begin{center}
 \includegraphics[width=\columnwidth]{fig4/fig4.png}
 \end{center}
 \caption{
-\textbf{Human-like limits on accuracy of CNNs performing the discrete item display search task}
-As described in the text, when using weights pre-trained on ImageNet in convolutional layers, 
-and fine-tuning weights in fully-connected layers so AlexNet could perform the task, 
-this CNN showed decreases in accuracy as set size increased (\textbf{a}). This decrease was 
-smallest for feature search stimuli (left plot), intermediate for conjunction stimuli (middle plot), 
-and largest for spatial configuration stimuli (right plot). The same approach produced similar 
-results with the VGG16 architecture (\textbf{b}).
+\textbf{Training single networks on multiple stimuli does not impair accuracy}
+Two instances of AlexNet trained on datasets containing all three types of visual search 
+stimuli used in this study still attained high accuracy.
 } 
-\label{fig2}
+\label{fig4}
 \end{figure}
 
 \section{Discussion}
-
-\subsection{Implications for comparative studies of neuroscience and 
-artificial intelligence}
-- problem for any 
-we see this as a general issue 
-for studies that compare cognitive science and artificial intelligence, and 
-so here we report results that might otherwise be considered methodological 
-troubleshooting.
-
-- e.g. Bengio study of gestalt fx
-
-\subsection{Implications for the study of attention in the brain}
-- if the task is possible to perform perfectly, who needs attention?
-- brain optimized for something else besides classifying static images
-- in this sense, consistent with findings that recurrent
+We tested whether CNNs using representations learned from image classification tasks would be subject 
+to human-like capacity limitations when performing the discrete item display search task. While we 
+did not find that CNNs can always perform the discrete item display search task with perfect accuracy, 
+we did show that these models are not necessarily limited by the same factors as the primate visual system.
 
 \section{Acknowledgments}
 Research funded by the Lifelong Learning Machines program, 
