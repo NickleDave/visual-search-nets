@@ -17,7 +17,8 @@ def test(gz_filename,
          epochs_list,
          batch_size,
          model_save_path,
-         test_results_save_path):
+         test_results_save_path,
+         configfile):
     """measure accuracy of trained convolutional neural networks on test set of visual search stimuli
 
     Parameters
@@ -47,6 +48,9 @@ def test(gz_filename,
         path to directory where model checkpoints should be saved
     test_results_save_path : str
         path to directory where results from measuring accuracy on test set should be saved
+    configfile : str
+        filename of config.ini file. Used (without .ini extension) as name for output file
+        that is saved in test_results_save_path.
 
     Returns
     -------
@@ -166,9 +170,11 @@ def test(gz_filename,
 
         if not os.path.isdir(test_results_save_path):
             os.makedirs(test_results_save_path)
+        results_fname_stem = configfile.replace('.ini', '')  # remove .ini extension
         results_fname = os.path.join(test_results_save_path,
-                                     f'test_{net_name}_trained_{epochs}_epochs.gz')
+                                     f'{results_fname_stem}_trained_{epochs}_epochs_test_results.gz')
         results_dict = dict(acc_per_set_size_per_model=acc_per_set_size_per_model,
                             acc_per_set_size_model_dict=acc_per_set_size_model_dict,
-                            predictions_per_model_dict=predictions_per_model_dict)
+                            predictions_per_model_dict=predictions_per_model_dict,
+                            set_sizes=set_sizes)
         joblib.dump(results_dict, results_fname)
