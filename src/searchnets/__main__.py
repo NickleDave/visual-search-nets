@@ -51,7 +51,7 @@ def _call_train(config):
           patience=config.train.patience)
 
 
-def _call_test(config):
+def _call_test(config, configfile):
     """helper function to call searchstims.test"""
     test(gz_filename=config.data.gz_filename,
          net_name=config.train.net_name,
@@ -125,7 +125,7 @@ def cli(command, configfile):
     elif command == 'all':
         _call_data(config)
         _call_train(config)
-        _call_test(config)
+        _call_test(config, configfile)
 
     elif command == 'learncurve':
         _call_learncurve(config)
