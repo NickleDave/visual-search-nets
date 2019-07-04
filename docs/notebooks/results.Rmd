@@ -13,141 +13,38 @@ jupyter:
     name: python3
 ---
 
-# Convolutional Neural Networks Show Attention-like Effects When Performing Visual Search Tasks
+# Lack of evidence for attention-like limits on accuracy of convolutional neural networks performing a visual search task
 
 
 ## Abstract
-Convolutional neural networks (CNNs) provide cutting edge tools for computer vision tasks like image classification and scene segmentation. Many mechanisms described as "attention" have been proposed to improve the accuracy of CNNs, although it is becoming clear that accuracy alone does not explain how CNNs perform in real-world situations. Attention has a long history of being studied by cognitive scientists and neuroscientists in the context of vision. The CNNs developed in the past few years are also increasingly being used as models of the visual system in the brain. Here we study whether models of attention in the brain, and visual search tasks used to investigate attention, provide an alternate way of benchmarking existing CNNs. We are pursuing these alternate benchmarks in the course of our investigations of attention-like mechanisms for continual learning algorithms. We adapt a classic form of visual search task so it can be performed by neural networks, and measure the accuracy of two CNN architectures, AlexNet and VGG16, as they report whether a target is present among distractors. Surprisingly, we find that both AlexNet and VGG16 show attention-like effects when performing the visual search task: when the target resembles the distractors, then a network's accuracy drops as the number of distractors increases. This dependency of accuracy on the number of items is often referred to as "set size effects". We do not find that these set size effects can be explained by factors known to affect CNNs, such as edge effects. We then adapt an analysis of visual search tasks based on signal detection theory to show that set size effects persist even when controlling for how discriminable the targets are from the distractors. This analysis suggests the "attentional" effects can be attributed to the decision criteria used by the network. We consider how this type of analysis can be extended to images besides visual search stimuli. Then we discuss the implications of our results for comparing CNN output with human behavior, and measuring how any proposed attentional mechanisms change neural network outputs.
+What limits our ability to find what we are looking for in the cluttered noisy world? To investigate this, cognitive scientists have long used visual search. In spite of hundreds of studies, it remains unclear how to relate effects found using the discrete item display search task to computations in the visual system. A separate thread of research has studied the visual system of humans and other primates using convolutional neural networks (CNNs) as models. Multiple lines of evidence suggest that training CNNs to perform tasks such as image classification causes them to learn  representations similar to those used by the visual system. These studies raise the question of whether CNNs that have learned such representations behave similarly to humans performing other vision-based tasks. Here we address this by measuring the behavior of CNNs trained for image classification while they perform the discrete item display search task. We first show how a fine-tuning approach often used to adapt pre-trained CNNs to new tasks can produce models that show human-like limitations on this task. However we then demonstrate that we can greatly reduce these effects by changing training,without changing the learned representations. Lastly we show that accuracy is not impaired when single networks are trained to discriminate multiple types of visual search stimuli. Based on these findings, we suggest that CNNs are not necessarily subject to the same limitations as the primate visual system.
 
 
 ## Introduction
 
-### Convolutional neural networks and attentional mechanisms
-Neural networks have in the past few years transitioned from being an academic area of artificial intellgience to being powerful tools for engineers working in areas such as image classification, speech-to-text, and automatic translation, to name but a few. In the 1980s, artificial neural networks trained with backpropagation gave rise to [Connectionist](https://en.wikipedia.org/wiki/Connectionism) models of cognition. Similar neural network models lie at the heart of the recent rise of deep learning, in large part because of advances in methods for training networks, and advances in technology such as GPUs that allow for parallelized training. When benchmarked with scalar metrics like accuracy on computer vision tasks such as object recognition, these deep neural networks appear capable of human or super-human levels of skill. The first major gains in accuracy were seen on image classification tasks such as ImageNet [@krizhevskyImagenetClassificationDeep2012; @simonyanVeryDeepConvolutional2014], and the deep neural networks that made these advances were built with what are known as convolutional layers. As the name implies, these layers perform a convolution-like operation by multiplying filters of learned weights with the input image, producing as outputs feature maps that can be further transformed by succeeding layers. Convolutional neural networks (CNNs) represent the state of the art in image recognition. Many mechanisms proposed to extend the abilities of CNNs have been given the name "attention", and these attention mechanisms typically involve some sort of recurrence [@baMultipleObjectRecognition2014; @mnihRecurrentModelsVisual2014; @xuShowAttendTell2015]. These mechanisms are arguably analogous to what is called **overt** attention in psychology and neuroscience. In the context of vision, overt attention describes movement of the eyes or head so that the high-acuity fovea is placed on the focus of attention. In contrast, **covert** attention is any mechanism that occurs internally to select features relevant for a task while discarding irrelevant features. Covert attention can be considered one type of **dynamic routing** of information thought to occur in the brain. Models of dynamic routing, inspired by studies of visual attention [@bobierAttentionalRoutingCircuit2011; @bobierUnifyingMechanisticModel2014a; @olshausenMultiscaleDynamicRouting1995; @olshausenNeurobiologicalModelVisual1993] have also formed the basis of attention-like mechanisms in applied research on neural networks [@tangLearningGenerativeModels2014]. The function of CNNs has not typically been considered within the context of this work on covert visual attention. 
+### The discrete item display search task
+On each trial, subjects view a display (example images, $\mathbf{a}$) of discrete items on a flat background. Subjects respond whether the target is present or absent (condition varies across rows of $\mathbf{a}$). Another condition that varies across trials is the set size, that is, the total number of targets and distractors (varies across rows in $\mathbf{a}$). Many studies focus on *set size effects*. Typical effects are an increase in reaction time or a decrease in accuracy as set size increases (depicted schematically in $\mathbf{b}$, redrawn from (Wolfe et al., 2010) and (Eckstein, 1998). Effects vary based on the features that distinguish targets from distractors (shown in columns). Details in introduction. Accuracy for spatial configuration-type stimuli not shown in $\mathbf{b}$ because this has been less studied (but see E. M. Palmer et al., 2011)
 
-### Convolutional neural networks as models of the visual system
-Recently, many in neuroscience and cognitive science have returned to using neural network models to understand the brain, in part because of their resurgence. More specifically, many researchers have drawn parallels between the architecture of CNNs and the architecture of the visual system in the brain [@kriegeskorteDeepNeuralNetworks2015], in particular in humans and other primates where this system has been most thoroughly studied. Like CNNs, the visual system has a hierarchical structure, and is thought to function in part by performing transformations at each level of this hierarchy so that high-dimensional, low-level features are mapped into low-dimensional abstract representations. Several recent studies in the realm of cognitive neuroscience have measured representations in more directly tested the similarities between CNNs and the visual system, by comparing representations in both [@khaligh-razaviDeepSupervisedNot2014; @yaminsPerformanceoptimizedHierarchicalModels2014; @yaminsUsingGoaldrivenDeep2016]. Representations can be easily extracted from CNNs because they are "transparent box" models--i.e. we have access to the "activity" of the individual units from which these models are built when we "show" the CNNs a stimulus. In the same studies, brain activity was obtained with electrophysiological or functional imaging methods. Such studies have found in general that representations are similar. (Of course this comparison depends on methods for measuring representational similarity [@bobadilla-suarezMeasuresNeuralSimilarity2018; @diedrichsenRepresentationalModelsCommon2017], but this study does not address those methods.)  
-
-### Visual search tasks for investigating attention
-In spite of the many attentional mechanisms proposed for neural networks, and the many parallels and links between studies of vision in psychology, neuroscience, and artificial intelligence, little work has been done to relate the tasks and models used to investigate visual attention to neural networks. We are aware of only one study [@poderCapacityLimitationsVisual2017], which led us to the results that we report below as we replicated it. Like that study, we measured the performance of an exist CNN on a visual search task. In addition, we test whether our results hold for other CNN architectures, and we apply analyses from signal detection theory-based models of attention to understand our results. Our ultimate goal is to provide new methods for comparing neural network output with human behavior and of benchmarking proposed attentional mechansims. First we describe visual search tasks, and then we describe different types of cognitive models used to explain results obtained with these tasks.
-We begin with background on visual search tasks. In the "classical" form of the visual search paradigm [@wolfeVisualSearch1998], experimenters present a subject with a search display on which there are discrete items, i.e. objects. The subject is asked to report whether a target is present among distractors. The experimenter sets the probability that the target will be present on any given trial. Experimenters measure the reaction time and/or accuracy of the subjects. Often, the results are presented as a plot of reaction time as a function of set size (the number of discrete items in stimulus). By fitting a line to the plot of reaction times as a function of set size and taking the slope of that line, experimenters produced estimates of processing speed, i.e. "seconds per item". Slopes are almost horizontal when subjects are shown visual search stimuli where targets differ from distractors in some clearly salient **feature**, e.g. a red target among green distractors, and slopes become much steeper when targets differ from distractors in some harder-to-distinguish **spatial conjunction** of features, e.g., a digital 2 among digital 5s. Some examples of these stimuli are shown below, generated with https://github.com/NickleDave/searchstims.
-
-<table><tr>
-<td> <img src="../static/redvert_v_greenvert_set_size_4_target_present_55.png" alt="efficient" style="width: 250px;"/> </td>
-<td> <img src="../static/two_v_five_set_size_6_target_present_78.png" alt="inefficient" style="width: 250px;"/> </td>
-</tr>
-<tr>
-<td> <b>Feature</b> search $\longrightarrow$ almost horizontal slopes </td>
-<td> <b>Spatial configuration</b> search $\longrightarrow$ steep slopes </td>
-</tr>
-</table>
-
-Below is a figure explaining the basic visual search paradigm, reproduced from [Wolfe Horowitz 2017](http://search.bwh.harvard.edu/new/pubs/FiveFactors_Wolfe-Horowitz_2017.pdf)
-
-<img src="../static/Fig-2-Wolfe-Horowitz-2017.png" alt="inefficient" style="width: 900px;"/>
-
-This use of search slope as metric led to one of the most influential early models of visual search: feature integration theory [@treismanFeatureintegrationAttention1980]. Essentially, feature integration theory posits that the brain can search the visual field in parallel when a single feature distinguishes the target from distractors, but that a conjunction of multiple features requires serial processing. However, Wolfe [@wolfeWhatCanMillion1998] showed that there is no clear cut segregation of slopes into one type or the other, and that in fact the distributions of slope overlap so much it is not possible to distinguish them. He has proposed talking about visual search in terms of a spectrum of of speeds that depend in some way on features: when a salient feature like color is what discriminates the target from the distractor, this allows for efficient search, like in the visual search stimulus on the left. When a complex conjunction of features distinguishes the target from the distractor, as in the visual search stimulus on the right, this results in inefficient search. In the results below, however, we continue to refer to the stimuli by the names "feature" and "spatial conjunction" search.
-
-
-### Accuracy as a measure of attentional effects
-Although these classic visual search tasks were originally designed to answer questions about how features were processed across the visual field, they went on to became the basis for most modern theories of selective visual attention. As described above, the feature integration theory (FIT) held that some features could be processed in parallel, in a pre-attentional way, but a conjunction of features required directing attention to it, and that items consisting of such features were processed in a serial way. Given this theory about the algorithms underlying attention, reaction times become a proxy for attention; they are what we measure to see if our theories about attention are correct.  
-The approach of measuring reaction times is not always used. In some cases, the stimulus is shown only briefly to the subject, and then after a variable length of time a masking stimulus such as white noise is shown. During the period between the stimulus with a set of items and the masking stimulus, the "*internal representation* of that stimulus can be searched \[by the subject\] until a mask appears several hundred milliseconds later" [@wolfeVisualSearch1998] (emphasis added). When the experiment is carried out this way, accuracy is measured instead of reaction time [@bergenRapidDiscriminationVisual1983; @ecksteinLowerVisualSearch1998]. Accuracy has an inverse linear relationship with set size in these experiments (as opposed to the linear relationship seen between reaction times and set size). In spite of this change, when accuracy is used as the measure, it fulfills the same function as reaction times: we use accuracy to tell us whether attentional processes behaves as we think they do. **But of course CNNs have no built-in mechanism of attention; in effect, they process the entire visual field in parallel, in a single pass, instantaneously**. Therefore, if we see attention-like effects when measuring the accuracy of CNNs, we must either conclude either one of two things: (1) we have not chosen a task and/or metric that gives us insight into the processing going on. Maybe a single scalar metric like accuracy is not actually telling us much about the behavior used to achieve the task, or the internal process of the algorithm that is performing the task. Or (2) we have chosen a good task and/or metric, but there's some other explanation that doesn't require attention, because an algorithm without attention can produce the same behavior that we produce. Maybe attention-like effects are just what happens when brains and CNNs solve this task, because targets are hard to discriminate from distractors, regardless of the features.
+![figure 1](../static/fig1/fig1.png)
 
 
 ## Results
-In an initial set of simulations, we trained a CNN to "perform" the visual search task. We used the AlexNet architecture, which has previously been used in studies comparing CNNs to the visual system [@khaligh-razaviDeepSupervisedNot2014]. To train AlexNet, we followed a fine-tuning approach, where we re-used weights from training this CNN on the ImageNet dataset. During fine-tuning, the weights in the convolutional layers were frozen, but randomly initialized weights in the final fully-connected layers were update with a very small learning rate. The original softmax layer with 1000 outputs representing ImageNet classes was replaced with a 2-unit softmax layer, where one unit represented a response of "target present" and the other a response of "target absent". This approach is similar to that taken by a previous study [@poderCapacityLimitationsVisual2017]; we discuss differences in the details of fine-tuning in the methods below. To generate visual search stimuli that could be fed into a neural network, we used a simple Python package (<https://github.com/NickleDave/searchstims>) built on top of the [PyGame](https://www.pygame.org) library . The search displays were divided up into a 5x5 grid of cells, and items were plotted in a randomly chosen subset of cells (as described in [@wolfeReactionTimeDistributions2010] and shown at <http://search.bwh.harvard.edu/new/data_set_files.html>). The library applied jitter to the items, so that two images could be different even if both images had the same set size and target present condition, and the items were in the exact same cells.  This is typically done with visual search stimuli used in psychophysics experiments, but an added benefit was that this allowed us to create a large set of unique training images (on the order of ten thousand) for each set size and condition, in effect resulting in a sort of data augmentation, as is often used when training neural networks.
+### Human-like limits on accuracy of convolutional neural networks (CNNs) performing the discrete item display search task
 
-### AlexNet shows attentional effects without any attention mechanisms in spite of processing images in parallel
-After training AlexNet to perform this task, we found to our surprise that the results qualitatively resemble those seen for human subjects. We plotted accuracy as a function of set size, and saw that slopes of these lines were close to horizontal when AlexNet performed the task given feature search stimuli, where the target was a red vertical rectangle among distractors that were green vertical rectangles. In contrast, the slopes were steep when AlexNet performed the task given spatial conjunction search stimuli, where the target was a digital 2 and the distractors were digital 5s.
+When using weights pre-trained on ImageNet in convolutional layers, and fine-tuning weights in fully-connected layers so AlexNet could perform the task, this CNN showed decreases in accuracy as set size increased ($\mathbf{a}$). This decrease was smallest for feature search stimuli (left plot), intermediate for conjunction stimuli (middle plot), and largest for spatial configuration stimuli (right plot). The same approach produced similar results with the VGG16 architecture ($\mathbf{b}$)
 
-```{python}
-# %matplotlib inline
-import os
-
-from searchnets.plots.figures import ftr_v_spt_conj, mn_slope_by_epoch
-
-TEST_RESULTS_DIR = '../../data/experiment_1/results'
-ftr_400_results = os.path.join(TEST_RESULTS_DIR,
-                            'feature_search_alexnet_models/test_alexnet_trained_400_epochs.gz')
-sptl_400_results = os.path.join(TEST_RESULTS_DIR,
-                             'spatial_config_search_alexnet_models/test_alexnet_trained_400_epochs.gz')
-
-ftr_v_spt_conj(ftr_400_results,
-               sptl_400_results,
-               epochs=400)
-```
-
-**Figure 1. Accuracy of AlexNet when reporting whether a target is present or absent, given efficient or inefficent visual search stimuli** X axis is set size, i.e., number of items in the visual search stimulus shown to the network. Y axis is mean accuracy for each set size, as measured on a previously unseen test set. The test set contained ~3000 images, balanced so that there were equal numbers of images for each set size.  Each line represents one trained network; there are five replicates total.
+![Figure 2](../static/fig2/fig2.png)
 
 
-### Higher accuracy correlates with stronger attentional effects
-Given the surprising result that CNNs showed attention-like effects without attention mechanisms and in spite of processing their inputs in a parallel, feedforward fashion, we next asked whether these effects might depend on training. Again to our surprise, we saw that slopes for the feature search got closer to zero as we increased the number of epochs of training, while the slopes for spatial conjunction search got steeper. This was in spite of the fact that training accuracy continued to increase up until about 800 epochs, as measured on a validation set. 
+### Changing training greatly reduces set size effects
+Training histories showed that the accuracy of models trained with the fine tuning approach did not converge
+on some asymptotic value, and varied depending on the set size of the search stimuli ($\textbf{a}$, left plot). Increasing the learning rate and including more examples of stimuli with larger set sizes greatly sped up convergence ($\textbf{a}$, right plot). AlexNet models trained with this higher learning rate and larger training set showed reduced set size effects ($\textbf{b}$).
+![figure 3](../static/fig3/fig3.png)
 
-```{python}
-TEST_RESULTS_DIR = '../../data/experiment_1/results'
-epochs_list = [10, 50, 200, 400, 800]
-ftr_results_list = []
-sptl_results_list = []
-for epochs in epochs_list:
-    ftr_results = os.path.join(TEST_RESULTS_DIR, f'feature_search_alexnet_models/test_alexnet_trained_{epochs}_epochs.gz')
-    ftr_results_list.append(ftr_results)
-    sptl_results = os.path.join(TEST_RESULTS_DIR, f'spatial_config_search_alexnet_models/test_alexnet_trained_{epochs}_epochs.gz')
-    sptl_results_list.append(sptl_results)
-    ftr_v_spt_conj(ftr_results,
-                   sptl_results,
-                   epochs=epochs)
-alexnet_results = {
-    'ftr': ftr_results_list,
-    'sptl': sptl_results_list,
-}
-```
 
-To quantify this result, we fit slopes to the accuracy vs. set size plots for each trained replicate of AlexNet, for each number of training epochs. As shown below, the slope for feature search decreased as the number of training epochs increased, while the slope for spatial conjunction search increased. We took the mean slope for each type of search stimulus and subtracted them to get a measure of the difference, and saw that indeed this difference did increase as the number of training epochs increased.
-
-```{python}
-mn_slope_by_epoch(alexnet_results['ftr'], alexnet_results['sptl'], epochs_list)
-```
-
-### Other CNN architectures also show similar effects
-To test whether these effects resulted from the architecture of AlexNet or were more general, we repeated the simulations using the VGG16 architecture. We again saw a clear difference in set size effects when comparing accuracy of networks performing either feature search or spatial conjunction search.
-
-```{python}
-TEST_RESULTS_DIR = '../../data/experiment_1/results'
-epochs_list = [10, 50, 200, 400, 800]
-ftr_results_list = []
-sptl_results_list = []
-for epochs in epochs_list:
-    ftr_results = os.path.join(TEST_RESULTS_DIR, f'feature_search_vgg16_models/test_VGG16_trained_{epochs}_epochs.gz')
-    ftr_results_list.append(ftr_results)
-    sptl_results = os.path.join(TEST_RESULTS_DIR, f'spatial_config_search_vgg16_models/test_VGG16_trained_{epochs}_epochs.gz')
-    sptl_results_list.append(sptl_results)
-vgg16_results = {
-    'ftr': ftr_results_list,
-    'sptl': sptl_results_list,
-}
-
-ftr_v_spt_conj(vgg16_results['ftr'][3],
-               vgg16_results['sptl'][3],
-               epochs=epochs_list[3])
-```
-
-We also again saw that the set size effect increased, as did difference in accuracy v. set size slopes for feature and spatial conjunction search, as the VGG16 architecture was trained for more epochs.
-
-```{python}
-mn_slope_by_epoch(vgg16_results['ftr'], vgg16_results['sptl'], epochs_list)
-```
-
-### A psychophysics analysis of visual search shows set size affects remain even when controlling for how discriminable targets are from distractors
-The Feature Integration Theory of visual search attributed set size effects to **serial** processing required to bind different types of features [@treismanFeatureintegrationAttention1980]. This conclusion made sense, based on the result that reaction time increased when discriminating targets from distractors required subjects to consider more than one feature, e.g. both color and orientation. However, later work showed that reaction time effects disappear as targets and distractors become more easily discriminable along one feature dimension [@duncanVisualSearchStimulus1989].  
-Later researchers, using methods from psychophysics and signal-detection theory, carefully controlled for the discriminability of targets and distractors [@palmerPsychophysicsVisualSearch2000]. This work provided important alternative explanations for the results seen in visual search experiments: attentional effects can be explained in terms of completely parallel but noisy representations that are used by a decision rule [@ecksteinLowerVisualSearch1998; @ecksteinSignalDetectionModel2000; @palmerMeasuringEffectAttention1993; @palmerSetsizeEffectsVisual1994]. This approach also explains errors in terms of low thresholds used by decision making criteria.  We adapted these psychophysics methods to see if they offered additional insights into the attention-like effects we saw in CNNs.  
-
-#### Psychometric curves
-First we generated 'feature' search stimuli--red vertical rectangle v. green vertical rectangle--where the red and green were more or less discriminable. We did so by taking advantage of RGB color space: by adding more red to the green color, and vice versa, the colors of the target and distractor can be moved closer to each other from the two red and green verticies of the triangle that defines RGB space. (When the color has "all red" and "all green", it becomes yellow, so the stimuli we generated moved closer and closer to yellow.) We then used these stimuli to measure the accuracy of the neural nets we trained as the target and distractor became more and more similar.  
-<img src="../static/psychometric_function_fits.png" alt="efficient" style="width: 500px;"/>
-#### Threshold v. set size
-We then used the psychometric curves to find what level of target-distractor discriminability gave rise to 75% accuracy, known as the "difference threshold". We found this difference threshold for each trained network and each set size.  
-<img src="../static/threshold_v_setsize.png" alt="efficient" style="width: 600px;"/>  
-Here we see that the difference threshold goes up with set size, meaning more discriminable target-distractor pairs are required as set size increases. In signal detection theory terms, this result is consistent with any theory of attention where decisions are made with a low threshold. (For a detailed walkthrough of how we did this, please see [this notebook](./psychometric.ipynb).)
+### Training single networks on multiple stimuli does not impair accuracy
+Two instances of AlexNet trained on datasets containing all three types of visual search stimuli used in this study still attained high accuracy.
+![figure 4](../static/fig4/fig4.png)
 
 
 ## Methods
@@ -156,8 +53,12 @@ Fine-tuning Alexnet and VGG16:
 * Stochastic gradient descent
 * Base learning rate: 1e-20
 * Rate for fully-connected layers: 0.0001
-* epochs: [10 (as in Poder 2017), 50, 200, 400, 800]
+* epochs: 200
 
+Training  
+* Freeze convolutional layers
+* Rate for fully-connected layers: 0.001
+* Epochs: until validation accuracy did not improve for more than 20 epochs
 
 
 ## References
