@@ -61,7 +61,8 @@ def _call_test(config, configfile):
          epochs_list=config.train.epochs_list,
          batch_size=config.train.batch_size,
          model_save_path=config.train.model_save_path,
-         test_results_save_path=config.test.test_results_save_path)
+         test_results_save_path=config.test.test_results_save_path,
+         configfile=configfile)
 
 
 def _call_learncurve(config):
@@ -120,7 +121,7 @@ def cli(command, configfile):
         _call_train(config)
 
     elif command == 'test':
-        _call_test(config)
+        _call_test(config, configfile)
 
     elif command == 'all':
         _call_data(config)
