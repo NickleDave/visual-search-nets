@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
@@ -170,7 +171,7 @@ def test(gz_filename,
 
         if not os.path.isdir(test_results_save_path):
             os.makedirs(test_results_save_path)
-        results_fname_stem = configfile.replace('.ini', '')  # remove .ini extension
+        results_fname_stem = str(Path(configfile).stem)  # remove .ini extension
         results_fname = os.path.join(test_results_save_path,
                                      f'{results_fname_stem}_trained_{epochs}_epochs_test_results.gz')
         results_dict = dict(acc_per_set_size_per_model=acc_per_set_size_per_model,
