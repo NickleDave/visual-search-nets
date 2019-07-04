@@ -1,1 +1,1 @@
-from .figures import train_history, mn_slope_by_epoch, item_heatmap, acc_v_set_size, ftr_v_spt_conj
+from .figures import acc_v_set_size, acc_v_set_size_df, ftr_v_spt_conj, item_heatmap, mn_slope_by_epoch, train_history
