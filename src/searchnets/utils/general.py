@@ -4,6 +4,7 @@ import os
 import joblib
 import numpy as np
 import pandas as pd
+from scipy.stats import norm
 
 
 def make_targz(output_filename, source_dir):
@@ -36,7 +37,30 @@ def targz_dirs(dir_names=('checkpoints', 'configs', 'data_prepd_for_nets', 'resu
         make_targz(output_filename=output_filename, source_dir=os.path.join(path, dir_name))
 
 
-HEADER = ['net_name', 'train_type', 'net_number', 'stimulus', 'target_condition', 'set_size', 'accuracy']
+z_score = norm.ppf
+
+
+def compute_d_prime(y_true, y_pred):
+    """computes d prime given y_true and y_pred"""
+    hits = np.logical_and(y_pred == 1, y_true == 1)
+    hit_rate = hits.sum() / np.where(y_true == 1)[0].shape
+    false_alarms = np.logical_and(y_pred == 1, y_true == 1)
+    false_alarm_rate = false_alarms.sum() / np.where(y_true == 0)[0].shape
+    d_prime = z_score(hit_rate) - z_score(false_alarm_rate)
+    return hit_rate, false_alarm_rate, d_prime
+
+
+HEADER = ['net_name',
+          'train_type',
+          'net_number',
+          'stimulus',
+          'set_size',
+          'target_condition',
+          'accuracy',
+          'hit_rate',
+          'false_alarm_rate',
+          'd_prime',
+          ]
 
 
 def results_csv(data_prep_dir,
@@ -45,7 +69,7 @@ def results_csv(data_prep_dir,
                 nets=('alexnet', 'VGG16'),
                 train_types=('finetune', 'train'),
                 stims=('2_v_5', 'RVvGV', 'RVvRHGV'),
-                target_condition=('present', 'absent'),
+                target_condition=('present', 'absent', 'both'),
                 data_gz_paths=None,
                 results_gz_paths=None,
                 ):
@@ -84,7 +108,6 @@ def results_csv(data_prep_dir,
 
     saves Pandas dataframe as .csv file using test_csv_path as filename
     """
-
     if results_gz_paths and data_gz_paths:
         if len(results_gz_paths) != len(data_gz_paths):
             raise ValueError(
@@ -134,9 +157,19 @@ def results_csv(data_prep_dir,
                             elif target_cond == 'absent':
                                 inds_this_cond = np.where(
                                     np.logical_and(y_test == 0, set_size_vec_test == set_size))
+                            elif target_cond == 'both':
+                                inds_this_cond = np.arange(y_pred.shape[0])
                             acc = np.sum(y_pred[inds_this_cond] == y_test[inds_this_cond])
                             acc = acc / y_test[inds_this_cond].shape[0]
-                            row = [net, train_type, net_num, stim, target_cond, set_size, acc]
+
+                            if target_cond == 'both':
+                                hit_rate, false_alarm_rate, d_prime = compute_d_prime(
+                                    y_pred, y_test
+                                )
+                            else:
+                                hit_rate, false_alarm_rate, d_prime = None, None, None
+                            row = [net, train_type, net_num, stim, set_size, target_cond,
+                                   acc, hit_rate, false_alarm_rate, d_prime]
                             rows.append(row)
 
                 iter_counter += 1
