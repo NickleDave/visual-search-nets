@@ -17,11 +17,14 @@ This is the version used for paper submitted to ccneuro 2019
 - ability to specify types of visual search stimuli to use when a single
   run of `searchstims` places paths to all types in a single `json` file
   + using `stim_types` option in `config.ini` file
-- ability to specify number of samples per (viusal search stimulus)
+- ability to specify number of samples per (visual search stimulus)
   "set size" in training, validation, and test sets
   + enables "balancing" data set
 - sub-module for running learning curves (needs to be updated to use
   additions to `searchstims.train`)
+- functionality in `utils.results_csv` that computes d prime and adds it
+  to the .csv, as well as accuracy across both target present and target
+  absent conditions (i.e. what most people would call just "accuracy")
 
 ### Fixed
 - `searchnets.train` uses `MomentumOptimizer` like original AlexNet and
