@@ -181,13 +181,13 @@ def results_csv(data_prep_dir,
                                 inds_this_cond = np.where(
                                     np.logical_and(y_test == 0, set_size_vec_test == set_size))
                             elif target_cond == 'both':
-                                inds_this_cond = np.arange(y_pred.shape[0])
+                                inds_this_cond = np.where(set_size_vec_test == set_size)[0]
                             acc = np.sum(y_pred[inds_this_cond] == y_test[inds_this_cond])
                             acc = acc / y_test[inds_this_cond].shape[0]
 
                             if target_cond == 'both':
                                 hit_rate, false_alarm_rate, d_prime = compute_d_prime(
-                                    y_pred, y_test
+                                    y_pred[inds_this_cond], y_test[inds_this_cond]
                                 )
                             else:
                                 hit_rate, false_alarm_rate, d_prime = None, None, None
