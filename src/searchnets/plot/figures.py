@@ -103,14 +103,10 @@ def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), ax=None,
         plt.savefig(save_as)
 
 
-MN_ACC_TARGET_PRESENT_LABEL = 'mean acc.\ntarget present'
-MN_ACC_TARGET_ABSENT_LABEL = 'mean acc.\ntarget absent'
-
-
-def acc_v_set_size_df(df, net_name, train_type, stimulus, ax=None,
-                      title=None, save_as=None, figsize=(10, 5),
-                      set_xlabel=False, set_ylabel=False, set_ylim=True,
-                      ylim=(0, 1.1), plot_mean=True, add_legend=False):
+def metric_v_set_size_df(df, net_name, train_type, stimulus, metric, conditions,
+                         ax=None, title=None, save_as=None, figsize=(10, 5),
+                         set_xlabel=False, set_ylabel=False, set_ylim=True,
+                         ylim=(0, 1.1), plot_mean=True, add_legend=False):
     """plot accuracy as a function of visual search task set size
     for models trained on a single task or dataset
 
@@ -122,8 +118,22 @@ def acc_v_set_size_df(df, net_name, train_type, stimulus, ax=None,
     df : pandas.Dataframe
         path to results.gz file saved after measuring accuracy of trained networks
         on test set of visual search stimuli
-    set_sizes : list
-        of int, set sizes of visual search stimuli. Default is [1, 2, 4, 8].
+    net_name : str
+        name of neural net architecture. Must be a value in the 'net_name' column
+        of df.
+    train_type : str
+        method used for training. Must be a value in the 'train_type' column of df.
+    stimulus : str
+        type of visual search stimulus, e.g. 'RVvGV', '2_v_5'. Must be a value in
+        the 'stimulus' column of df.
+    metric : str
+        metric to plot. One of {'acc', 'd_prime'}.
+    conditions : list, str
+        conditions to plot. One of {'present', 'absent', 'both'}. Corresponds to
+        'target_condition' column in df.
+
+    Other Parameters
+    ----------------
     ax : matplotlib.Axis
         axis on which to plot figure. Default is None, in which case a new figure with
         a single axis is created for the plot.
@@ -138,7 +148,7 @@ def acc_v_set_size_df(df, net_name, train_type, stimulus, ax=None,
     set_xlabel : bool
         if True, set the value of xlabel to "set size". Default is False.
     set_ylabel : bool
-        if True, set the value of ylabel to "accuracy". Default is False.
+        if True, set the value of ylabel to metric. Default is False.
     set_ylim : bool
         if True, set the y-axis limits to the value of ylim.
     ylim : tuple
@@ -147,8 +157,6 @@ def acc_v_set_size_df(df, net_name, train_type, stimulus, ax=None,
         if True, find mean accuracy and plot as a separate solid line. Default is True.
     add_legend : bool
         if True, add legend to axis. Default is False.
-    task_name : str
-
 
     Returns
     -------
@@ -158,41 +166,96 @@ def acc_v_set_size_df(df, net_name, train_type, stimulus, ax=None,
         fig, ax = plt.subplots()
         fig.set_size_inches(figsize)
 
-    df = df.loc[(df['net_name'] == net_name) & (df['train_type'] == train_type) & (df['stimulus'] == stimulus)]
+    df = df.loc[
+        (df['net_name'] == net_name) & (df['train_type'] == train_type) &
+        (df['stimulus'] == stimulus)]
 
-    acc_target_present = []
-    acc_target_absent = []
+    if 'present' in conditions:
+        metric_target_present = []
+    else:
+        metric_target_present = None
+
+    if 'absent' in conditions:
+        metric_target_absent = []
+    else:
+        metric_target_absent = None
+
+    if 'both' in conditions:
+        metric_both = []
+    else:
+        metric_both = None
+
     set_sizes = None
     net_nums = df['net_number'].unique()
+    # get metric across set sizes for each training replicate
+    # we end up with a list of vectors we can pass to ax.plot,
+    # so that the 'line' for each training replicate gets plotted
     for net_num in net_nums:
         df_this_net_num = df.loc[(df['net_number'] == net_num)]
-        for targ_cond in ['present', 'absent']:
-            df_this_cond = df_this_net_num.loc[(df_this_net_num['target_condition'] == targ_cond)]
-            acc = df_this_cond['accuracy'].values
+        # and each condition specified
+        for targ_cond in conditions:
+            df_this_cond = df_this_net_num.loc[
+                (df_this_net_num['target_condition'] == targ_cond)
+            ]
+            metric_vals = df_this_cond[metric].values
             if targ_cond == 'present':
-                acc_target_present.append(acc)
+                metric_target_present.append(metric_vals)
             elif targ_cond == 'absent':
-                acc_target_absent.append(acc)
+                metric_target_absent.append(metric_vals)
+            elif targ_cond == 'both':
+                metric_both.append(metric_vals)
 
             set_size = df_this_cond['set_size'].values
             if set_sizes is None:
                 set_sizes = set_size
             else:
-                assert np.array_equal(set_sizes, set_size)
+                assert np.array_equal(set_sizes, set_size), 'set sizes did not match'
 
-    for arr_acc_present, arr_acc_absent in zip(acc_target_present, acc_target_absent):
-        ax.plot(set_sizes, arr_acc_present, color='violet', linewidth=2, linestyle='--',
-                marker='o', zorder=1, alpha=0.85, label=None)
-        ax.plot(set_sizes, arr_acc_absent, color='lightgreen', linewidth=2, linestyle='--',
-                marker='o', zorder=1, alpha=0.85, label=None)
+    if metric_target_present:
+        for arr_metric_present in metric_target_present:
+            ax.plot(set_sizes, arr_metric_present, color='violet', linewidth=2,
+                    linestyle='--', marker='o', zorder=1, alpha=0.85, label=None)
 
-    if plot_mean:
-        mn_acc_present = np.asarray(acc_target_present).mean(axis=0)
-        mn_acc_present_line, = ax.plot(set_sizes, mn_acc_present, color='magenta', linewidth=4,
-                                       zorder=0, label=MN_ACC_TARGET_PRESENT_LABEL)
-        mn_acc_absent = np.asarray(acc_target_absent).mean(axis=0)
-        mn_acc_absent_line, = ax.plot(set_sizes, mn_acc_absent, color='lawngreen', linewidth=4,
-                                      zorder=0, label=MN_ACC_TARGET_ABSENT_LABEL)
+        if plot_mean:
+            mn_metric_present = np.asarray(metric_target_present).mean(axis=0)
+            mn_metric_present_label = f'mean {metric},\ntarget present'
+            mn_metric_present_line, = ax.plot(set_sizes, mn_metric_present,
+                                              color='magenta', linewidth=4,
+                                              zorder=0,
+                                              label=mn_metric_present_label)
+    else:
+        mn_metric_present_line = None
+        mn_metric_present_label = None
+
+    if metric_target_absent:
+        for arr_metric_absent in metric_target_present:
+            ax.plot(set_sizes, arr_metric_absent, color='lightgreen', linewidth=2,
+                    linestyle='--', marker='o', zorder=1, alpha=0.85, label=None)
+
+        if plot_mean:
+            mn_metric_absent = np.asarray(metric_target_absent).mean(axis=0)
+            mn_metric_absent_label = f'mean {metric},\ntarget absent'
+            mn_metric_absent_line, = ax.plot(set_sizes, mn_metric_absent,
+                                             color='lawngreen', linewidth=4, zorder=0,
+                                             label=mn_metric_absent_label)
+    else:
+        mn_metric_absent_line = None
+        mn_metric_absent_label = None
+
+    if metric_both:
+        for arr_metric_both in metric_both:
+            ax.plot(set_sizes, arr_metric_both, color='black', linewidth=2,
+                    linestyle='--', marker='o', zorder=1, alpha=0.85, label=None)
+
+        if plot_mean:
+            mn_metric_both = np.asarray(metric_both).mean(axis=0)
+            mn_metric_both_label = f'mean {metric}\n'
+            mn_metric_both_line, = ax.plot(set_sizes, mn_metric_both,
+                                             color='black', linewidth=4, zorder=0,
+                                             label=mn_metric_both_label)
+    else:
+        mn_metric_both_line = None
+        mn_metric_both_label = None
 
     ax.set_xticks(set_sizes)
 
@@ -201,13 +264,21 @@ def acc_v_set_size_df(df, net_name, train_type, stimulus, ax=None,
     if set_xlabel:
         ax.set_xlabel('set size')
     if set_ylabel:
-        ax.set_ylabel('accuracy')
+        ax.set_ylabel(metric)
     if set_ylim:
         ax.set_ylim(ylim)
 
     if add_legend:
-        ax.legend(handles=(mn_acc_present_line, mn_acc_absent_line),
-                  labels=(MN_ACC_TARGET_PRESENT_LABEL, MN_ACC_TARGET_ABSENT_LABEL),
+        handles = (handle for handle in [mn_metric_present_line,
+                                         mn_metric_absent_line,
+                                         mn_metric_both_line]
+                   if handle is not None)
+        labels = (label for label in [mn_metric_present_label,
+                                      mn_metric_absent_label,
+                                      mn_metric_both_label]
+                  if label is not None)
+        ax.legend(handles=handles,
+                  labels=labels,
                   loc='lower left')
 
     if save_as:
