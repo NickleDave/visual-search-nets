@@ -199,3 +199,42 @@ def results_csv(data_prep_dir,
 
     test_df = pd.DataFrame.from_records(rows, columns=HEADER)
     test_df.to_csv(test_csv_path)
+
+
+def reorder_paths(paths, order_strs):
+    """reorder a list of paths, using a list of strings.
+    Returns a new list of the paths, re-ordered so that the
+    first path will have the first string in it, the second path
+    will have the second string in it, and so on.
+
+    Parameters
+    ----------
+    paths : list
+        of paths
+    order_strs : list
+        of strings, e.g. visual search stimulus names
+
+    Returns
+    -------
+    paths_out : list
+        paths, sorted by order_strs
+
+    Notes
+    -----
+    Used to sort paths to data and results, according to
+    visual search stimulus names
+    """
+    if len(paths) != len(order_strs):
+        raise ValueError(
+            "length of paths does not equal length of order_strs"
+        )
+
+    paths_out = []
+    for order_str in order_strs:
+        for path in paths:
+            if order_str in path:
+                paths_out.append(path)
+
+    assert len(paths_out) == len(paths), "not all paths in paths_out"
+
+    return paths_out
