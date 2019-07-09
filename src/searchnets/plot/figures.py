@@ -105,6 +105,7 @@ def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), ax=None,
 
 def metric_v_set_size_df(df, net_name, train_type, stimulus, metric, conditions,
                          ax=None, title=None, save_as=None, figsize=(10, 5),
+                         both_color='darkgrey', mn_both_color='black',
                          set_xlabel=False, set_ylabel=False, set_ylim=True,
                          ylim=(0, 1.1), plot_mean=True, add_legend=False):
     """plot accuracy as a function of visual search task set size
@@ -145,6 +146,10 @@ def metric_v_set_size_df(df, net_name, train_type, stimulus, metric, conditions,
     figsize : tuple
         (width, height) in inches. Default is (10, 5). Only used if ax is None and a new
         figure is created.
+    both_color : str
+        color to use to plot lines for individual replicates in 'both' condition
+    mn_both_color : str
+        color to use
     set_xlabel : bool
         if True, set the value of xlabel to "set size". Default is False.
     set_ylabel : bool
@@ -244,14 +249,14 @@ def metric_v_set_size_df(df, net_name, train_type, stimulus, metric, conditions,
 
     if metric_both:
         for arr_metric_both in metric_both:
-            ax.plot(set_sizes, arr_metric_both, color='black', linewidth=2,
-                    linestyle='--', marker='o', zorder=1, alpha=0.85, label=None)
+            ax.plot(set_sizes, arr_metric_both, color=both_color, linewidth=2,
+                    linestyle='--', marker='o', zorder=1, label=None)
 
         if plot_mean:
             mn_metric_both = np.asarray(metric_both).mean(axis=0)
             mn_metric_both_label = f'mean {metric}\n'
-            mn_metric_both_line, = ax.plot(set_sizes, mn_metric_both,
-                                             color='black', linewidth=4, zorder=0,
+            mn_metric_both_line, = ax.plot(set_sizes, mn_metric_both, alpha=0.85,
+                                             color=mn_both_color, linewidth=4, zorder=0,
                                              label=mn_metric_both_label)
     else:
         mn_metric_both_line = None
