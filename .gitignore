@@ -1,4 +1,6 @@
 # buildstuffs and other ephemera
+build/
+dist/
 .ipynb_checkpoints/
 .idea
 */__pycache__/*
