@@ -19,7 +19,7 @@ except NameError:
     base_dir = None
 
 
-__title__ = "'visual-search-nets'"
+__title__ = "visual-search-nets"
 __summary__ = "experiments measuring how convolutional neural networks perform a visual search task"
 __uri__ = "https://github.com/NickleDave/visual-search-nets"
 
