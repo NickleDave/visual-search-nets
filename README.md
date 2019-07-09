@@ -1,5 +1,5 @@
 [![DOI](https://zenodo.org/badge/169021695.svg)](https://zenodo.org/badge/latestdoi/169021695)
-
+[![PyPI version](https://badge.fury.io/py/visual-search-nets.svg)](https://badge.fury.io/py/visual-search-nets)
 # visual-search-nets
 
 Experiments to measure the behavior of deep neural networks performing 
