@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0]
+This is the version used for presentation at SciPy 2019
+### Added
+- functionality in `utils.results_csv` that computes d prime and adds it
+  to the .csv, as well as accuracy across both target present and target
+  absent conditions (i.e. what most people would call just "accuracy")
+- single-source version
+- summary results files and files with paths to training/validation/test
+  data are part of repository
+
+### Changed
+- `figures.acc_v_set_size` re-written as more general `metric_v_set_size`,
+  works with d-prime metric and can plot accuracy, means, etc., for both
+  conditions (instead of always separating out target present and target
+  absent conditions into two lines)
+
 ## [0.2.0]
 This is the version used for paper submitted to ccneuro 2019
 ### Added
@@ -22,9 +38,6 @@ This is the version used for paper submitted to ccneuro 2019
   + enables "balancing" data set
 - sub-module for running learning curves (needs to be updated to use
   additions to `searchstims.train`)
-- functionality in `utils.results_csv` that computes d prime and adds it
-  to the .csv, as well as accuracy across both target present and target
-  absent conditions (i.e. what most people would call just "accuracy")
 
 ### Fixed
 - `searchnets.train` uses `MomentumOptimizer` like original AlexNet and
