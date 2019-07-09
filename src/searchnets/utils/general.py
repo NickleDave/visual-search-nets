@@ -41,13 +41,36 @@ z_score = norm.ppf
 
 
 def compute_d_prime(y_true, y_pred):
-    """computes d prime given y_true and y_pred"""
-    hits = np.logical_and(y_pred == 1, y_true == 1)
-    hit_rate = hits.sum() / np.where(y_true == 1)[0].shape
-    false_alarms = np.logical_and(y_pred == 1, y_true == 1)
-    false_alarm_rate = false_alarms.sum() / np.where(y_true == 0)[0].shape
+    """computes d prime given y_true and y_pred
+
+    adapted from <https://lindeloev.net/calculating-d-in-python-and-php/>
+    """
+    hits = np.logical_and(y_pred == 1, y_true == 1).sum()
+    misses = np.logical_and(y_pred == 0, y_true == 1).sum()
+    hit_rate = hits / (hits + misses)
+
+    false_alarms = np.logical_and(y_pred == 1, y_true == 0).sum()
+    correct_rejects = np.logical_and(y_pred == 0, y_true == 0).sum()
+    false_alarm_rate = false_alarms / (false_alarms + correct_rejects)
+
+    # standard correction to avoid d' value of infinity or minus infinity;
+    # if either is 0 or 1, assume "true" value is somewhere between 0 (or 1)
+    # and (1/2N) where N is the number of targets (or "lures", as appropriate)
+    half_hit = 0.5 / (hits + misses)
+    half_fa = 0.5 / (false_alarms + correct_rejects)
+
+    if hit_rate == 1:
+        hit_rate = 1 - half_hit
+    if hit_rate == 0:
+        hit_rate = half_hit
+
+    if false_alarm_rate == 1:
+        false_alarm_rate = 1 - half_fa
+    if false_alarm_rate == 0:
+        false_alarm_rate = half_fa
+
     d_prime = z_score(hit_rate) - z_score(false_alarm_rate)
-    return hit_rate, false_alarm_rate, d_prime
+    return hit_rate.item(), false_alarm_rate.item(), d_prime.item()
 
 
 HEADER = ['net_name',
