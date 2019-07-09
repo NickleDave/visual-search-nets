@@ -137,12 +137,12 @@ def results_csv(data_prep_dir,
                 'results_gz_paths must be same length as data_gz_paths'
             )
 
-    num_iter_main_loop = len(train_types) * len(nets) * len(stims)
-    if len(results_gz_paths) != num_iter_main_loop:
-        raise ValueError(
-            f'not enough paths in results_gz_paths (length {len(results_gz_paths)} '
-            f'for all iterations of main loop, {num_iter_main_loop}.'
-        )
+        num_iter_main_loop = len(train_types) * len(nets) * len(stims)
+        if len(results_gz_paths) != num_iter_main_loop:
+            raise ValueError(
+                f'not enough paths in results_gz_paths (length {len(results_gz_paths)} '
+                f'for all iterations of main loop, {num_iter_main_loop}.'
+            )
 
     iter_counter = 0
     rows = []
