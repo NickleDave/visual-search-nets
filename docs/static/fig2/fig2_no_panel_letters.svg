@@ -16,8 +16,8 @@
    id="svg4505"
    version="1.1"
    inkscape:version="0.92.4 (33fec40, 2019-01-16)"
-   sodipodi:docname="fig2.svg"
-   inkscape:export-filename="/home/bart/Documents/repos/L2M/visual-search-nets/docs/static/fig2/fig2.png"
+   sodipodi:docname="fig2_no_panel_letters.svg"
+   inkscape:export-filename="./fig2_no_panel_letters.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
   <defs
@@ -56,11 +56,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.35"
-     inkscape:cx="312.94462"
-     inkscape:cy="377.84027"
+     inkscape:zoom="0.49497475"
+     inkscape:cx="628.16881"
+     inkscape:cy="539.46468"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="layer4"
      showgrid="false"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -137,7 +137,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -314,29 +314,5 @@
          x="880.17444"
          y="148.17776"
          style="font-size:40px;line-height:1.25">spatial config.</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:12px;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="32.39312"
-       y="225.63416"
-       id="text3508-3-9"><tspan
-         sodipodi:role="line"
-         x="32.39312"
-         y="225.63416"
-         style="font-weight:bold;font-size:90.00000763px;line-height:1.25;stroke-width:1px"
-         id="tspan4350-7">a</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:12px;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="25.669485"
-       y="684.92474"
-       id="text3508-3-9-3"
-       inkscape:transform-center-x="-11.428572"
-       inkscape:transform-center-y="-22.857144"><tspan
-         sodipodi:role="line"
-         x="25.669485"
-         y="684.92474"
-         style="font-weight:bold;font-size:90.00000763px;line-height:1.25;stroke-width:1px"
-         id="tspan4350-7-0">b</tspan></text>
   </g>
 </svg>
