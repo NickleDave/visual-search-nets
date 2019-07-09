@@ -14,13 +14,19 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-NAME = 'visual-search-nets'
-DESCRIPTION = 'experiments measuring how convolutional neural networks perform a visual search task'
-URL = 'https://github.com/NickleDave/visual-search-nets'
-EMAIL = 'nicholdav@gmail.com'
-AUTHOR = 'David Nicholson'
+# Package meta-data.
+about = {}
+with open("src/searchnets/__about__.py") as fp:
+    exec(fp.read(), about)
+
+NAME = about['__title__']
+DESCRIPTION = about['__summary__']
+URL = about['__uri__']
+EMAIL = about['__email__']
+AUTHOR = about['__author__']
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '0.2.0'
+VERSION = about['__version__']
+LICENSE = about['__license__']
 
 # What packages are required for this module to be executed?
 REQUIRED = [
