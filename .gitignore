@@ -11,10 +11,11 @@ __pycache__/
 results/*
 bvlc_alexnet.npy
 *.npz
-data/visual_search_stimuli/*
-data/experiment_*/
 data/checkpoints/*/
+data/experiment_*/
 data/for_figshare/*
+data/neural_net_weights/
+data/visual_search_stimuli/*
 
 # tests
 tests/test_data/visual_search_stimuli
