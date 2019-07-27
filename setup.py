@@ -30,7 +30,8 @@ LICENSE = about['__license__']
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    'numpy', 'scipy', 'tensorflow', 'matplotlib', 'pandas', 'seaborn', 'imageio', 'joblib', 'tqdm', 'attrs',
+    'numpy', 'scipy', 'tensorflow', 'matplotlib', 'pandas', 'seaborn', 'imageio',
+    'joblib', 'tqdm', 'attrs',
     'snakemake', 'searchstims>=2.2.0',
 ]
 
