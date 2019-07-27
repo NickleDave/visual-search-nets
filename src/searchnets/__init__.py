@@ -12,9 +12,10 @@ from .__about__ import (
 
 from . import config
 from . import plot
+from . import utils
 
-from .train import train
 from .data import data
-from .test import test
 from .learncurve import learning_curve
+from .train import train
+from .test import test
 
