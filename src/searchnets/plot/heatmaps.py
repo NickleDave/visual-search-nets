@@ -11,7 +11,7 @@ from scipy import stats
 import seaborn as sns
 
 
-def heatmap(grid, ax=None):
+def heatmap(grid, ax=None, cmap='rainbow', vmin=0, vmax=1):
     """helper function that plots a heatmap,
      using the matplotlib.pyplot.imshow function
 
@@ -22,16 +22,21 @@ def heatmap(grid, ax=None):
     ax : matplotlib.axes.Axes
         axes on which to plot heatmap. If None, then
         a new Axes instance is created
+    cmap : str
+        name of colormap to use. Default is 'rainbow'.
+    vmin, vmax : scalar
+        define the data range that the colormap covers.
+        Default is 0, 1.
 
     Returns
     -------
-    ax : matplotlib.axes.Axes
-        axes on which heatmap was plotted
+    im : matplotlib.image.AxesImage
+        instance returned by call to imshow.
     """
     if ax is None:
         fig, ax = plt.subplots()
-    ax.imshow(grid)
-    return ax
+    im = ax.imshow(grid, vmin=vmin, vmax=vmax, cmap=cmap)
+    return im
 
 
 def item_heatmap(json_fname, data_fname, test_results_fname,
