@@ -1,14 +1,11 @@
-import os
 import json
-from glob import glob
+from pathlib import Path
 
 import joblib
 import numpy as np
-import matplotlib as mpl
 import matplotlib.pyplot as plt
-import pandas as pd
-from scipy import stats
-import seaborn as sns
+
+from ..utils.metrics import p_item_grid
 
 
 def heatmap(grid, ax=None, cmap='rainbow', vmin=0, vmax=1):
@@ -39,99 +36,94 @@ def heatmap(grid, ax=None, cmap='rainbow', vmin=0, vmax=1):
     return im
 
 
-def item_heatmap(json_fname, data_fname, test_results_fname,
-                 item_type, pred_type):
-    """create heatmap of where items were plotted
-    to visualize whether location of items affected accuracy
+def p_item_heatmap(json_fname, data_gz_fname, stim_abbrev, set_size=None,
+                   data_set='train', item_char='t', vmin=0, vmax=1,
+                   ax=None, add_cbar=False):
+    """given a dataset of visual search stimuli where discrete target and
+    distractor items appear within cells of a grid, plot a
+    heatmap of the probability that a specified item appears
+    within each cell of the grid
 
     Parameters
     ----------
     json_fname : str
-        path to .json file output by searchstims with target
-        and distractor indices from each stimulus file
-    data_fname : str
-        path to file output by searchnets.data that
-        contains list of filenames for training, validation, and
-        test sets. Used to link predictions to data in json_fname.
-    test_results_fname : str
-        path to file output by searchnets.test that
-        contains predictions for each trained neural network.
-    item_type : str
-        one of {'target', 'distractor'}
-    pred_type : str
-        one of {'correct', 'incorrect'}
+        path to .json file created by searchstims package
+        with target and distractor indices from each stimulus file
+    data_gz_fname : str
+        path to .gz file created by searchnets.data
+        that has filenames of files in dataset
+    stim_abbrev : str
+        abbreviation that represents type of visual search stimulus,
+        e.g. '2_v_5', 'RVvGV'.
+    set_size : int
+        set size of visual search stimuli
+    data_set : str
+        one of {'train', 'val', 'test'}; data set from which heatmap should
+        be generated. Default is 'train'.
+    item_char : str
+        Character that represents item in grid_as_char.
+        Default is 't', for 'target'.
+    ax : matplotlib.axes.Axes
+        default is None, in which case a new Axes instance is created.
 
     Returns
     -------
-    None
+    p : numpy.ndarray
+        where value of each element is probability
+        that item_char occurs in the corresponding cell in char_grids
+    im : matplotlib.image.AxesImage
+        instance returned by call to imshow
     """
-    if item_type not in ['target', 'distractor']:
-        raise ValueError("pred_type must be either 'target' or 'distractor'")
-
-    if pred_type not in ['correct', 'incorrect']:
-        raise ValueError("pred_type must be either 'correct' or 'incorrect'")
-
-    with open(json_fname) as fp:
-        stim_info_json = json.load(fp)
-
-    # get indices out of .json file
-    if item_type == 'target':
-        inds_key = 'target_indices'
-    elif item_type == 'distractor':
-        inds_key = 'distractor_indices'
-    item_indices_by_fname = {
-        os.path.basename(stim_info['filename']): stim_info[inds_key]
-        for set_size, present_absent_dict in stim_info_json.items()
-        for is_target_present, stim_info_list in present_absent_dict.items()
-        for stim_info in stim_info_list
-    }
-
-    data = joblib.load(data_fname)
-    test_set_files = data['test_set_files']
-    y_true = data['y_test']
-    set_size_vec_test = data['set_size_vec_test']
-
-    # get indices using file names from
-    # 'test_set_files' in .npz file with training data,
-    # so indices are in same order as y_test from the same file
-    y_true_item_indices = []
-    for test_set_file in test_set_files:
-        y_true_item_indices.append(
-            item_indices_by_fname[os.path.basename(test_set_file)]
+    if data_set not in {'train',  'val', 'test'}:
+        raise ValueError(
+            f"data_set must be 'train', 'test', or 'val', but got {data_set}"
         )
 
-    # now convert to a numpy array so we can index into it;
-    # note this is an "array of lists", because one image may have multiple
-    # sets of indices for distractors, for example, but I still want to be able to
-    # index by image without doing a bunch of advanced indexing
-    y_true_item_indices = np.asarray(y_true_item_indices).squeeze()
+    # get filenames of files in dataset, i.e. training set files, test files, etc.,
+    # so we can keep only grid_as_char for those files
+    data_gz = joblib.load(data_gz_fname)
+    stim_fnames = data_gz[f'x_{data_set}']
+    if all([type(stim_fname) == str for stim_fname in stim_fnames]):
+        stim_fnames = np.asarray(stim_fnames)
+    elif all([type(stim_fname) == np.ndarray for stim_fname in stim_fnames]):
+        stim_fnames = np.concatenate(stim_fnames)
 
-    results = joblib.load(test_results_fname)
-    predictions_per_model_dict = results['predictions_per_model_dict']
+#    stim_type_vec = data_gz[f'stim_type_vec_{data_set}']
+#    if all([type(stim_fname) == str for stim_fname in stim_fnames]):
+#        stim_fnames = np.asarray(stim_fnames)
+#    elif all([type(stim_fname) == np.ndarray for stim_fname in stim_fnames]):
+#        stim_fnames = np.concatenate(stim_fnames)
 
-    y_pred = list(predictions_per_model_dict.values())
+    # keep just the ones that are the correct visual search stimulus type
+#    inds_of_stim = np.nonzero(stim_type_vec == stim_abbrev)
+#    import pdb;pdb.set_trace()
+#    stim_fnames = stim_fnames[inds_of_stim]
+#    stim_fnames = stim_fnames.tolist()
+    # keep just name of file, not whole path,
+    # so we can more easily check if each filename from the .json file
+    # is in this list of 'just filenames' (without paths)
+    stim_fnames = [Path(stim_fname).name for stim_fname in stim_fnames]
 
-    to_plot = []
-    for y_pred_for_model in y_pred:
-        if pred_type == 'correct':
-            pred_indices = np.where(y_pred_for_model == y_true)[0]
-        elif pred_type == 'incorrect':
-            pred_indices = np.where(y_pred_for_model != y_true)[0]
-        to_plot.append(pred_indices)
+    with open(json_fname) as fp:
+        stim_meta_dict = json.load(fp)
 
-    xx = []
-    yy = []
-    for pred_indices in to_plot:
-        these_rows = y_true_item_indices[pred_indices]
-        # have to flatten lists of pairs of indices into one long list of pairs of indices
-        these_inds = []  # <-- will be long list
-        for row in these_rows:
-            for inds_pair in row:
-                these_inds.append(inds_pair)
-        these_inds = np.asarray(these_inds)
-        xx.append(these_inds[:, 0])
-        yy.append(these_inds[:, 1])
+    stim_meta_dict = stim_meta_dict[stim_abbrev]
+    stim_meta_dict = stim_meta_dict[set_size]
+    # just concatenate both the 'present' and 'absent' lists
+    # and look at all of them, instead of e.g. only keeping
+    # target present to look for 't'. In case a different
+    # character was used for target and/or distractor type(s)
+    stim_meta_list = []
+    stim_meta_list.extend(stim_meta_dict['present'])
+    stim_meta_list.extend(stim_meta_dict['absent'])
 
-    fig, ax = plt.subplots()
-    for x_vals, y_vals in zip(xx, yy):
-        ax.scatter(x_vals, y_vals)
+    char_grids = [
+        np.asarray(meta_d['grid_as_char'])
+        for meta_d in stim_meta_list
+        # only keep if filename is in stim_fnames from data_gz
+        if Path(meta_d['filename']).name in stim_fnames
+    ]
+
+    p = p_item_grid(char_grids, item_char)
+    im = heatmap(p, ax, vmin=vmin, vmax=vmax)
+    return p, im
