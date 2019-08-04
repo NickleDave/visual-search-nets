@@ -29,11 +29,13 @@ def heatmap(grid, ax=None, cmap='rainbow', vmin=0, vmax=1):
     -------
     im : matplotlib.image.AxesImage
         instance returned by call to imshow.
+    ax : matplotlib.axes.Axes
+        axes on which heatmap was plotted.
     """
     if ax is None:
         fig, ax = plt.subplots()
     im = ax.imshow(grid, vmin=vmin, vmax=vmax, cmap=cmap)
-    return im
+    return im, ax
 
 
 def p_item_heatmap(json_fname, data_gz_fname, stim_abbrev, set_size=None,
@@ -73,6 +75,8 @@ def p_item_heatmap(json_fname, data_gz_fname, stim_abbrev, set_size=None,
         that item_char occurs in the corresponding cell in char_grids
     im : matplotlib.image.AxesImage
         instance returned by call to imshow
+    ax : matplotlib.axes.Axes
+        axes on which heatmap was plotted.
     """
     if data_set not in {'train',  'val', 'test'}:
         raise ValueError(
@@ -125,5 +129,7 @@ def p_item_heatmap(json_fname, data_gz_fname, stim_abbrev, set_size=None,
     ]
 
     p = p_item_grid(char_grids, item_char)
-    im = heatmap(p, ax, vmin=vmin, vmax=vmax)
-    return p, im
+    im, ax = heatmap(p, ax, vmin=vmin, vmax=vmax)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    return p, im, ax
