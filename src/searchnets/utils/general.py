@@ -5,6 +5,8 @@ import joblib
 import numpy as np
 import pandas as pd
 
+from .metrics import compute_d_prime
+
 
 def make_targz(output_filename, source_dir):
     """make a .tar.gz file from a directory, i.e. a gzip-compressed archive"""
