@@ -40,7 +40,7 @@ def heatmap(grid, ax=None, cmap='rainbow', vmin=0, vmax=1):
 
 def p_item_heatmap(json_fname, data_gz_fname, stim_abbrev, set_size=None,
                    data_set='train', item_char='t', vmin=0, vmax=1,
-                   ax=None, add_cbar=False):
+                   ax=None, cmap='rainbow'):
     """given a dataset of visual search stimuli where discrete target and
     distractor items appear within cells of a grid, plot a
     heatmap of the probability that a specified item appears
@@ -67,6 +67,8 @@ def p_item_heatmap(json_fname, data_gz_fname, stim_abbrev, set_size=None,
         Default is 't', for 'target'.
     ax : matplotlib.axes.Axes
         default is None, in which case a new Axes instance is created.
+    cmap : str
+        name of colormap to use. Default is 'rainbow'.
 
     Returns
     -------
@@ -87,6 +89,10 @@ def p_item_heatmap(json_fname, data_gz_fname, stim_abbrev, set_size=None,
     # so we can keep only grid_as_char for those files
     data_gz = joblib.load(data_gz_fname)
     stim_fnames = data_gz[f'x_{data_set}']
+
+    if all([type(stim_fname) == list for stim_fname in stim_fnames]):
+        stim_fnames = [item for sublist in stim_fnames for item in sublist]
+
     if all([type(stim_fname) == str for stim_fname in stim_fnames]):
         stim_fnames = np.asarray(stim_fnames)
     elif all([type(stim_fname) == np.ndarray for stim_fname in stim_fnames]):
@@ -100,7 +106,7 @@ def p_item_heatmap(json_fname, data_gz_fname, stim_abbrev, set_size=None,
 
     # keep just the ones that are the correct visual search stimulus type
 #    inds_of_stim = np.nonzero(stim_type_vec == stim_abbrev)
-#    import pdb;pdb.set_trace()
+
 #    stim_fnames = stim_fnames[inds_of_stim]
 #    stim_fnames = stim_fnames.tolist()
     # keep just name of file, not whole path,
@@ -131,7 +137,7 @@ def p_item_heatmap(json_fname, data_gz_fname, stim_abbrev, set_size=None,
     ]
 
     p = p_item_grid(char_grids, item_char)
-    im, ax = heatmap(p, ax, vmin=vmin, vmax=vmax)
+    im, ax = heatmap(p, ax, vmin=vmin, vmax=vmax, cmap=cmap)
     ax.set_xticks([])
     ax.set_yticks([])
     return p, im, ax
@@ -140,7 +146,7 @@ def p_item_heatmap(json_fname, data_gz_fname, stim_abbrev, set_size=None,
 def acc_err_heatmap(json_fname, data_gz_fname, results_gz_fname,
                     stim_abbrev, net_num, set_size=None,
                     metric='acc', data_set='test',
-                    vmin=0, vmax=1, ax=None):
+                    vmin=0, vmax=1, ax=None, cmap='rainbow'):
     """given a dataset of visual search stimuli where discrete target and
     distractor items appear within cells of a grid, plot heatmap of
     either accuracy or error within each cell of the grid,
@@ -175,6 +181,8 @@ def acc_err_heatmap(json_fname, data_gz_fname, results_gz_fname,
         Default is 't', for 'target'.
     ax : matplotlib.axes.Axes
         default is None, in which case a new Axes instance is created.
+    cmap : str
+        name of colormap to use. Default is 'rainbow'.
 
     Returns
     -------
@@ -206,6 +214,10 @@ def acc_err_heatmap(json_fname, data_gz_fname, results_gz_fname,
     # so we can keep only grid_as_char for those files
     data_gz = joblib.load(data_gz_fname)
     stim_fnames = data_gz[f'x_{data_set}']
+
+    if all([type(stim_fname) == list for stim_fname in stim_fnames]):
+        stim_fnames = [item for sublist in stim_fnames for item in sublist]
+
     if all([type(stim_fname) == str for stim_fname in stim_fnames]):
         stim_fnames = np.asarray(stim_fnames)
     elif all([type(stim_fname) == np.ndarray for stim_fname in stim_fnames]):
@@ -267,7 +279,7 @@ def acc_err_heatmap(json_fname, data_gz_fname, results_gz_fname,
         m_arr = acc_grid(stim_fnames, y_true, y_pred, char_grids, stim_fnames_meta)
     elif metric == 'err':
         m_arr = err_grid(stim_fnames, y_true, y_pred, char_grids, stim_fnames_meta)
-    im, ax = heatmap(m_arr, ax, vmin=vmin, vmax=vmax)
+    im, ax = heatmap(m_arr, ax, vmin=vmin, vmax=vmax, cmap=cmap)
     ax.set_xticks([])
     ax.set_yticks([])
     return m_arr, im, ax
