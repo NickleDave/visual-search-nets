@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from .nets import AlexNet
 from .nets import VGG16
+from .utils.metrics import d_prime_tf
 from .utils.tfdata import get_dataset
 
 MOMENTUM = 0.9  # used for both Alexnet and VGG16
@@ -27,6 +28,7 @@ def train(gz_filename,
           random_seed,
           model_save_path,
           dropout_rate=0.5,
+          loss='CE',
           use_val=True,
           val_step=None,
           patience=None,
@@ -77,6 +79,9 @@ def train(gz_filename,
     dropout_rate : float
         Probability that any unit in a layer will "drop out" during
         a training epoch, as a form of regularization. Default is 0.5.
+    loss : str
+        type of loss function to use. One of {'CE', 'invDPrime'}. Default is 'CE',
+        the standard cross-entropy loss. 'invDPrime' is inverse D prime.
     save_acc_by_set_size_by_epoch : bool
         if True, compute accuracy on training set for each epoch separately
         for each unique set size in the visual search stimuli. These values
@@ -195,10 +200,18 @@ def train(gz_filename,
                     'labels': tf.cast(tf.argmax(model.output, axis=1), tf.int32, name='labels')
                 }
 
-                cross_entropy_loss = tf.reduce_mean(
-                    tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
-                                                               labels=y_onehot),
-                    name='cross_entropy_loss')
+                if loss == 'CE':
+                    loss = tf.reduce_mean(
+                        tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
+                                                                   labels=y_onehot),
+                        name='cross_entropy_loss')
+                elif loss == 'invDPrime':
+                    softmax = tf.nn.softmax(model.output, name='softmax')
+                    y_pred = tf.math.argmax(softmax, name='y_pred')
+                    d_prime = d_prime_tf(y, y_pred)
+                    # loss is actually inverse of d_prime, because
+                    # as d_prime gets bigger (good), then 1 / d_prime gets smaller. So we minimize that.
+                    loss = 1 / d_prime
 
                 var_list1 = []  # all layers before fully-connected
                 var_list2 = []  # fully-connected layers
@@ -212,14 +225,14 @@ def train(gz_filename,
                 if freeze_trained_weights:
                     opt = tf.train.MomentumOptimizer(learning_rate=new_layer_learning_rate,
                                                      momentum=MOMENTUM)
-                    grads = tf.gradients(cross_entropy_loss, var_list2)
+                    grads = tf.gradients(loss, var_list2)
                     train_op = opt.apply_gradients(zip(grads, var_list2), name='train_op')
                 else:
                     opt1 = tf.train.MomentumOptimizer(learning_rate=base_learning_rate,
                                                       momentum=MOMENTUM)
                     opt2 = tf.train.MomentumOptimizer(learning_rate=new_layer_learning_rate,
                                                       momentum=MOMENTUM)
-                    grads = tf.gradients(cross_entropy_loss, var_list1 + var_list2)
+                    grads = tf.gradients(loss, var_list1 + var_list2)
                     grads1 = grads[:len(var_list1)]
                     grads2 = grads[len(var_list1):]
                     train_op1 = opt1.apply_gradients(zip(grads1, var_list1))
