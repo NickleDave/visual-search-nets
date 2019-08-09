@@ -1,7 +1,8 @@
 """functions for computing metrics: error, probabilities, etc."""
 import numpy as np
 from scipy.stats import norm
-
+import tensorflow as tf
+import tensorflow_probability as tfp
 
 z_score = norm.ppf
 
@@ -37,6 +38,69 @@ def compute_d_prime(y_true, y_pred):
 
     d_prime = z_score(hit_rate) - z_score(false_alarm_rate)
     return hit_rate.item(), false_alarm_rate.item(), d_prime.item()
+
+
+def d_prime_tf(y_true, y_pred):
+    """computes d prime given y_true and y_pred.
+
+    Same as compute_d_prime function, but written as a Tensorflow computation graph,
+    so it can be used as part of loss function (see searchnets.train).
+    Adapted from <https://lindeloev.net/calculating-d-in-python-and-php/>.
+
+    Parameters
+    ----------
+    y_true : Tensorflow.Tensor
+    y_pred : Tensorflow.Tensor
+
+    Returns
+    -------
+    d_prime : Tensorflow.Tensor
+    """
+    hits_vec = tf.cast(
+        tf.math.logical_and(y_pred == 1, y_true == 1),
+        dtype=tf.int32
+    )
+    hits = tf.math.reduce_sum(hits_vec)
+    misses_vec = tf.cast(
+        tf.math.logical_and(y_pred == 0, y_true == 1),
+        dtype=tf.int32
+    )
+    misses = tf.math.reduce_sum(misses_vec)
+    hit_rate = hits / (hits + misses)
+
+    false_alarms_vec = tf.cast(
+        tf.math.logical_and(y_pred == 1, y_true == 0),
+        dtype=tf.int32
+    )
+    false_alarms = tf.math.reduce_sum(false_alarms_vec)
+    correct_rejects_vec = tf.cast(
+        tf.math.logical_and(y_pred == 0, y_true == 0),
+        dtype=tf.int32
+    )
+    correct_rejects = tf.math.reduce_sum(correct_rejects_vec)
+    false_alarm_rate = false_alarms / (false_alarms + correct_rejects)
+
+    # standard correction to avoid d' value of infinity or minus infinity;
+    # if either is 0 or 1, assume "true" value is somewhere between 0 (or 1)
+    # and (1/2N) where N is the number of targets (or "lures", as appropriate)
+    half_hit = tf.constant(0.5, dtype=tf.int32) / (hits + misses)
+    half_fa = tf.constant(0.5, dtype=tf.int32) / (false_alarms + correct_rejects)
+
+    if hit_rate.eval() == 1:
+        hit_rate = tf.constant(1.0, dtype=tf.int32) - half_hit
+    if hit_rate.eval() == 0:
+        hit_rate = half_hit
+
+    if false_alarm_rate.eval() == 1:
+        false_alarm_rate = tf.constant(1.0, dtype=tf.int32) - half_fa
+    if false_alarm_rate.eval() == 0:
+        false_alarm_rate = half_fa
+
+    norm = tfp.distributions.Normal(loc=0, scale=1)
+    z_score = norm.quantile  # rename quantile method (AKA ppf, inverse cdf) to z-score
+
+    d_prime = z_score(hit_rate) - z_score(false_alarm_rate)
+    return d_prime
 
 
 def p_item_grid(char_grids, item_char='any', return_counts=False):
