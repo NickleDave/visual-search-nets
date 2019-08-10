@@ -57,50 +57,72 @@ def d_prime_tf(y_true, y_pred):
     d_prime : Tensorflow.Tensor
     """
     hits_vec = tf.cast(
-        tf.math.logical_and(y_pred == 1, y_true == 1),
-        dtype=tf.int32
-    )
+        tf.math.logical_and(
+            tf.math.equal(y_pred, tf.constant(1, tf.int32)),
+            tf.math.equal(y_true, tf.constant(1, tf.int32))
+                    ),dtype=tf.float32)
     hits = tf.math.reduce_sum(hits_vec)
+
     misses_vec = tf.cast(
-        tf.math.logical_and(y_pred == 0, y_true == 1),
-        dtype=tf.int32
-    )
+        tf.math.logical_and(
+            tf.math.equal(y_pred, tf.constant(0, tf.int32)),
+            tf.math.equal(y_true, tf.constant(1, tf.int32))
+        ), dtype=tf.float32)
     misses = tf.math.reduce_sum(misses_vec)
+
     hit_rate = hits / (hits + misses)
 
     false_alarms_vec = tf.cast(
-        tf.math.logical_and(y_pred == 1, y_true == 0),
-        dtype=tf.int32
-    )
+        tf.math.logical_and(
+            tf.math.equal(y_pred, tf.constant(1, tf.int32)),
+            tf.math.equal(y_true, tf.constant(0, tf.int32))
+                    ),dtype=tf.float32)
     false_alarms = tf.math.reduce_sum(false_alarms_vec)
+
     correct_rejects_vec = tf.cast(
-        tf.math.logical_and(y_pred == 0, y_true == 0),
-        dtype=tf.int32
-    )
+        tf.math.logical_and(
+            tf.math.equal(y_pred, tf.constant(0, tf.int32)),
+            tf.math.equal(y_true, tf.constant(0, tf.int32))
+                    ),dtype=tf.float32)
     correct_rejects = tf.math.reduce_sum(correct_rejects_vec)
+
     false_alarm_rate = false_alarms / (false_alarms + correct_rejects)
 
     # standard correction to avoid d' value of infinity or minus infinity;
     # if either is 0 or 1, assume "true" value is somewhere between 0 (or 1)
     # and (1/2N) where N is the number of targets (or "lures", as appropriate)
-    half_hit = tf.constant(0.5, dtype=tf.int32) / (hits + misses)
-    half_fa = tf.constant(0.5, dtype=tf.int32) / (false_alarms + correct_rejects)
+    half_hit = tf.constant(0.5, dtype=tf.float32) / (hits + misses)
+    half_fa = tf.constant(0.5, dtype=tf.float32) / (false_alarms + correct_rejects)
 
-    if hit_rate.eval() == 1:
-        hit_rate = tf.constant(1.0, dtype=tf.int32) - half_hit
-    if hit_rate.eval() == 0:
-        hit_rate = half_hit
+    # if hit rate is 1, change to 1 - half hit
+    hit_rate = tf.cond(
+        pred=tf.math.equal(hit_rate, 1.0),
+        true_fn=lambda: tf.constant(1.0, dtype=tf.float32) - half_hit,
+        false_fn=lambda: hit_rate,
+    )
+    # if hit rate is 0, change to half hit
+    hit_rate = tf.cond(
+        pred=tf.math.equal(hit_rate, 0.0),
+        true_fn=lambda: half_hit,
+        false_fn=lambda: hit_rate,
+    )
 
-    if false_alarm_rate.eval() == 1:
-        false_alarm_rate = tf.constant(1.0, dtype=tf.int32) - half_fa
-    if false_alarm_rate.eval() == 0:
-        false_alarm_rate = half_fa
+    false_alarm_rate = tf.cond(
+        pred=tf.math.equal(false_alarm_rate, 1.0),
+        true_fn=lambda: tf.constant(1.0, dtype=tf.float32) - half_fa,
+        false_fn=lambda: false_alarm_rate,
+    )
+    false_alarm_rate = tf.cond(
+        pred=tf.math.equal(false_alarm_rate, 0.0),
+        true_fn=lambda: half_fa,
+        false_fn=lambda: false_alarm_rate,
+    )
 
     norm = tfp.distributions.Normal(loc=0, scale=1)
     z_score = norm.quantile  # rename quantile method (AKA ppf, inverse cdf) to z-score
 
-    d_prime = z_score(hit_rate) - z_score(false_alarm_rate)
-    return d_prime
+    d_prime_op = z_score(hit_rate) - z_score(false_alarm_rate)
+    return d_prime_op
 
 
 def p_item_grid(char_grids, item_char='any', return_counts=False):
