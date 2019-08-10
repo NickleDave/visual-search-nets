@@ -41,24 +41,24 @@ class TestDPrime(tf.test.TestCase):
     def test_dprime(self):
         N_SAMPLES = 500
         with self.test_session() as sess:
-            y_true_ph = tf.placeholder(dtype=tf.int32, shape=(N_SAMPLES,))
-            y_pred_ph = tf.placeholder(dtype=tf.int32, shape=(N_SAMPLES,))
+            y_true_ph = tf.placeholder(tf.int32, shape=[None], name='y_true_ph')
+            y_pred_ph = tf.placeholder(tf.int32, shape=[None], name='y_pred_ph')
             y_true = np.random.choice(
                 a=np.asarray([0, 1]),
-                size=(500,),
-            ).astype(np.int32)
+                size=(N_SAMPLES,),
+            ).astype(np.int64)  # dtype for 'y_train' in data.gz files
             y_pred = np.copy(y_true)
 
-            y_true = tf.convert_to_tensor(y_true)
-            y_pred = tf.convert_to_tensor(y_pred)
+            d_prime_op = searchnets.utils.metrics.d_prime_tf(y_true_ph,
+                                                             y_pred_ph)
 
-            d_prime = sess.run(
-                searchnets.utils.metrics.d_prime_tf(y_true, y_pred),
-                feed_dict={y_true_ph: y_true, y_pred_ph: y_pred}
-            )
+            d_prime = sess.run(d_prime_op,
+                               feed_dict={y_true_ph: y_true,
+                                          y_pred_ph: y_pred}
+                               )
             self.assertTrue(d_prime > 5.75)
 
 
 if __name__ == '__main__':
     unittest.main()
-    tf.test.TestCase.main()
+
