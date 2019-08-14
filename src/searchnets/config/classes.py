@@ -62,7 +62,7 @@ class TrainConfig:
     dropout_rate : float
         Probability that any unit in a layer will "drop out" during
         a training epoch, as a form of regularization. Default is 0.5.
-    loss : str
+    loss_func : str
         type of loss function to use. One of {'CE', 'invDPrime'}. Default is 'CE',
         the standard cross-entropy loss. 'invDprime' is inverse D prime.
     save_acc_by_set_size_by_epoch : bool
@@ -113,6 +113,14 @@ class TrainConfig:
     base_learning_rate = attr.ib(validator=instance_of(float), default=0.0)
     freeze_trained_weights = attr.ib(validator=instance_of(bool), default=False)
     dropout_rate = attr.ib(validator=instance_of(float), default=0.5)
+    loss_func = attr.ib(validator=instance_of(str), default='CE')
+    @loss_func.validator
+    def check_loss_func(self, attribute, value):
+        if value not in {'CE', 'InvDPrime'}:
+            raise ValueError(
+                f"loss_func must be one of {{'CE', 'InvDPrime'}}, but was {value}."
+            )
+
     save_acc_by_set_size_by_epoch = attr.ib(validator=instance_of(bool), default=False)
     use_val = attr.ib(validator=instance_of(bool), default=False)
     val_step = attr.ib(validator=optional(is_pos_int), default=None)
