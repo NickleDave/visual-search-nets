@@ -45,6 +45,7 @@ def _call_train(config):
           base_learning_rate=config.train.base_learning_rate,
           freeze_trained_weights=config.train.freeze_trained_weights,
           dropout_rate=config.train.dropout_rate,
+          loss_func=config.train.loss_func,
           save_acc_by_set_size_by_epoch=config.train.save_acc_by_set_size_by_epoch,
           use_val=config.train.use_val,
           val_step=config.train.val_step,
