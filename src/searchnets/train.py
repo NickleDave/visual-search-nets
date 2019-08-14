@@ -2,9 +2,10 @@
 import csv
 import os
 
+import joblib
 import numpy as np
 import tensorflow as tf
-import joblib
+import tensorflow_probability as tfp
 from tqdm import tqdm
 
 from .nets import AlexNet
@@ -28,7 +29,7 @@ def train(gz_filename,
           random_seed,
           model_save_path,
           dropout_rate=0.5,
-          loss='CE',
+          loss_func='CE',
           use_val=True,
           val_step=None,
           patience=None,
@@ -79,9 +80,9 @@ def train(gz_filename,
     dropout_rate : float
         Probability that any unit in a layer will "drop out" during
         a training epoch, as a form of regularization. Default is 0.5.
-    loss : str
-        type of loss function to use. One of {'CE', 'invDPrime'}. Default is 'CE',
-        the standard cross-entropy loss. 'invDPrime' is inverse D prime.
+    loss_func : str
+        type of loss function to use. One of {'CE', 'InvDPrime'}. Default is 'CE',
+        the standard cross-entropy loss. 'InvDPrime' is inverse D prime.
     save_acc_by_set_size_by_epoch : bool
         if True, compute accuracy on training set for each epoch separately
         for each unique set size in the visual search stimuli. These values
@@ -200,18 +201,27 @@ def train(gz_filename,
                     'labels': tf.cast(tf.argmax(model.output, axis=1), tf.int32, name='labels')
                 }
 
-                if loss == 'CE':
-                    loss = tf.reduce_mean(
+                if loss_func == 'CE':
+                    loss_op = tf.reduce_mean(
                         tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
                                                                    labels=y_onehot),
                         name='cross_entropy_loss')
-                elif loss == 'invDPrime':
-                    softmax = tf.nn.softmax(model.output, name='softmax')
-                    y_pred = tf.math.argmax(softmax, name='y_pred')
-                    d_prime = d_prime_tf(y, y_pred)
-                    # loss is actually inverse of d_prime, because
-                    # as d_prime gets bigger (good), then 1 / d_prime gets smaller. So we minimize that.
-                    loss = 1 / d_prime
+                elif loss_func == 'InvDPrime':
+                    target_present_inds = tf.math.equal(y, tf.constant(1, tf.int32))
+                    vecs_present = tf.gather(model.fc7, target_present_inds)
+                    mu_present = tf.math.reduce_mean(vecs_present)
+                    sigma_present = tf.math.reduce_std(vecs_present)
+
+                    target_absent_inds = tf.math.equal(y, tf.constant(0, tf.int32))
+                    vecs_absent = tf.gather(model.fc7, target_absent_inds)
+                    mu_absent = tf.math.reduce_mean(vecs_absent)
+                    sigma_absent = tf.math.reduce_std(vecs_absent)
+
+                    cross_entropy_op = tf.reduce_mean(
+                        tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
+                                                                   labels=y_onehot),
+                        name='cross_entropy_loss')
+                    loss_op = sigma_present + sigma_absent + 1 / tf.math.abs()
 
                 var_list1 = []  # all layers before fully-connected
                 var_list2 = []  # fully-connected layers
@@ -225,14 +235,14 @@ def train(gz_filename,
                 if freeze_trained_weights:
                     opt = tf.train.MomentumOptimizer(learning_rate=new_layer_learning_rate,
                                                      momentum=MOMENTUM)
-                    grads = tf.gradients(loss, var_list2)
+                    grads = tf.gradients(loss_op, var_list2)
                     train_op = opt.apply_gradients(zip(grads, var_list2), name='train_op')
                 else:
                     opt1 = tf.train.MomentumOptimizer(learning_rate=base_learning_rate,
                                                       momentum=MOMENTUM)
                     opt2 = tf.train.MomentumOptimizer(learning_rate=new_layer_learning_rate,
                                                       momentum=MOMENTUM)
-                    grads = tf.gradients(loss, var_list1 + var_list2)
+                    grads = tf.gradients(loss_op, var_list1 + var_list2)
                     grads1 = grads[:len(var_list1)]
                     grads2 = grads[len(var_list1):]
                     train_op1 = opt1.apply_gradients(zip(grads1, var_list1))
@@ -303,7 +313,7 @@ def train(gz_filename,
                                         rate: dropout_rate}
 
                                 loss, _ = sess.run(
-                                    [cross_entropy_loss, train_op],
+                                    [loss_op, train_op],
                                     feed_dict=feed)
                                 batch_pbar.set_description(f'batch {i} of {batch_total}, loss: {loss: 7.3f}')
                                 total_loss += loss
