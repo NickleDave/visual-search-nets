@@ -23,7 +23,7 @@ def parse_config(config_fname):
     """
     if not os.path.isfile(config_fname):
         raise FileNotFoundError(
-            f'specified config.ini file not found: {configfile}'
+            f'specified config.ini file not found: {config_fname}'
         )
 
     config = configparser.ConfigParser()
