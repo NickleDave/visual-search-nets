@@ -62,6 +62,14 @@ class TrainConfig:
     dropout_rate : float
         Probability that any unit in a layer will "drop out" during
         a training epoch, as a form of regularization. Default is 0.5.
+    loss_func : str
+        type of loss function to use. One of {'CE', 'invDPrime'}. Default is 'CE',
+        the standard cross-entropy loss. 'invDprime' is inverse D prime.
+    triplet_loss_margin : float
+        Minimum margin between clusters, parameter in triplet loss function. Default is 0.5.
+    squared_dist : bool
+        if True, when computing similarity of embeddings (e.g. for triplet loss), use pairwise squared
+        distance, i.e. Euclidean distance.
     save_acc_by_set_size_by_epoch : bool
         if True, compute accuracy on training set for each epoch separately
         for each unique set size in the visual search stimuli. These values
@@ -110,6 +118,16 @@ class TrainConfig:
     base_learning_rate = attr.ib(validator=instance_of(float), default=0.0)
     freeze_trained_weights = attr.ib(validator=instance_of(bool), default=False)
     dropout_rate = attr.ib(validator=instance_of(float), default=0.5)
+    loss_func = attr.ib(validator=instance_of(str), default='CE')
+    @loss_func.validator
+    def check_loss_func(self, attribute, value):
+        if value not in {'CE', 'InvDPrime', 'triplet', 'triplet-CE'}:
+            raise ValueError(
+                f"loss_func must be one of {{'CE', 'InvDPrime', 'triplet', 'triplet-CE'}}, but was {value}."
+            )
+    triplet_loss_margin = attr.ib(validator=instance_of(float), default=0.5)
+    squared_dist = attr.ib(validator=instance_of(bool), default=False)
+
     save_acc_by_set_size_by_epoch = attr.ib(validator=instance_of(bool), default=False)
     use_val = attr.ib(validator=instance_of(bool), default=False)
     val_step = attr.ib(validator=optional(is_pos_int), default=None)

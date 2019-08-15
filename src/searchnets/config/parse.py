@@ -54,6 +54,21 @@ def parse_config(config_fname):
     else:
         dropout_rate = 0.5
 
+    if config.has_option('TRAIN', 'LOSS_FUNC'):
+        loss_func = config['TRAIN']['LOSS_FUNC']
+    else:
+        loss_func = 'CE'
+
+    if config.has_option('TRAIN', 'TRIPLET_LOSS_MARGIN'):
+        triplet_loss_margin = float(config['TRAIN']['TRIPLET_LOSS_MARGIN'])
+    else:
+        triplet_loss_margin = 0.5
+
+    if config.has_option('TRAIN', 'SQUARED_DIST'):
+        squared_dist = bool(strtobool(config['TRAIN']['SQUARED_DIST']))
+    else:
+        squared_dist = False
+
     model_save_path = config['TRAIN']['MODEL_SAVE_PATH']
 
     if config.has_option('TRAIN', 'SAVE_ACC_BY_SET_SIZE_BY_EPOCH'):
@@ -88,6 +103,9 @@ def parse_config(config_fname):
                                base_learning_rate,
                                freeze_trained_weights,
                                dropout_rate,
+                               loss_func,
+                               triplet_loss_margin,
+                               squared_dist,
                                save_acc_by_set_size_by_epoch,
                                use_val,
                                val_step,

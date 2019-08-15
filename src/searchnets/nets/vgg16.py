@@ -158,12 +158,12 @@ class VGG16:
 
         new_shape = int(np.prod(block5_pool.get_shape()[1:]))
         flattened = tf.reshape(block5_pool, [-1, new_shape], name='flatten')
-        fc6 = self.fc(flattened, new_shape, 4096, name='fc6')
-        dropout1 = dropout(fc6, self.dropout_rate)
+        self.fc6 = self.fc(flattened, new_shape, 4096, name='fc6')
+        dropout1 = dropout(self.fc6, self.dropout_rate)
 
         # 7th Layer: FC (w ReLu) -> Dropout
-        fc7 = self.fc(dropout1, 4096, 4096, name='fc7')
-        dropout2 = dropout(fc7, self.dropout_rate)
+        self.fc7 = self.fc(dropout1, 4096, 4096, name='fc7')
+        dropout2 = dropout(self.fc7, self.dropout_rate)
 
         # 8th Layer: FC and return unscaled activations
         fc8 = self.fc(dropout2, 4096, self.num_classes, relu=False, name='fc8')
