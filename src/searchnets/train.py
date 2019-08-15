@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 from .nets import AlexNet
 from .nets import VGG16
+from .triplet_loss import batch_all_triplet_loss
 from .utils.metrics import d_prime_tf
 from .utils.tfdata import get_dataset
 
@@ -30,6 +31,8 @@ def train(gz_filename,
           model_save_path,
           dropout_rate=0.5,
           loss_func='CE',
+          triplet_loss_margin=0.5,
+          squared_dist=False,
           use_val=True,
           val_step=None,
           patience=None,
@@ -81,8 +84,14 @@ def train(gz_filename,
         Probability that any unit in a layer will "drop out" during
         a training epoch, as a form of regularization. Default is 0.5.
     loss_func : str
-        type of loss function to use. One of {'CE', 'InvDPrime'}. Default is 'CE',
-        the standard cross-entropy loss. 'InvDPrime' is inverse D prime.
+        type of loss function to use. One of {'CE', 'InvDPrime', 'triplet'}. Default is 'CE',
+        the standard cross-entropy loss. 'InvDPrime' is inverse D prime. 'triplet' is triplet loss
+        used in face recognition and biometric applications.
+    triplet_loss_margin : float
+        Minimum margin between clusters, parameter in triplet loss function. Default is 0.5.
+    squared_dist : bool
+        if True, when computing similarity of embeddings (e.g. for triplet loss), use pairwise squared
+        distance, i.e. Euclidean distance.
     save_acc_by_set_size_by_epoch : bool
         if True, compute accuracy on training set for each epoch separately
         for each unique set size in the visual search stimuli. These values
@@ -206,6 +215,7 @@ def train(gz_filename,
                         tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
                                                                    labels=y_onehot),
                         name='cross_entropy_loss')
+
                 elif loss_func == 'InvDPrime':
                     target_present_inds = tf.math.equal(y, tf.constant(1, tf.int32))
                     vecs_present = tf.gather(model.fc7, target_present_inds)
@@ -222,6 +232,19 @@ def train(gz_filename,
                                                                    labels=y_onehot),
                         name='cross_entropy_loss')
                     loss_op = sigma_present + sigma_absent + 1 / tf.math.abs()
+                elif loss_func == 'triplet':
+                    embeddings = model.fc7
+                    loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
+                                                               squared=squared_dist)
+                elif loss_func == 'triplet-CE':
+                    CE_loss_op = tf.reduce_mean(
+                        tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
+                                                                   labels=y_onehot),
+                        name='cross_entropy_loss')
+                    embeddings = model.fc7
+                    triplet_loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
+                                                                       squared=squared_dist)
+                    loss_op = CE_loss_op + triplet_loss_op
 
                 var_list1 = []  # all layers before fully-connected
                 var_list2 = []  # fully-connected layers
