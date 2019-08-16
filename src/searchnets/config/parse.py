@@ -81,10 +81,15 @@ def parse_config(config_fname):
     else:
         use_val = True
 
-    if config.has_option('TRAIN', 'VAL_STEP'):
-        val_step = int(config['TRAIN']['VAL_STEP'])
+    if config.has_option('TRAIN', 'VAL_EPOCH'):
+        val_epoch = int(config['TRAIN']['VAL_EPOCH'])
     else:
-        val_step = None
+        val_epoch = None
+
+    if config.has_option('TRAIN', 'SUMMARY_STEP'):
+        summary_step = int(config['TRAIN']['SUMMARY_STEP'])
+    else:
+        summary_step = None
 
     if config.has_option('TRAIN', 'PATIENCE'):
         patience = int(config['TRAIN']['PATIENCE'])
@@ -108,7 +113,8 @@ def parse_config(config_fname):
                                squared_dist,
                                save_acc_by_set_size_by_epoch,
                                use_val,
-                               val_step,
+                               val_epoch,
+                               summary_step,
                                patience)
 
     # ------------- unpack [DATA] section of config.ini file -----------------------------------------------------------
