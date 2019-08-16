@@ -1,7 +1,6 @@
 # Adapted from code by Olivier Moindrot. https://github.com/omoindrot/tensorflow-triplet-loss
 # Used under MIT license, https://github.com/omoindrot/tensorflow-triplet-loss/blob/master/LICENSE
 """Define functions to create the triplet loss with online triplet mining."""
-
 import tensorflow as tf
 
 
@@ -99,12 +98,18 @@ def _get_triplet_mask(labels):
         labels: tf.int32 `Tensor` with shape [batch_size]
     """
     # Check that i, j and k are distinct
-    indices_equal = tf.cast(tf.eye(tf.shape(labels)[0]), tf.bool)
+    indices_equal = tf.cast(
+        tf.eye(num_rows=tf.shape(labels)[0]),  # num_cols will default to value of num_rows
+        dtype=tf.bool)
     indices_not_equal = tf.logical_not(indices_equal)
+    # shape (batch_size, batch_size, 1)
     i_not_equal_j = tf.expand_dims(indices_not_equal, 2)
+    # shape (batch_size, 1, batch_size)
     i_not_equal_k = tf.expand_dims(indices_not_equal, 1)
+    # shape (1, batch_size, batch_size)
     j_not_equal_k = tf.expand_dims(indices_not_equal, 0)
 
+    # shape (batch_size, batch_size, batch_size)
     distinct_indices = tf.logical_and(tf.logical_and(i_not_equal_j, i_not_equal_k), j_not_equal_k)
 
     # Check if labels[i] == labels[j] and labels[i] != labels[k]
