@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from .nets import AlexNet
 from .nets import VGG16
-from .triplet_loss import batch_all_triplet_loss
+from .triplet_loss import batch_all_triplet_loss, _pairwise_distances
 from .utils.metrics import d_prime_tf
 from .utils.tfdata import get_dataset
 
@@ -34,7 +34,8 @@ def train(gz_filename,
           triplet_loss_margin=0.5,
           squared_dist=False,
           use_val=True,
-          val_step=None,
+          val_epoch=None,
+          summary_step=None,
           patience=None,
           save_acc_by_set_size_by_epoch=False):
     """train convolutional neural networks to perform visual search task.
@@ -100,8 +101,11 @@ def train(gz_filename,
         set size. Default is False.
     use_val : bool
         if True, use validation set.
-    val_step : int
-        if not None, accuracy on validation set will be measured every `val_step` steps
+    val_epoch : int
+        if not None, accuracy on validation set will be measured every `val_epoch` epochs. Default is None.
+    summary_step : int
+        Step on which to write summaries to file. Each minibatch is counted as one step, and steps are counted across
+        epochs. Default is None.
     patience : int
         if not None, training will stop if accuracy on validation set has not improved in `patience` steps
 
@@ -109,16 +113,16 @@ def train(gz_filename,
     -------
     None
     """
-    if use_val and val_step is None or val_step < 1 or type(val_step) != int:
+    if use_val and val_epoch is None or val_epoch < 1 or type(val_epoch) != int:
         raise ValueError(
-            'invalid value for val_step: {val_step}. Validation step must be positive integer'
+            'invalid value for val_epoch: {val_epoch}. Validation epoch must be positive integer'
         )
 
     if use_val is False and patience is not None:
         raise ValueError('patience argument only works with a validation set')
 
     if patience is not None:
-        if type(val_step) != int or patience < 1:
+        if type(val_epoch) != int or patience < 1:
             raise TypeError('patience must be a positive integer')
 
     if type(epochs_list) is int:
@@ -210,6 +214,24 @@ def train(gz_filename,
                     'labels': tf.cast(tf.argmax(model.output, axis=1), tf.int32, name='labels')
                 }
 
+                embeddings = model.fc7
+                # t = target, d = distractor
+                t_inds = tf.where(tf.math.equal(y, 1))
+                t_vecs = tf.gather(embeddings, t_inds)
+                t_vecs = tf.squeeze(t_vecs)
+                t_distances = _pairwise_distances(t_vecs, squared=squared_dist)
+                tf.summary.histogram('target_distances', t_distances)
+                tf.summary.scalar('target_distances_mean', tf.reduce_mean(t_distances))
+                tf.summary.scalar('target_distances_std', tf.math.reduce_std(t_distances))
+
+                d_inds = tf.where(tf.math.equal(y, 0))
+                d_vecs = tf.gather(embeddings, d_inds)
+                d_vecs = tf.squeeze(d_vecs)
+                d_distances = _pairwise_distances(d_vecs, squared=squared_dist)
+                tf.summary.histogram('distractor_distances', d_distances)
+                tf.summary.scalar('distractor_distances_mean', tf.reduce_mean(d_distances))
+                tf.summary.scalar('distractor_distances_std', tf.math.reduce_std(d_distances))
+
                 if loss_func == 'CE':
                     loss_op = tf.reduce_mean(
                         tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
@@ -233,7 +255,6 @@ def train(gz_filename,
                         name='cross_entropy_loss')
                     loss_op = sigma_present + sigma_absent + 1 / tf.math.abs()
                 elif loss_func == 'triplet':
-                    embeddings = model.fc7
                     loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
                                                                squared=squared_dist)
                 elif loss_func == 'triplet-CE':
@@ -241,10 +262,12 @@ def train(gz_filename,
                         tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
                                                                    labels=y_onehot),
                         name='cross_entropy_loss')
-                    embeddings = model.fc7
+                    tf.summary.scalar('cross_entropy_loss', CE_loss_op)
                     triplet_loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
                                                                        squared=squared_dist)
+                    tf.summary.scalar('triplet_loss', triplet_loss_op)
                     loss_op = CE_loss_op + triplet_loss_op
+                tf.summary.scalar('loss', loss_op)
 
                 var_list1 = []  # all layers before fully-connected
                 var_list2 = []  # fully-connected layers
@@ -274,12 +297,14 @@ def train(gz_filename,
 
                 correct_predictions = tf.equal(predictions['labels'],
                                                y, name='correct_preds')
-                saver = tf.train.Saver()
 
                 accuracy = tf.reduce_mean(
                     tf.cast(correct_predictions, tf.float32),
                     name='accuracy')
+                tf.summary.scalar('accuracy', accuracy)
 
+                summaries = tf.summary.merge_all()
+                saver = tf.train.Saver()
                 # note that running global_variables_initializer() will initialize at random all the variables in the
                 # model that are in the `init_layer` list passed as an argument when the model was instantiated, **and**
                 # assign the pre-trained weights + biases to the other variables that are not in `init_layer`. This can
@@ -294,12 +319,16 @@ def train(gz_filename,
                 if not os.path.isdir(savepath):
                     os.makedirs(savepath, exist_ok=True)
 
+                if summary_step:
+                    train_writer = tf.summary.FileWriter(os.path.join(savepath, 'train'),
+                                                         sess.graph)
                 if save_acc_by_set_size_by_epoch:
                     acc_by_epoch_by_set_size = np.zeros(shape=(epochs, set_sizes.shape[0]))
 
                 # --------------- finally start training ---------------------------------------------------------------
                 train_loss = []
                 train_acc = []
+                step = 0  # each minibatch is a step, and we count steps across epochs
                 if val_ds is not None:
                     val_acc = []
                     if patience is not None:
@@ -330,14 +359,19 @@ def train(gz_filename,
                             batch_total = int(np.ceil(len(x_shard) / batch_size))
                             batch_pbar = tqdm(range(batch_total))
                             for i in batch_pbar:
+                                step += 1
                                 batch_x, batch_y = sess.run(next_element)
                                 feed = {x: batch_x,
                                         y: batch_y,
                                         rate: dropout_rate}
-
-                                loss, _ = sess.run(
-                                    [loss_op, train_op],
-                                    feed_dict=feed)
+                                if step % summary_step == 0:
+                                    summary, loss, _ = sess.run([summaries, loss_op, train_op],
+                                                                feed_dict=feed)
+                                    train_writer.add_summary(summary, step)
+                                else:
+                                    loss, _ = sess.run(
+                                        [loss_op, train_op],
+                                        feed_dict=feed)
                                 batch_pbar.set_description(f'batch {i} of {batch_total}, loss: {loss: 7.3f}')
                                 total_loss += loss
 
@@ -346,7 +380,7 @@ def train(gz_filename,
                     print(f'\tTraining Avg. Loss: {avg_loss:7.3f}')
 
                     if val_ds is not None:
-                        if epoch % val_step == 0:
+                        if epoch % val_epoch == 0:
                             total = int(np.ceil(len(data_dict['x_val']) / batch_size))
                             iterator = val_ds.make_initializable_iterator()
                             sess.run(iterator.initializer, feed_dict={filenames_placeholder_val: data_dict['x_val'],
