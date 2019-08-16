@@ -78,8 +78,11 @@ class TrainConfig:
         set size. Default is False.
     use_val : bool
         if True, use validation set.
-    val_step : int
-        if not None, accuracy on validation set will be measured every `val_step` steps
+    val_epoch : int
+        if not None, accuracy on validation set will be measured every `val_epoch` epochs
+    summary_step : int
+        Step on which to write summaries to file. Each minibatch is counted as one step, and steps are counted across
+        epochs. Default is None.
     patience : int
         if not None, training will stop if accuracy on validation set has not improved in `patience` steps
     """
@@ -130,7 +133,8 @@ class TrainConfig:
 
     save_acc_by_set_size_by_epoch = attr.ib(validator=instance_of(bool), default=False)
     use_val = attr.ib(validator=instance_of(bool), default=False)
-    val_step = attr.ib(validator=optional(is_pos_int), default=None)
+    val_epoch = attr.ib(validator=optional(is_pos_int), default=None)
+    summary_step = attr.ib(validator=optional(is_pos_int), default=None)
     patience = attr.ib(validator=optional(is_pos_int), default=None)
 
 
