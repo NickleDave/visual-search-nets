@@ -4,6 +4,30 @@
 import tensorflow as tf
 
 
+def dist_squared(A, B=None):
+    """essentially the same as _pairwise_distances when squared=True"""
+    if B is None:
+        B = A
+
+    row_norms_A = tf.reduce_sum(tf.square(A), axis=1)
+    row_norms_A = tf.reshape(row_norms_A, [-1, 1])  # Column vector.
+
+    row_norms_B = tf.reduce_sum(tf.square(B), axis=1)
+    row_norms_B = tf.reshape(row_norms_B, [1, -1])  # Row vector.
+
+    return row_norms_A - 2 * tf.matmul(A, tf.transpose(B)) + row_norms_B
+
+
+def dist_euclid(A, B=None):
+    """essentially the same as _pairwise_distances when squared=False"""
+    if B is None:
+        B = A
+    D = tf.sqrt(
+        tf.abs(dist_squared(A, B) + 1e-16)
+    )
+    return D
+
+
 def _pairwise_distances(embeddings, squared=False):
     """Compute the 2D matrix of distances between all the embeddings.
 
