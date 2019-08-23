@@ -376,10 +376,11 @@ def train(gz_filename,
                                 feed = {x: batch_x,
                                         y: batch_y,
                                         rate: dropout_rate}
-                                if step % summary_step == 0:
-                                    summary, loss, _ = sess.run([summaries, loss_op, train_op],
-                                                                feed_dict=feed)
-                                    train_writer.add_summary(summary, step)
+                                if summary_step:
+                                    if step % summary_step == 0:
+                                        summary, loss, _ = sess.run([summaries, loss_op, train_op],
+                                                                    feed_dict=feed)
+                                        train_writer.add_summary(summary, step)
                                 else:
                                     loss, _ = sess.run(
                                         [loss_op, train_op],
