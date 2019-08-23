@@ -10,8 +10,7 @@ from tqdm import tqdm
 
 from .nets import AlexNet
 from .nets import VGG16
-from .triplet_loss import batch_all_triplet_loss, _pairwise_distances
-from .utils.metrics import d_prime_tf
+from .triplet_loss import batch_all_triplet_loss, dist_squared, dist_euclid
 from .utils.tfdata import get_dataset
 
 MOMENTUM = 0.9  # used for both Alexnet and VGG16
@@ -219,7 +218,10 @@ def train(gz_filename,
                 t_inds = tf.where(tf.math.equal(y, 1))
                 t_vecs = tf.gather(embeddings, t_inds)
                 t_vecs = tf.squeeze(t_vecs)
-                t_distances = _pairwise_distances(t_vecs, squared=squared_dist)
+                if squared_dist:
+                    t_distances = dist_squared(t_vecs)
+                else:
+                    t_distances = dist_euclid(t_vecs)
                 tf.summary.histogram('target_distances', t_distances)
                 tf.summary.scalar('target_distances_mean', tf.reduce_mean(t_distances))
                 tf.summary.scalar('target_distances_std', tf.math.reduce_std(t_distances))
@@ -227,10 +229,21 @@ def train(gz_filename,
                 d_inds = tf.where(tf.math.equal(y, 0))
                 d_vecs = tf.gather(embeddings, d_inds)
                 d_vecs = tf.squeeze(d_vecs)
-                d_distances = _pairwise_distances(d_vecs, squared=squared_dist)
+                if squared_dist:
+                    d_distances = dist_squared(d_vecs)
+                else:
+                    d_distances = dist_euclid(d_vecs)
                 tf.summary.histogram('distractor_distances', d_distances)
                 tf.summary.scalar('distractor_distances_mean', tf.reduce_mean(d_distances))
                 tf.summary.scalar('distractor_distances_std', tf.math.reduce_std(d_distances))
+
+                if squared_dist:
+                    td_distances = dist_squared(t_vecs, d_vecs)
+                else:
+                    td_distances = dist_euclid(t_vecs, d_vecs)
+                tf.summary.histogram('target_distractor_distances', td_distances)
+                tf.summary.scalar('target_distractor_distances_mean', tf.reduce_mean(td_distances))
+                tf.summary.scalar('target_distractor_distances_std', tf.math.reduce_std(td_distances))
 
                 if loss_func == 'CE':
                     loss_op = tf.reduce_mean(
