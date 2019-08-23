@@ -50,7 +50,8 @@ def _call_train(config):
           squared_dist=config.train.squared_dist,
           save_acc_by_set_size_by_epoch=config.train.save_acc_by_set_size_by_epoch,
           use_val=config.train.use_val,
-          val_step=config.train.val_step,
+          val_epoch=config.train.val_epoch,
+          summary_step=config.train.summary_step,
           patience=config.train.patience)
 
 
