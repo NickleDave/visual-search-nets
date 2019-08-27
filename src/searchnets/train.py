@@ -211,6 +211,7 @@ def train(gz_filename,
                     'labels': tf.cast(tf.argmax(model.output, axis=1), tf.int32, name='labels')
                 }
 
+                train_summaries = []
                 embeddings = model.fc7
                 # t = target, d = distractor
                 t_inds = tf.where(tf.math.equal(y, 1))
@@ -220,9 +221,11 @@ def train(gz_filename,
                     t_distances = dist_squared(t_vecs)
                 else:
                     t_distances = dist_euclid(t_vecs)
-                tf.summary.histogram('target_distances', t_distances)
-                tf.summary.scalar('target_distances_mean', tf.reduce_mean(t_distances))
-                tf.summary.scalar('target_distances_std', tf.math.reduce_std(t_distances))
+                train_summaries.extend([
+                    tf.summary.histogram('target_distances', t_distances),
+                    tf.summary.scalar('target_distances_mean', tf.reduce_mean(t_distances)),
+                    tf.summary.scalar('target_distances_std', tf.math.reduce_std(t_distances)),
+                ])
 
                 d_inds = tf.where(tf.math.equal(y, 0))
                 d_vecs = tf.gather(embeddings, d_inds)
@@ -231,17 +234,21 @@ def train(gz_filename,
                     d_distances = dist_squared(d_vecs)
                 else:
                     d_distances = dist_euclid(d_vecs)
-                tf.summary.histogram('distractor_distances', d_distances)
-                tf.summary.scalar('distractor_distances_mean', tf.reduce_mean(d_distances))
-                tf.summary.scalar('distractor_distances_std', tf.math.reduce_std(d_distances))
+                train_summaries.extend([
+                    tf.summary.histogram('distractor_distances', d_distances),
+                    tf.summary.scalar('distractor_distances_mean', tf.reduce_mean(d_distances)),
+                    tf.summary.scalar('distractor_distances_std', tf.math.reduce_std(d_distances)),
+                ])
 
                 if squared_dist:
                     td_distances = dist_squared(t_vecs, d_vecs)
                 else:
                     td_distances = dist_euclid(t_vecs, d_vecs)
-                tf.summary.histogram('target_distractor_distances', td_distances)
-                tf.summary.scalar('target_distractor_distances_mean', tf.reduce_mean(td_distances))
-                tf.summary.scalar('target_distractor_distances_std', tf.math.reduce_std(td_distances))
+                train_summaries.extend([
+                    tf.summary.histogram('target_distractor_distances', td_distances),
+                    tf.summary.scalar('target_distractor_distances_mean', tf.reduce_mean(td_distances)),
+                    tf.summary.scalar('target_distractor_distances_std', tf.math.reduce_std(td_distances)),
+                ])
 
                 if loss_func == 'CE':
                     loss_op = tf.reduce_mean(
@@ -265,6 +272,7 @@ def train(gz_filename,
                                                                    labels=y_onehot),
                         name='cross_entropy_loss')
                     loss_op = sigma_present + sigma_absent + 1 / tf.math.abs()
+
                 elif loss_func == 'triplet':
                     loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
                                                                squared=squared_dist)
@@ -273,12 +281,15 @@ def train(gz_filename,
                         tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
                                                                    labels=y_onehot),
                         name='cross_entropy_loss')
-                    tf.summary.scalar('cross_entropy_loss', CE_loss_op)
                     triplet_loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
                                                                        squared=squared_dist)
-                    tf.summary.scalar('triplet_loss', triplet_loss_op)
+                    train_summaries.extend([
+                        tf.summary.scalar('cross_entropy_loss', CE_loss_op),
+                        tf.summary.scalar('triplet_loss', triplet_loss_op),
+                    ])
                     loss_op = CE_loss_op + triplet_loss_op
-                tf.summary.scalar('loss', loss_op)
+
+                train_summaries.append(tf.summary.scalar('loss', loss_op))
 
                 var_list1 = []  # all layers before fully-connected
                 var_list2 = []  # fully-connected layers
@@ -312,9 +323,9 @@ def train(gz_filename,
                 accuracy = tf.reduce_mean(
                     tf.cast(correct_predictions, tf.float32),
                     name='accuracy')
-                tf.summary.scalar('accuracy', accuracy)
+                train_summaries.append(tf.summary.scalar('accuracy', accuracy))
+                train_summaries = tf.summary.merge(train_summaries)
 
-                summaries = tf.summary.merge_all()
                 saver = tf.train.Saver()
                 # note that running global_variables_initializer() will initialize at random all the variables in the
                 # model that are in the `init_layer` list passed as an argument when the model was instantiated, **and**
@@ -375,7 +386,7 @@ def train(gz_filename,
                                         rate: dropout_rate}
                                 if summary_step:
                                     if step % summary_step == 0:
-                                        summary, loss, _ = sess.run([summaries, loss_op, train_op],
+                                        summary, loss, _ = sess.run([train_summaries, loss_op, train_op],
                                                                     feed_dict=feed)
                                         train_writer.add_summary(summary, step)
                                 else:
@@ -406,7 +417,11 @@ def train(gz_filename,
 
                                 val_acc_this_epoch.append(sess.run(accuracy, feed_dict=feed))
                             val_acc_this_epoch = np.asarray(val_acc_this_epoch).mean()
-                            val_acc.append(val_acc_this_epoch)
+                            if summary_step:
+                                val_acc_summary = tf.Summary(value=[
+                                    tf.Summary.Value(tag="val_acc", simple_value=val_acc_this_epoch),
+                                ])
+                                train_writer.add_summary(val_acc_summary, step)
 
                             print(' Validation Acc: %7.3f' % val_acc_this_epoch)
 
