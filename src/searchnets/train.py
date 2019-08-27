@@ -1,5 +1,4 @@
 # Approach to training based on https://arxiv.org/pdf/1707.09775.pdf
-import csv
 import os
 
 import joblib
@@ -338,8 +337,6 @@ def train(gz_filename,
                     acc_by_epoch_by_set_size = np.zeros(shape=(epochs, set_sizes.shape[0]))
 
                 # --------------- finally start training ---------------------------------------------------------------
-                train_loss = []
-                train_acc = []
                 step = 0  # each minibatch is a step, and we count steps across epochs
                 if val_ds is not None:
                     val_acc = []
@@ -389,7 +386,6 @@ def train(gz_filename,
                                 total_loss += loss
 
                     avg_loss = total_loss / (batch_total * shard_total)
-                    train_loss.append(avg_loss)
                     print(f'\tTraining Avg. Loss: {avg_loss:7.3f}')
 
                     if val_ds is not None:
@@ -492,22 +488,6 @@ def train(gz_filename,
                     saver.save(sess, ckpt_name, global_step=epochs)
 
                 stem = f'{net_name}_trained_{epochs}_epochs_number_{net_number}'
-
-                # make rows for csv file with training history
-                fieldnames = ['train_loss', 'train_acc']
-                ziprows = [train_loss, train_acc]
-                if val_ds is not None:
-                    fieldnames.append('val_acc')
-                    ziprows.append(val_acc)
-                # use * operator to unpack so we don't have to know how many elements are in ziprows
-                rows = [list(row) for row in zip(*ziprows)]
-
-                csv_fname = os.path.join(model_save_path, f'{stem}.training_history.csv')
-                with open(csv_fname, 'w') as f:
-                    writer = csv.DictWriter(f, fieldnames=fieldnames)
-                    writer.writeheader()
-                    for row in rows:
-                        writer.writerow(dict(zip(fieldnames, row)))
 
                 if save_acc_by_set_size_by_epoch:
                     # and save matrix with accuracy by epoch by set size
