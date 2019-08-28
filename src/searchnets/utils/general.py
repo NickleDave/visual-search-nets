@@ -64,7 +64,7 @@ def results_csv(data_prep_dir,
     """make csv from results directory
 
     creates Pandas dataframe from results that is then saved to a .csv file.
-    The resulting dataframe can be used with searchstims.plot.figures.acc_v_set_size_df
+    The resulting dataframe can be used with searchstims.plot.figures.metric_v_set_size_df
 
     Parameters
     ----------
