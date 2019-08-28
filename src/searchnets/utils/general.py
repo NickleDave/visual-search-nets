@@ -38,43 +38,40 @@ def targz_dirs(dir_names=('checkpoints', 'configs', 'data_prepd_for_nets', 'resu
         make_targz(output_filename=output_filename, source_dir=os.path.join(path, dir_name))
 
 
-HEADER = ['net_name',
-          'train_type',
-          'net_number',
-          'stimulus',
-          'set_size',
-          'target_condition',
-          'accuracy',
-          'hit_rate',
-          'false_alarm_rate',
-          'd_prime',
-          ]
+COLUMNS = ['net_name',
+           'train_type',
+           'net_number',
+           'stimulus',
+           'set_size',
+           'target_condition',
+           'accuracy',
+           'hit_rate',
+           'false_alarm_rate',
+           'd_prime',
+           ]
 
 
-def results_csv(data_prep_dir,
-                results_dir,
-                test_csv_path='./test.csv',
-                nets=('alexnet', 'VGG16'),
-                train_types=('finetune', 'train'),
-                stims=('2_v_5', 'RVvGV', 'RVvRHGV'),
-                target_condition=('present', 'absent', 'both'),
-                data_gz_paths=None,
-                results_gz_paths=None,
-                ):
-    """make csv from results directory
-
-    creates Pandas dataframe from results that is then saved to a .csv file.
+def results_df(data_prep_dir,
+               results_dir,
+               nets=('alexnet', 'VGG16'),
+               train_types=('finetune', 'train'),
+               stims=('2_v_5', 'RVvGV', 'RVvRHGV'),
+               target_condition=('present', 'absent', 'both'),
+               data_gz_paths=None,
+               results_gz_paths=None,
+               csv_path=None,
+               ):
+    """creates Pandas dataframe from results.
     The resulting dataframe can be used with searchstims.plot.figures.metric_v_set_size_df
 
     Parameters
     ----------
     data_prep_dir : pathlib.Path
-        used to find paths to .gz files containing results, if not supplied via data_gz_paths argument
+        used to find paths to .gz files containing results,
+        if not supplied via data_gz_paths argument
     results_dir : pathlib.Path
-        used to find paths to .gz files containing results, if not supplied via results_gz_paths argument
-    test_csv_path : str
-        saved csv will have this filename, can include complete path.
-        Default is './test.csv'
+        used to find paths to .gz files containing results,
+        if not supplied via results_gz_paths argument
     nets : list
         of string, names of neural network architectures.
         Default is ('alexnet', 'VGG16')
@@ -84,17 +81,22 @@ def results_csv(data_prep_dir,
     stims : list
         of str, names of visual search stimuli.
         Default is ('2_v_5', 'RVvGV', 'RVvRHGV').
-    target_condition
+    target_condition : list
+        of str, valid options are {'present', 'absent', 'both'}.
+        Conditions for which to compute metrics (e.g. accuracy).
+        Default is all three, ['present', 'absent', 'both'].
     data_gz_paths : list
         of str, paths to data files. In case they have different names than what would be determined programatically.
     results_gz_paths
         of str, paths to results files. In case they have different names than what would be determined programatically.
+    csv_path : str
+        Path to use to save dataframe as a csv.
+        Default is None, in which case no csv is saved.
 
     Returns
     -------
-    None
-
-    saves Pandas dataframe as .csv file using test_csv_path as filename
+    df : pandas.Dataframe
+        computed from results
     """
     if results_gz_paths and data_gz_paths:
         if len(results_gz_paths) != len(data_gz_paths):
@@ -162,8 +164,10 @@ def results_csv(data_prep_dir,
 
                 iter_counter += 1
 
-    test_df = pd.DataFrame.from_records(rows, columns=HEADER)
-    test_df.to_csv(test_csv_path)
+    df = pd.DataFrame.from_records(rows, columns=COLUMNS)
+    if csv_path:
+        df.to_csv(csv_path)
+    return df
 
 
 def reorder_paths(paths, order_strs):
