@@ -87,7 +87,6 @@ def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), ax=None,
 
 def metric_v_set_size_df(df, net_name, train_type, stimulus, metric, conditions,
                          ax=None, title=None, save_as=None, figsize=(10, 5),
-                         both_color='darkgrey', mn_both_color='black',
                          set_xlabel=False, set_ylabel=False, set_ylim=True,
                          ylim=(0, 1.1), plot_mean=True, add_legend=False):
     """plot accuracy as a function of visual search task set size
@@ -128,10 +127,6 @@ def metric_v_set_size_df(df, net_name, train_type, stimulus, metric, conditions,
     figsize : tuple
         (width, height) in inches. Default is (10, 5). Only used if ax is None and a new
         figure is created.
-    both_color : str
-        color to use to plot lines for individual replicates in 'both' condition
-    mn_both_color : str
-        color to use
     set_xlabel : bool
         if True, set the value of xlabel to "set size". Default is False.
     set_ylabel : bool
@@ -153,96 +148,78 @@ def metric_v_set_size_df(df, net_name, train_type, stimulus, metric, conditions,
         fig, ax = plt.subplots()
         fig.set_size_inches(figsize)
 
-    df = df.loc[
-        (df['net_name'] == net_name) & (df['train_type'] == train_type) &
-        (df['stimulus'] == stimulus)]
+    df = df[(df['net_name'] == net_name)
+            & (df['train_type'] == train_type)
+            & (df['stimulus'] == stimulus)]
 
-    if 'present' in conditions:
-        metric_target_present = []
-    else:
-        metric_target_present = None
+    if not all(
+            [df['target_condition'].isin([targ_cond]).any() for targ_cond in conditions]
+    ):
+        raise ValueError(f'not all target conditions specified were found in dataframe.'
+                         f'Target conditions specified were: {conditions}')
 
-    if 'absent' in conditions:
-        metric_target_absent = []
-    else:
-        metric_target_absent = None
+    net_colors = []
+    mn_colors = []
+    for targ_cond in conditions:
+        if 'present' in targ_cond:
+            net_colors.append('violet')
+            if plot_mean:
+                mn_colors.append('magenta')
+            else:
+                mn_colors.append(None)
+        elif 'absent' in targ_cond:
+            net_colors.append('lightgreen')
+            if plot_mean:
+                mn_colors.append('lawngreen')
+            else:
+                mn_colors.append(None)
+        elif 'both' in targ_cond:
+            net_colors.append('darkgrey')
+            if plot_mean:
+                mn_colors.append('black')
+            else:
+                mn_colors.append(None)
 
-    if 'both' in conditions:
-        metric_both = []
-    else:
-        metric_both = None
+    handles = []
+    labels = []
 
-    set_sizes = None
+    set_sizes = None  # because we verify set sizes is the same across conditions
     net_nums = df['net_number'].unique()
     # get metric across set sizes for each training replicate
     # we end up with a list of vectors we can pass to ax.plot,
     # so that the 'line' for each training replicate gets plotted
-    for net_num in net_nums:
-        df_this_net_num = df.loc[(df['net_number'] == net_num)]
-        # and each condition specified
-        for targ_cond in conditions:
-            df_this_cond = df_this_net_num.loc[
-                (df_this_net_num['target_condition'] == targ_cond)
-            ]
-            metric_vals = df_this_cond[metric].values
-            if targ_cond == 'present':
-                metric_target_present.append(metric_vals)
-            elif targ_cond == 'absent':
-                metric_target_absent.append(metric_vals)
-            elif targ_cond == 'both':
-                metric_both.append(metric_vals)
+    for targ_cond, net_color, mn_color in zip(conditions, net_colors, mn_colors):
+        metric_vals = []
+        for net_num in net_nums:
+            metric_vals.append(
+                df[(df['net_number'] == net_num)
+                   & (df['target_condition'] == targ_cond)][metric].values
+            )
 
-            set_size = df_this_cond['set_size'].values
+            curr_set_size = df[(df['net_number'] == net_num)
+                               & (df['target_condition'] == targ_cond)]['set_size'].values
             if set_sizes is None:
-                set_sizes = set_size
+                set_sizes = curr_set_size
             else:
-                assert np.array_equal(set_sizes, set_size), 'set sizes did not match'
+                if not np.array_equal(set_sizes, curr_set_size):
+                    raise ValueError(
+                        f'set size for net number {net_num}, '
+                        f'target condition {targ_cond},  did not match others'
+                    )
 
-    if metric_target_present:
-        for arr_metric_present in metric_target_present:
-            ax.plot(set_sizes, arr_metric_present, color='violet', linewidth=2,
+        for arr_metric in metric_vals:
+            ax.plot(set_sizes, arr_metric, color=net_color, linewidth=2,
                     linestyle='--', marker='o', zorder=1, alpha=0.85, label=None)
 
         if plot_mean:
-            mn_metric_present = np.asarray(metric_target_present).mean(axis=0)
-            mn_metric_present_label = f'mean {metric},\ntarget present'
-            mn_metric_present_line, = ax.plot(set_sizes, mn_metric_present,
-                                              color='magenta', linewidth=4,
-                                              zorder=0,
-                                              label=mn_metric_present_label)
-    else:
-        mn_metric_present_line = None
-        mn_metric_present_label = None
-
-    if metric_target_absent:
-        for arr_metric_absent in metric_target_present:
-            ax.plot(set_sizes, arr_metric_absent, color='lightgreen', linewidth=2,
-                    linestyle='--', marker='o', zorder=1, alpha=0.85, label=None)
-
-        if plot_mean:
-            mn_metric_absent = np.asarray(metric_target_absent).mean(axis=0)
-            mn_metric_absent_label = f'mean {metric},\ntarget absent'
-            mn_metric_absent_line, = ax.plot(set_sizes, mn_metric_absent,
-                                             color='lawngreen', linewidth=4, zorder=0,
-                                             label=mn_metric_absent_label)
-    else:
-        mn_metric_absent_line = None
-        mn_metric_absent_label = None
-
-    if metric_both:
-        for arr_metric_both in metric_both:
-            ax.plot(set_sizes, arr_metric_both, color=both_color, linewidth=2,
-                    linestyle='--', marker='o', zorder=1, label=None)
-
-        if plot_mean:
-            mn_metric_both = np.asarray(metric_both).mean(axis=0)
-            mn_metric_both_label = f'mean {metric}\n'
-            mn_metric_both_line, = ax.plot(set_sizes, mn_metric_both, alpha=0.85,
-                                             color=mn_both_color, linewidth=4, zorder=0,
-                                             label=mn_metric_both_label)
-    else:
-        mn_metric_both_line = None
-        mn_metric_both_label = None
+            mn_metric = np.asarray(metric_vals).mean(axis=0)
+            mn_metric_label = f'mean {metric},\n{targ_cond}'
+            labels.append(mn_metric_label)
+            mn_metric_line, = ax.plot(set_sizes, mn_metric,
+                                      color=mn_color, linewidth=4,
+                                      zorder=0,
+                                      label=mn_metric_label)
+            handles.append(mn_metric_line)
 
     ax.set_xticks(set_sizes)
 
@@ -256,14 +233,6 @@ def metric_v_set_size_df(df, net_name, train_type, stimulus, metric, conditions,
         ax.set_ylim(ylim)
 
     if add_legend:
-        handles = (handle for handle in [mn_metric_present_line,
-                                         mn_metric_absent_line,
-                                         mn_metric_both_line]
-                   if handle is not None)
-        labels = (label for label in [mn_metric_present_label,
-                                      mn_metric_absent_label,
-                                      mn_metric_both_label]
-                  if label is not None)
         ax.legend(handles=handles,
                   labels=labels,
                   loc='lower left')
