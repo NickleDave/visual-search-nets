@@ -13,6 +13,7 @@ bvlc_alexnet.npy
 *.npz
 data/checkpoints/*/
 data/experiment_*/
+data/expt_*/
 data/for_figshare/*
 data/neural_net_weights/
 data/visual_search_stimuli/*
