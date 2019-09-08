@@ -118,8 +118,13 @@ def parse_config(config_fname):
                                patience)
 
     # ------------- unpack [DATA] section of config.ini file -----------------------------------------------------------
-    train_dir = config['DATA']['TRAIN_DIR']
+    csv_file_in = config['DATA']['CSV_FILE_IN']
     train_size = int(config['DATA']['TRAIN_SIZE'])
+
+    if config.has_option('DATA', 'CSV_FILE_OUT'):
+        csv_file_out = config['DATA']['CSV_FILE_OUT']
+    else:
+        csv_file_out = None
 
     if config.has_option('DATA', 'STIM_TYPES'):
         stim_types = ast.literal_eval(config['DATA']['STIM_TYPES'])
@@ -139,7 +144,6 @@ def parse_config(config_fname):
         set_sizes = ast.literal_eval(config['DATA']['SET_SIZES'])
     else:
         set_sizes = None
-    gz_filename = config['DATA']['GZ_FILENAME']
 
     if config.has_option('DATA', 'TRAIN_SIZE_PER_SET_SIZE'):
         train_size_per_set_size = ast.literal_eval(config['DATA']['TRAIN_SIZE_PER_SET_SIZE'])
@@ -165,9 +169,9 @@ def parse_config(config_fname):
             raise ValueError('shard_train set to True inf config.ini file but shard_size not specified')
         shard_size = None
 
-    data_config = DataConfig(train_dir,
+    data_config = DataConfig(csv_file_in,
                              train_size,
-                             gz_filename,
+                             csv_file_out,
                              stim_types,
                              val_size,
                              test_size,
