@@ -9,64 +9,62 @@ import os
 import argparse
 
 from .config import parse_config
-from .data import data
+from .data import split
 from .train import train
 from .test import test
 from .learncurve import learning_curve
 
 
-def _call_data(config):
-    """helper function to call searchstims.data"""
-    data(train_dir=config.data.train_dir,
-         train_size=config.data.train_size,
-         stim_types=config.data.stim_types,
-         val_size=config.data.val_size,
-         test_size=config.data.test_size,
-         gz_filename=config.data.gz_filename,
-         train_size_per_set_size=config.data.train_size_per_set_size,
-         val_size_per_set_size=config.data.val_size_per_set_size,
-         test_size_per_set_size=config.data.test_size_per_set_size,
-         shard_train=config.data.shard_train,
-         shard_size=config.data.shard_size)
+def _call_split(config):
+    """helper function to call searchstims.data.split"""
+    split(csv_file_in=config.data.csv_file_in,
+          train_size=config.data.train_size,
+          csv_file_out=config.data.csv_file_out,
+          stim_types=config.data.stim_types,
+          val_size=config.data.val_size,
+          test_size=config.data.test_size,
+          train_size_per_set_size=config.data.train_size_per_set_size,
+          val_size_per_set_size=config.data.val_size_per_set_size,
+          test_size_per_set_size=config.data.test_size_per_set_size)
 
 
 def _call_train(config):
     """helper function to call searchstims.train"""
-    train(gz_filename=config.data.gz_filename,
+    train(csv_file=config.data.csv_file_out,
           net_name=config.train.net_name,
           number_nets_to_train=config.train.number_nets_to_train,
-          input_shape=config.train.input_shape,
           new_learn_rate_layers=config.train.new_learn_rate_layers,
           new_layer_learning_rate=config.train.new_layer_learning_rate,
           epochs_list=config.train.epochs_list,
           batch_size=config.train.batch_size,
           random_seed=config.train.random_seed,
-          model_save_path=config.train.model_save_path,
+          save_path=config.train.save_path,
           base_learning_rate=config.train.base_learning_rate,
           freeze_trained_weights=config.train.freeze_trained_weights,
-          dropout_rate=config.train.dropout_rate,
           loss_func=config.train.loss_func,
           triplet_loss_margin=config.train.triplet_loss_margin,
           squared_dist=config.train.squared_dist,
-          save_acc_by_set_size_by_epoch=config.train.save_acc_by_set_size_by_epoch,
           use_val=config.train.use_val,
           val_epoch=config.train.val_epoch,
           summary_step=config.train.summary_step,
-          patience=config.train.patience)
+          patience=config.train.patience,
+          checkpoint_epoch=config.train.checkpoint_epoch,
+          save_acc_by_set_size_by_epoch=config.train.save_acc_by_set_size_by_epoch,
+          num_workers=config.train.num_workers)
 
 
 def _call_test(config, configfile):
     """helper function to call searchstims.test"""
-    test(gz_filename=config.data.gz_filename,
+    test(csv_file=config.data.csv_file_out,
          net_name=config.train.net_name,
          number_nets_to_train=config.train.number_nets_to_train,
-         input_shape=config.train.input_shape,
-         new_learn_rate_layers=config.train.new_learn_rate_layers,
          epochs_list=config.train.epochs_list,
          batch_size=config.train.batch_size,
-         model_save_path=config.train.model_save_path,
+         restore_path=config.train.save_path,
          test_results_save_path=config.test.test_results_save_path,
-         configfile=configfile)
+         configfile=configfile,
+         random_seed=config.train.random_seed,
+         num_workers=config.train.num_workers)
 
 
 def _call_learncurve(config):
@@ -118,8 +116,8 @@ def cli(command, configfile):
     # get config first so we can know if we should save log, where to make results directory, etc.
     config = parse_config(configfile)
 
-    if command == 'data':
-        _call_data(config)
+    if command == 'split':
+        _call_split(config)
 
     elif command == 'train':
         _call_train(config)
@@ -128,7 +126,7 @@ def cli(command, configfile):
         _call_test(config, configfile)
 
     elif command == 'all':
-        _call_data(config)
+        _call_split(config)
         _call_train(config)
         _call_test(config, configfile)
 
@@ -136,7 +134,7 @@ def cli(command, configfile):
         _call_learncurve(config)
 
 
-CHOICES = ['data', 'train', 'test', 'all', 'learncurve']
+CHOICES = ['split', 'train', 'test', 'all', 'learncurve']
 
 
 def get_parser():
