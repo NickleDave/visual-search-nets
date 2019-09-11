@@ -89,7 +89,7 @@ def test(csv_file,
         if set_sizes == []:
             set_sizes = set_sizes_this_stim
         else:
-            if set_sizes_this_stim != set_sizes:
+            if not np.all(np.equal(set_sizes_this_stim, set_sizes)):
                 raise ValueError('set sizes are not the same across visual search stimuli')
             else:
                 continue
