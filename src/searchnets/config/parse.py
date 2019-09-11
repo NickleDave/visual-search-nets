@@ -69,7 +69,7 @@ def parse_config(config_fname):
     else:
         squared_dist = False
 
-    model_save_path = config['TRAIN']['MODEL_SAVE_PATH']
+    save_path = config['TRAIN']['SAVE_PATH']
 
     if config.has_option('TRAIN', 'SAVE_ACC_BY_SET_SIZE_BY_EPOCH'):
         save_acc_by_set_size_by_epoch = bool(strtobool(config['TRAIN']['SAVE_ACC_BY_SET_SIZE_BY_EPOCH']))
@@ -96,6 +96,16 @@ def parse_config(config_fname):
     else:
         patience = None
 
+    if config.has_option('TRAIN', 'CHECKPOINT_EPOCH'):
+        checkpoint_epoch = int(config['TRAIN']['CHECKPOINT_EPOCH'])
+    else:
+        checkpoint_epoch = None
+
+    if config.has_option('TRAIN', 'NUM_WORKERS'):
+        num_workers = int(config['TRAIN']['NUM_WORKERS'])
+    else:
+        num_workers = 4
+
     train_config = TrainConfig(net_name,
                                number_nets_to_train,
                                input_shape,
@@ -104,7 +114,7 @@ def parse_config(config_fname):
                                epochs_list,
                                batch_size,
                                random_seed,
-                               model_save_path,
+                               save_path,
                                base_learning_rate,
                                freeze_trained_weights,
                                dropout_rate,
@@ -115,11 +125,18 @@ def parse_config(config_fname):
                                use_val,
                                val_epoch,
                                summary_step,
-                               patience)
+                               patience,
+                               checkpoint_epoch,
+                               num_workers)
 
     # ------------- unpack [DATA] section of config.ini file -----------------------------------------------------------
-    train_dir = config['DATA']['TRAIN_DIR']
+    csv_file_in = config['DATA']['CSV_FILE_IN']
     train_size = int(config['DATA']['TRAIN_SIZE'])
+
+    if config.has_option('DATA', 'CSV_FILE_OUT'):
+        csv_file_out = config['DATA']['CSV_FILE_OUT']
+    else:
+        csv_file_out = None
 
     if config.has_option('DATA', 'STIM_TYPES'):
         stim_types = ast.literal_eval(config['DATA']['STIM_TYPES'])
@@ -139,7 +156,6 @@ def parse_config(config_fname):
         set_sizes = ast.literal_eval(config['DATA']['SET_SIZES'])
     else:
         set_sizes = None
-    gz_filename = config['DATA']['GZ_FILENAME']
 
     if config.has_option('DATA', 'TRAIN_SIZE_PER_SET_SIZE'):
         train_size_per_set_size = ast.literal_eval(config['DATA']['TRAIN_SIZE_PER_SET_SIZE'])
@@ -165,18 +181,16 @@ def parse_config(config_fname):
             raise ValueError('shard_train set to True inf config.ini file but shard_size not specified')
         shard_size = None
 
-    data_config = DataConfig(train_dir,
+    data_config = DataConfig(csv_file_in,
                              train_size,
-                             gz_filename,
+                             csv_file_out,
                              stim_types,
                              val_size,
                              test_size,
                              set_sizes,
                              train_size_per_set_size,
                              val_size_per_set_size,
-                             test_size_per_set_size,
-                             shard_train,
-                             shard_size)
+                             test_size_per_set_size)
 
     # ------------- unpack [TEST] section of config.ini file -----------------------------------------------------------
     test_results_save_path = config['TEST']['TEST_RESULTS_SAVE_PATH']

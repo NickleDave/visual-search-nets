@@ -1,5 +1,4 @@
 import numpy as np
-import tensorflow as tf
 import joblib
 
 from .train import train
@@ -95,52 +94,52 @@ def learning_curve(gz_filename,
                         f"as invalid type: {type(epochs_list)}")
 
     np.random.seed(random_seed)  # for shuffling in batch_generator
-    tf.random.set_random_seed(random_seed)
-
-    x_test = data_dict['x_test']
-    y_test = data_dict['y_test']
-    # make sure there's only one 'set' of set sizes
-    set_sizes_by_stim_type = data_dict['set_sizes_by_stim_stype']
-    set_sizes = []
-    for stim_type, set_sizes_this_stim in set_sizes_by_stim_type.items():
-        if set_sizes == []:
-            set_sizes = set_sizes_this_stim
-        else:
-            if set_sizes_this_stim != set_sizes:
-                raise ValueError('set sizes are not the same across visual search stimuli')
-            else:
-                continue
-
-    # -------------------- first train a bunch of models ---------------------------------------------------------------
-    train(x_train,
-          y_train,
-          net_name,
-          number_nets_to_train,
-          input_shape,
-          base_learning_rate,
-          freeze_trained_weights,
-          new_learn_rate_layers,
-          new_layer_learning_rate,
-          train_size_list,
-          epochs_list,
-          batch_size,
-          dropout_rate,
-          model_save_path)
-
-    # -------------------- then measure accuracy on test data ----------------------------------------------------------
-    test(x_train,
-         y_train,
-         x_test,
-         y_test,
-         data_dict['set_size_vec_train'],
-         data_dict['set_size_vec_test'],
-         set_sizes,
-         net_name,
-         number_nets_to_train,
-         input_shape,
-         new_learn_rate_layers,
-         epochs_list,
-         train_size_list,
-         batch_size,
-         model_save_path,
-         test_results_save_path)
+    # tf.random.set_random_seed(random_seed)
+    #
+    # x_test = data_dict['x_test']
+    # y_test = data_dict['y_test']
+    # # make sure there's only one 'set' of set sizes
+    # set_sizes_by_stim_type = data_dict['set_sizes_by_stim_stype']
+    # set_sizes = []
+    # for stim_type, set_sizes_this_stim in set_sizes_by_stim_type.items():
+    #     if set_sizes == []:
+    #         set_sizes = set_sizes_this_stim
+    #     else:
+    #         if set_sizes_this_stim != set_sizes:
+    #             raise ValueError('set sizes are not the same across visual search stimuli')
+    #         else:
+    #             continue
+    #
+    # # -------------------- first train a bunch of models ---------------------------------------------------------------
+    # train(x_train,
+    #       y_train,
+    #       net_name,
+    #       number_nets_to_train,
+    #       input_shape,
+    #       base_learning_rate,
+    #       freeze_trained_weights,
+    #       new_learn_rate_layers,
+    #       new_layer_learning_rate,
+    #       train_size_list,
+    #       epochs_list,
+    #       batch_size,
+    #       dropout_rate,
+    #       model_save_path)
+    #
+    # # -------------------- then measure accuracy on test data ----------------------------------------------------------
+    # test(x_train,
+    #      y_train,
+    #      x_test,
+    #      y_test,
+    #      data_dict['set_size_vec_train'],
+    #      data_dict['set_size_vec_test'],
+    #      set_sizes,
+    #      net_name,
+    #      number_nets_to_train,
+    #      input_shape,
+    #      new_learn_rate_layers,
+    #      epochs_list,
+    #      train_size_list,
+    #      batch_size,
+    #      model_save_path,
+    #      test_results_save_path)

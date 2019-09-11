@@ -1,2 +1,3 @@
-from .alexnet import AlexNet
-from .vgg16 import VGG16
+from . import alexnet
+from . import vgg16
+

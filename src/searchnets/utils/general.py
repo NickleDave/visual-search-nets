@@ -1,11 +1,25 @@
-import tarfile
 import os
+from pathlib import Path
+import tarfile
 
 import joblib
 import numpy as np
 import pandas as pd
 
 from .metrics import compute_d_prime
+
+
+def make_save_path(save_path, net_name, net_number, epochs):
+    """make a unique save path for model and checkpoints,
+     using network architecture, training replicate number, and number of epochs"""
+    save_path = Path(save_path).joinpath(
+        f'trained_{epochs}_epochs',
+        f'net_number_{net_number}')
+    if not save_path.is_dir():
+        save_path.mkdir(parents=True, exist_ok=True)
+    stem = f'{net_name}_trained_{epochs}_epochs_number_{net_number}'
+    save_path = save_path.joinpath(stem)
+    return save_path
 
 
 def make_targz(output_filename, source_dir):

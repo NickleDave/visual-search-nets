@@ -1,171 +1,120 @@
-"""VGG16 implementation, adapted from Frederik Kratzert AlexNet implementation, under BSD-3 license
-https://github.com/kratzert/finetune_alexnet_with_tensorflow/blob/master/LICENSE
-
-Uses VGG16 architecture as specified in
-https://github.com/tensorflow/tensorflow/blob/r1.8/tensorflow/python/keras/_impl/keras/applications/vgg16.py
-which is released under Apache license 2.0, http://www.apache.org/licenses/LICENSE-2.0
+"""VGG16 implementation from torchvision
+https://github.com/pytorch/vision/blob/master/LICENSE
 """
-import os
+import torch
+import torch.nn as nn
+from torchvision.models.utils import load_state_dict_from_url
 
-import tensorflow as tf
-import numpy as np
-
-from ..utils.figshare import fetch
-from ..utils.figshare_urls import VGG16_WEIGHTS_URL
-from .layers import max_pool, dropout
-
-THIS_FILE_PATH = os.path.dirname(__file__)
+model_urls = {
+    'vgg16': 'https://download.pytorch.org/models/vgg16-397923af.pth',
+    'vgg16_bn': 'https://download.pytorch.org/models/vgg16_bn-6c64b313.pth',
+}
 
 
-class VGG16:
-    """Implementation of VGG16."""
+class VGG(nn.Module):
 
-    def __init__(self, x, init_layer, dropout_rate, num_classes=2, weights_path='DEFAULT'):
-        """initialize an instance of VGG16
+    def __init__(self, features, num_classes=1000, init_weights=True):
+        super(VGG, self).__init__()
+        self.features = features
+        self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
+        self.classifier = nn.Sequential(
+            nn.Linear(512 * 7 * 7, 4096),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(4096, 4096),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(4096, num_classes),
+        )
+        if init_weights:
+            self._initialize_weights()
 
-        Parameters
-        ----------
-        x: tensorflow.Placeholder
-            Placeholder for the input tensor.
-        init_layer: list
-            of strings, names of layers that will have variables initialized at random and
-            trained "from scratch" instead of loading pre-trained weights.
-        dropout_rate: tensorflow.Placeholder
-            Dropout probability. Default used by 'train' function is 0.5.
-        num_classes: int
-            Number of classes in the dataset. Default is 2 (for "target present" / "target absent")
-        weights_path: str
-            Complete path to the pre-trained weight file. If file doesn't exist, weights will
-            be downloaded and saved to this location. Default is 'DEFAULT', in which case the
-            path used is '../../../data/neural_net_weights/bvlc_alexnet.npy'
-        """
-        self.x = x
-        self.num_classes = num_classes
-        self.dropout_rate = dropout_rate
-        self.init_layer = init_layer
+    def forward(self, x):
+        x = self.features(x)
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return x
 
-        if weights_path == 'DEFAULT':
-            weights_path = os.path.join(
-                THIS_FILE_PATH,
-                '..', '..', '..',
-                'data', 'neural_net_weights', 'vgg16_weights.npz'
-            )
-        if not os.path.isfile(weights_path):
-            print("downloading weights for AlexNet")
-            fetch(url=VGG16_WEIGHTS_URL,
-                  destination_path=weights_path)
-        self.weights_path = weights_path
-        self.weights_dict = np.load(self.weights_path)
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.normal_(m.weight, 0, 0.01)
+                nn.init.constant_(m.bias, 0)
 
-        self.output = None  # will be set during call to self.create() below
 
-        self.create()
-
-    def conv(self, x, filter_height, filter_width, num_filters, stride_y, stride_x, name,
-             padding='SAME', groups=1):
-        """Create a convolution layer.
-
-        Adapted from: https://github.com/ethereon/caffe-tensorflow
-        """
-        # Get number of input channels
-        input_channels = int(x.get_shape()[-1])
-
-        # Create lambda function for the convolution
-        convolve = lambda i, k: tf.nn.conv2d(i, k,
-                                             strides=[1, stride_y, stride_x, 1],
-                                             padding=padding)
-
-        with tf.variable_scope(name) as scope:
-            # if this is a layer we should initialize new weights for
-            if name in self.init_layer:
-                weights = tf.get_variable('weights', shape=[filter_height,
-                                                            filter_width,
-                                                            input_channels / groups,
-                                                            num_filters])
-                biases = tf.get_variable('biases', shape=[num_filters])
-            else:
-                # if this is a layer we should load weights for
-                weights = tf.Variable(self.weights_dict[name + '_W'], name='weights')
-                biases = tf.Variable(self.weights_dict[name + '_b'], name='biases')
-
-        if groups == 1:
-            conv = convolve(x, weights)
-
-        # In the cases of multiple groups, split inputs & weights and
+def make_layers(cfg, batch_norm=False):
+    layers = []
+    in_channels = 3
+    for v in cfg:
+        if v == 'M':
+            layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
         else:
-            # Split input and weights and convolve them separately
-            input_groups = tf.split(axis=3, num_or_size_splits=groups, value=x)
-            weight_groups = tf.split(axis=3, num_or_size_splits=groups,
-                                     value=weights)
-            output_groups = [convolve(i, k) for i, k in zip(input_groups, weight_groups)]
-
-            # Concat the convolved output together again
-            conv = tf.concat(axis=3, values=output_groups)
-
-        # Add biases
-        bias = tf.reshape(tf.nn.bias_add(conv, biases), tf.shape(conv))
-
-        # Apply relu function
-        relu = tf.nn.relu(bias, name=scope.name)
-
-        return relu
-
-    def fc(self, x, num_in, num_out, name, relu=True):
-        """Create a fully connected layer."""
-        with tf.variable_scope(name) as scope:
-            if name in self.init_layer:
-                weights = tf.get_variable('weights', shape=[num_in, num_out],
-                                          trainable=True)
-                biases = tf.get_variable('biases', [num_out], trainable=True)
+            conv2d = nn.Conv2d(in_channels, v, kernel_size=3, padding=1)
+            if batch_norm:
+                layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU(inplace=True)]
             else:
-                weights = tf.Variable(self.weights_dict[name + '_W'], name='weights')
-                biases = tf.Variable(self.weights_dict[name + '_b'], name='biases')
+                layers += [conv2d, nn.ReLU(inplace=True)]
+            in_channels = v
+    return nn.Sequential(*layers)
 
-            # Matrix multiply weights and inputs and add bias
-            act = tf.nn.xw_plus_b(x, weights, biases, name=scope.name)
 
-        if relu:
-            # Apply ReLu non linearity
-            relu = tf.nn.relu(act)
-            return relu
-        else:
-            return act
+cfgs = {
+    'A': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
+    'B': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
+    'D': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
+    'E': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M'],
+}
 
-    def create(self):
-        """Create the network graph."""
-        block1_conv1 = self.conv(self.x, 3, 3, 64, 1, 1, padding='SAME', name='conv1_1')
-        block1_conv2 = self.conv(block1_conv1, 3, 3, 64, 1, 1, padding='SAME', name='conv1_2')
-        block1_pool = max_pool(block1_conv2, 2, 2, 2, 2, padding='VALID', name='conv1__pool')
 
-        block2_conv1 = self.conv(block1_pool, 3, 3, 128, 1, 1, padding='SAME', name='conv2_1')
-        block2_conv2 = self.conv(block2_conv1, 3, 3, 128, 1, 1, padding='SAME', name='conv2_2')
-        block2_pool = max_pool(block2_conv2, 2, 2, 2, 2, padding='VALID', name='conv2_pool')
+def _vgg(arch, cfg, batch_norm, pretrained, progress, **kwargs):
+    if pretrained:
+        kwargs['init_weights'] = False
+    model = VGG(make_layers(cfgs[cfg], batch_norm=batch_norm), **kwargs)
+    if pretrained:
+        state_dict = load_state_dict_from_url(model_urls[arch],
+                                              progress=progress)
+        model.load_state_dict(state_dict)
+    return model
 
-        block3_conv1 = self.conv(block2_pool, 3, 3, 256, 1, 1, padding='SAME', name='conv3_1')
-        block3_conv2 = self.conv(block3_conv1, 3, 3, 256, 1, 1, padding='SAME', name='conv3_2')
-        block3_conv3 = self.conv(block3_conv2, 3, 3, 256, 1, 1, padding='SAME', name='conv3_3')
-        block3_pool = max_pool(block3_conv3, 2, 2, 2, 2, padding='VALID', name='block3_pool')
 
-        block4_conv1 = self.conv(block3_pool, 3, 3, 512, 1, 1, padding='SAME', name='conv4_1')
-        block4_conv2 = self.conv(block4_conv1, 3, 3, 512, 1, 1, padding='SAME', name='conv4_2')
-        block4_conv3 = self.conv(block4_conv2, 3, 3, 512, 1, 1, padding='SAME', name='conv4_3')
-        block4_pool = max_pool(block4_conv3, 2, 2, 2, 2, padding='VALID', name='conv4_pool')
+def build(pretrained=False, progress=True, **kwargs):
+    r"""VGG 16-layer model (configuration "D")
+    `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
 
-        block5_conv1 = self.conv(block4_pool, 3, 3, 512, 1, 1, padding='SAME', name='conv5_1')
-        block5_conv2 = self.conv(block5_conv1, 3, 3, 512, 1, 1, padding='SAME', name='conv5_2')
-        block5_conv3 = self.conv(block5_conv2, 3, 3, 512, 1, 1, padding='SAME', name='conv5_3')
-        block5_pool = max_pool(block5_conv3, 2, 2, 2, 2, padding='VALID', name='conv5_pool')
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        progress (bool): If True, displays a progress bar of the download to stderr
+    """
+    return _vgg('vgg16', 'D', False, pretrained, progress, **kwargs)
 
-        new_shape = int(np.prod(block5_pool.get_shape()[1:]))
-        flattened = tf.reshape(block5_pool, [-1, new_shape], name='flatten')
-        self.fc6 = self.fc(flattened, new_shape, 4096, name='fc6')
-        dropout1 = dropout(self.fc6, self.dropout_rate)
 
-        # 7th Layer: FC (w ReLu) -> Dropout
-        self.fc7 = self.fc(dropout1, 4096, 4096, name='fc7')
-        dropout2 = dropout(self.fc7, self.dropout_rate)
+def build_bn(pretrained=False, progress=True, **kwargs):
+    r"""VGG 16-layer model (configuration "D") with batch normalization
+    `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
 
-        # 8th Layer: FC and return unscaled activations
-        fc8 = self.fc(dropout2, 4096, self.num_classes, relu=False, name='fc8')
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        progress (bool): If True, displays a progress bar of the download to stderr
+    """
+    return _vgg('vgg16_bn', 'D', True, pretrained, progress, **kwargs)
 
-        self.output = fc8
+
+def reinit(model, init_layers):
+    """re-initialize specified layers"""
+    for init_layer in init_layers:
+        if init_layer == 'fc6':
+            model.classifier[1] = nn.Linear(in_features=9216, out_features=4096, bias=True)
+        elif init_layer == 'fc7':
+            model.classifier[4] = nn.Linear(in_features=4096, out_features=4096, bias=True)
+        elif init_layer == 'fc8':
+            model.classifier[6] = nn.Linear(in_features=4096, out_features=1000, bias=True)
+
+    return model
