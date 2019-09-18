@@ -107,7 +107,7 @@ def build_bn(pretrained=False, progress=True, **kwargs):
     return _vgg('vgg16_bn', 'D', True, pretrained, progress, **kwargs)
 
 
-def reinit(model, init_layers):
+def reinit(model, init_layers, num_classes=2):
     """re-initialize specified layers"""
     for init_layer in init_layers:
         if init_layer == 'fc6':
@@ -115,6 +115,6 @@ def reinit(model, init_layers):
         elif init_layer == 'fc7':
             model.classifier[4] = nn.Linear(in_features=4096, out_features=4096, bias=True)
         elif init_layer == 'fc8':
-            model.classifier[6] = nn.Linear(in_features=4096, out_features=1000, bias=True)
+            model.classifier[6] = nn.Linear(in_features=4096, out_features=num_classes, bias=True)
 
     return model
