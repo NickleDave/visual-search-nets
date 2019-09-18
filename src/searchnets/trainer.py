@@ -30,6 +30,7 @@ class Trainer:
                  new_learn_rate_layers,
                  csv_file,
                  save_path,
+                 num_classes=2,
                  loss_func='ce',
                  save_acc_by_set_size_by_epoch=True,
                  freeze_trained_weights=False,
@@ -71,10 +72,10 @@ class Trainer:
         self.net_name = net_name  # for checkpointing, saving model
         if net_name == 'alexnet':
             model = nets.alexnet.build(pretrained=True, progress=True)
-            model = nets.alexnet.reinit(model, new_learn_rate_layers)
+            model = nets.alexnet.reinit(model, new_learn_rate_layers, num_classes=num_classes)
         elif net_name == 'VGG16':
             model = nets.vgg16.build(pretrained=True, progress=True)
-            model = nets.vgg16.reinit(model, new_learn_rate_layers)
+            model = nets.vgg16.reinit(model, new_learn_rate_layers, num_classes=num_classes)
 
         model.to(device)
         self.model = model
@@ -260,7 +261,6 @@ class Trainer:
             self.step += 1
 
             batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
-
             output = self.model(batch_x)
             loss = self.criterion(output, batch_y)
 

@@ -19,6 +19,7 @@ def test(csv_file,
          test_results_save_path,
          configfile,
          random_seed,
+         num_classes=2,
          num_workers=4):
     """measure accuracy of trained convolutional neural networks on test set of visual search stimuli
 
@@ -48,6 +49,8 @@ def test(csv_file,
         that is saved in test_results_save_path.
     random_seed : int
         to seed random number generator
+    num_classes : int
+        number of classes. Default is 2 (target present, target absent).
     num_workers : int
         number of workers used by torch.DataLoaders. Default is 4.
 
@@ -113,6 +116,7 @@ def test(csv_file,
             tester = Tester(net_name,
                             csv_file,
                             restore_path_this_net,
+                            num_classes,
                             batch_size,
                             device,
                             num_workers)

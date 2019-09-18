@@ -16,6 +16,7 @@ def train(csv_file,
           batch_size,
           random_seed,
           save_path,
+          num_classes=2,
           loss_func='CE',
           triplet_loss_margin=0.5,
           squared_dist=False,
@@ -66,6 +67,8 @@ def train(csv_file,
         to seed random number generator
     save_path : str
         path to directory where checkpoints and train models were saved
+    num_classes : int
+        number of classes. Default is 2 (target present, target absent).
     loss_func : str
         type of loss function to use. One of {'CE', 'InvDPrime', 'triplet'}. Default is 'CE',
         the standard cross-entropy loss. 'InvDPrime' is inverse D prime. 'triplet' is triplet loss
@@ -136,6 +139,7 @@ def train(csv_file,
                               new_learn_rate_layers=new_learn_rate_layers,
                               csv_file=csv_file,
                               save_path=save_path_this_net,
+                              num_classes=num_classes,
                               loss_func=loss_func,
                               save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
                               freeze_trained_weights=freeze_trained_weights,

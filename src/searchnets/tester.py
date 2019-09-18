@@ -26,6 +26,7 @@ class Tester:
                  net_name,
                  csv_file,
                  restore_path,
+                 num_classes=2,
                  batch_size=64,
                  device='cuda',
                  num_workers=NUM_WORKERS,
@@ -38,15 +39,16 @@ class Tester:
         new_learn_rate_layers
         csv_file
         restore_path
+        num_classes
         batch_size
         device
         num_workers
         """
         self.net_name = net_name
         if net_name == 'alexnet':
-            model = nets.alexnet.build(pretrained=False, progress=False)
+            model = nets.alexnet.build(pretrained=False, progress=False, num_classes=num_classes)
         elif net_name == 'VGG16':
-            model = nets.vgg16.build(pretrained=False, progress=False)
+            model = nets.vgg16.build(pretrained=False, progress=False, num_classes=num_classes)
 
         self.restore_path = restore_path
         model_file = str(restore_path) + '-model.pt'
