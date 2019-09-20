@@ -150,8 +150,9 @@ def results_df(data_prep_dir,
                 results_dict = joblib.load(results_gz_path)
                 ppm = results_dict['predictions_per_model_dict']
                 num_nets = len(ppm.keys())
-                for net_num in range(num_nets):
-                    key = [key for key in ppm.keys() if f'net_number_{net_num}' in key][0]
+                for net_num in range(1, num_nets + 1):
+                    # below, notice we need to convert key (a Path) to string to check if net_num is 'in' it
+                    key = [key for key in ppm.keys() if f'net_number_{net_num}' in str(key)][0]
                     y_pred = ppm[key]
                     for target_cond in target_condition:
                         for set_size in set_sizes:
