@@ -1,33 +1,34 @@
 import numpy as np
 import torch
 
-from .trainer import Trainer
+from .classes.transfer_trainer import TransferTrainer
+from .classes.trainer import Trainer
 from .utils.general import make_save_path
 
 
 def train(csv_file,
           net_name,
           number_nets_to_train,
-          base_learning_rate,
-          freeze_trained_weights,
-          new_learn_rate_layers,
-          new_layer_learning_rate,
           epochs_list,
           batch_size,
           random_seed,
           save_path,
+          method='transfer',
           num_classes=2,
+          learning_rate=None,
+          base_learning_rate=1e-20,
+          new_learn_rate_layers='fc8',
+          new_layer_learning_rate=0.001,
+          freeze_trained_weights=True,
           loss_func='CE',
-          triplet_loss_margin=0.5,
-          squared_dist=False,
           use_val=True,
-          val_epoch=None,
+          val_epoch=1,
           summary_step=None,
           patience=None,
-          checkpoint_epoch=None,
+          checkpoint_epoch=10,
           save_acc_by_set_size_by_epoch=False,
           num_workers=4):
-    """train convolutional neural networks to perform visual search task.
+    """train neural networks to perform visual search task.
 
     Parameters
     ----------
@@ -39,6 +40,29 @@ def train(csv_file,
         One of {'alexnet', 'VGG16'}
     number_nets_to_train : int
         number of training "replicates"
+    epochs_list : list
+        of training epochs. Replicates will be trained for each
+        value in this list. Can also just be one value, but a list
+        is useful if you want to test whether effects depend on
+        number of training epochs.
+    batch_size : int
+        number of samples in a batch of training data
+    random_seed : int
+        to seed random number generator
+    save_path : str
+        path to directory where checkpoints and train models were saved
+    method : str
+        training method. One of {'initialize', 'transfer'}.
+        'initialize' means randomly initialize all weights and train the
+        networks "from scratch".
+        'transfer' means perform transfer learning, using weights pre-trained
+        on imagenet.
+        Default is 'transfer'.
+
+    Other Parameters
+    ----------------
+    num_classes : int
+        number of classes. Default is 2 (target present, target absent).
     base_learning_rate : float
         Applied to layers with weights loaded from training the
         architecture on ImageNet. Should be a very small number
@@ -56,19 +80,6 @@ def train(csv_file,
         `base_learning_rate` but still smaller than the usual
         learning rate for a deep net trained with SGD,
         e.g. 0.001 instead of 0.01
-    epochs_list : list
-        of training epochs. Replicates will be trained for each
-        value in this list. Can also just be one value, but a list
-        is useful if you want to test whether effects depend on
-        number of training epochs.
-    batch_size : int
-        number of samples in a batch of training data
-    random_seed : int
-        to seed random number generator
-    save_path : str
-        path to directory where checkpoints and train models were saved
-    num_classes : int
-        number of classes. Default is 2 (target present, target absent).
     loss_func : str
         type of loss function to use. One of {'CE', 'InvDPrime', 'triplet'}. Default is 'CE',
         the standard cross-entropy loss. 'InvDPrime' is inverse D prime. 'triplet' is triplet loss
@@ -135,23 +146,45 @@ def train(csv_file,
         print(f'training {net_name} model for {epochs} epochs')
         for net_number in range(1, number_nets_to_train + 1):
             save_path_this_net = make_save_path(save_path, net_name, net_number, epochs)
-            trainer = Trainer(net_name=net_name,
-                              new_learn_rate_layers=new_learn_rate_layers,
-                              csv_file=csv_file,
-                              save_path=save_path_this_net,
-                              num_classes=num_classes,
-                              loss_func=loss_func,
-                              save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
-                              freeze_trained_weights=freeze_trained_weights,
-                              base_learning_rate=base_learning_rate,
-                              new_layer_learning_rate=new_layer_learning_rate,
-                              batch_size=batch_size,
-                              epochs=epochs,
-                              val_epoch=val_epoch,
-                              use_val=use_val,
-                              patience=patience,
-                              checkpoint_epoch=checkpoint_epoch,
-                              summary_step=summary_step,
-                              device=device,
-                              num_workers=num_workers)
+            if method == 'transfer':
+                trainer = TransferTrainer.from_config(net_name=net_name,
+                                                      new_learn_rate_layers=new_learn_rate_layers,
+                                                      freeze_trained_weights=freeze_trained_weights,
+                                                      base_learning_rate=base_learning_rate,
+                                                      new_layer_learning_rate=new_layer_learning_rate,
+                                                      csv_file=csv_file,
+                                                      save_path=save_path_this_net,
+                                                      num_classes=num_classes,
+                                                      loss_func=loss_func,
+                                                      save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
+                                                      batch_size=batch_size,
+                                                      epochs=epochs,
+                                                      val_epoch=val_epoch,
+                                                      use_val=use_val,
+                                                      patience=patience,
+                                                      checkpoint_epoch=checkpoint_epoch,
+                                                      summary_step=summary_step,
+                                                      device=device,
+                                                      num_workers=num_workers)
+            elif method == 'initialize':
+                trainer = Trainer(net_name=net_name,
+                                  new_learn_rate_layers=new_learn_rate_layers,
+                                  csv_file=csv_file,
+                                  save_path=save_path_this_net,
+                                  num_classes=num_classes,
+                                  loss_func=loss_func,
+                                  save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
+                                  freeze_trained_weights=freeze_trained_weights,
+                                  base_learning_rate=base_learning_rate,
+                                  new_layer_learning_rate=new_layer_learning_rate,
+                                  batch_size=batch_size,
+                                  epochs=epochs,
+                                  val_epoch=val_epoch,
+                                  use_val=use_val,
+                                  patience=patience,
+                                  checkpoint_epoch=checkpoint_epoch,
+                                  summary_step=summary_step,
+                                  device=device,
+                                  num_workers=num_workers)
+
             trainer.train()
