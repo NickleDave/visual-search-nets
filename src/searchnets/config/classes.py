@@ -25,10 +25,6 @@ class TrainConfig:
         One of {'alexnet', 'VGG16'}
     number_nets_to_train : int
         number of training "replicates"
-    input_shape : tuple
-        with 3 elements, (rows, columns, channels)
-        should be (227, 227, 3) for AlexNet
-        and (224, 224, 3) for VGG16
     new_learn_rate_layers : list
         of layer names whose weights will be initialized randomly
         and then trained with the 'new_layer_learning_rate'.
@@ -90,24 +86,7 @@ class TrainConfig:
     """
     net_name = attr.ib(validator=instance_of(str))
     number_nets_to_train = attr.ib(validator=instance_of(int))
-    input_shape = attr.ib(validator=instance_of(tuple))
-
-    @input_shape.validator
-    def check_input_shape(self, attribute, value):
-        if len(value) != 3:
-            raise ValueError(f"input shape should be 3-element tuple (rows, columns, channels) but got {value}")
-
-    new_learn_rate_layers = attr.ib(validator=instance_of(list))
-
-    @new_learn_rate_layers.validator
-    def check_new_learn_rate_layers(self, attribute, value):
-        for layer_name in value:
-            if type(layer_name) != str:
-                raise TypeError(f'new_learn_rate_layer names should be strings but got {layer_name}')
-
-    new_layer_learning_rate = attr.ib(validator=instance_of(float))
     epochs_list = attr.ib(validator=instance_of(list))
-
     @epochs_list.validator
     def check_epochs_list(self, attribute, value):
         for ind, epochs in enumerate(value):
@@ -120,9 +99,27 @@ class TrainConfig:
     save_path = attr.ib(validator=instance_of(str))
 
     # ------------------------ have defaults ------------------------------------------------
-    base_learning_rate = attr.ib(validator=instance_of(float), default=0.0)
-    freeze_trained_weights = attr.ib(validator=instance_of(bool), default=False)
-    dropout_rate = attr.ib(validator=instance_of(float), default=0.5)
+    method = attr.ib(validator=instance_of(str), default='transfer')
+    @method.validator
+    def check_method(self, attribute, value):
+        if value not in {'initialize', 'transfer'}:
+            raise ValueError(
+                f"method must be one of {{'initialize', 'transfer'}}, but was {value}."
+            )
+    # for 'initialize' training
+    learning_rate = attr.ib(validator=instance_of(float), default=0.001)
+
+    # for 'transfer' training
+    new_learn_rate_layers = attr.ib(validator=instance_of(list), default=['fc8'])
+    @new_learn_rate_layers.validator
+    def check_new_learn_rate_layers(self, attribute, value):
+        for layer_name in value:
+            if type(layer_name) != str:
+                raise TypeError(f'new_learn_rate_layer names should be strings but got {layer_name}')
+    new_layer_learning_rate = attr.ib(validator=instance_of(float), default=0.001)
+    base_learning_rate = attr.ib(validator=instance_of(float), default=1e-20)
+    freeze_trained_weights = attr.ib(validator=instance_of(bool), default=True)
+
     loss_func = attr.ib(validator=instance_of(str), default='CE')
     @loss_func.validator
     def check_loss_func(self, attribute, value):
@@ -130,8 +127,6 @@ class TrainConfig:
             raise ValueError(
                 f"loss_func must be one of {{'CE', 'InvDPrime', 'triplet', 'triplet-CE'}}, but was {value}."
             )
-    triplet_loss_margin = attr.ib(validator=instance_of(float), default=0.5)
-    squared_dist = attr.ib(validator=instance_of(bool), default=False)
 
     save_acc_by_set_size_by_epoch = attr.ib(validator=instance_of(bool), default=False)
     use_val = attr.ib(validator=instance_of(bool), default=False)

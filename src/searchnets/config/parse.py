@@ -30,13 +30,50 @@ def parse_config(config_fname):
     config.read(config_fname)
 
     # ------------- unpack [TRAIN] section of config.ini file ----------------------------------------------------------
+    # do some validation first
+    if config.has_option('TRAIN', 'METHOD'):
+        if config['TRAIN']['METHOD'] == 'transfer':
+            if config.has_option('TRAIN', 'LEARNING_RATE'):
+                raise ValueError('option "LEARNING_RATE" should only be specified when METHOD is "initialize"')
+        if config['TRAIN']['METHOD'] == 'initialize':
+            if any(
+                [config.has_option('TRAIN', transfer_option)
+                 for transfer_option in ['NEW_LEARN_RATE_LAYERS',
+                                         'NEW_LAYER_LEARNING_RATE',
+                                         'BASE_LEARNING_RATE',
+                                         'FREEZE_TRAINED_WEIGHTS']]
+            ):
+                raise ValueError('METHOD specified as "initialize" but options for "transfer" were specified')
+
+    # now actually unpack
     net_name = config['TRAIN']['NETNAME']
     number_nets_to_train = int(config['TRAIN']['number_nets_to_train'])
-    input_shape = ast.literal_eval(config['TRAIN']['INPUT_SHAPE'])
-    new_learn_rate_layers = ast.literal_eval(config['TRAIN']['NEW_LEARN_RATE_LAYERS'])
-    base_learning_rate = float(config['TRAIN']['BASE_LEARNING_RATE'])
-    new_layer_learning_rate = float(config['TRAIN']['NEW_LAYER_LEARNING_RATE'])
+    batch_size = int(config['TRAIN']['BATCH_SIZE'])
+    random_seed = int(config['TRAIN']['RANDOM_SEED'])
+    save_path = config['TRAIN']['SAVE_PATH']
 
+    if config.has_option('TRAIN', 'METHOD'):
+        method = config['TRAIN']['METHOD']
+    else:
+        method = 'transfer'
+
+    if config.has_option('TRAIN', 'LEARNING_RATE'):
+        learning_rate = float(config['TRAIN']['LEARNING_RATE'])
+    else:
+        learning_rate = 0.001
+
+    if config.has_option('TRAIN', 'NEW_LEARN_RATE_LAYERS'):
+        new_learn_rate_layers = ast.literal_eval(config['TRAIN']['NEW_LEARN_RATE_LAYERS'])
+    else:
+        new_learn_rate_layers = ['fc8']
+    if config.has_option('TRAIN', 'NEW_LAYER_LEARNING_RATE'):
+        new_layer_learning_rate = float(config['TRAIN']['NEW_LAYER_LEARNING_RATE'])
+    else:
+        new_layer_learning_rate = 0.001
+    if config.has_option('TRAIN', 'BASE_LEARNING_RATE'):
+        base_learning_rate = float(config['TRAIN']['BASE_LEARNING_RATE'])
+    else:
+        base_learning_rate = 1e-20
     if config.has_option('TRAIN', 'FREEZE_TRAINED_WEIGHTS'):
         freeze_trained_weights = bool(strtobool(config['TRAIN']['FREEZE_TRAINED_WEIGHTS']))
     else:
@@ -46,30 +83,10 @@ def parse_config(config_fname):
     if type(epochs_list) == int:
         epochs_list = [epochs_list]
 
-    batch_size = int(config['TRAIN']['BATCH_SIZE'])
-    random_seed = int(config['TRAIN']['RANDOM_SEED'])
-
-    if config.has_option('TRAIN', 'DROPOUT_RATE'):
-        dropout_rate = config['TRAIN']['DROPOUT_RATE']
-    else:
-        dropout_rate = 0.5
-
     if config.has_option('TRAIN', 'LOSS_FUNC'):
         loss_func = config['TRAIN']['LOSS_FUNC']
     else:
         loss_func = 'CE'
-
-    if config.has_option('TRAIN', 'TRIPLET_LOSS_MARGIN'):
-        triplet_loss_margin = float(config['TRAIN']['TRIPLET_LOSS_MARGIN'])
-    else:
-        triplet_loss_margin = 0.5
-
-    if config.has_option('TRAIN', 'SQUARED_DIST'):
-        squared_dist = bool(strtobool(config['TRAIN']['SQUARED_DIST']))
-    else:
-        squared_dist = False
-
-    save_path = config['TRAIN']['SAVE_PATH']
 
     if config.has_option('TRAIN', 'SAVE_ACC_BY_SET_SIZE_BY_EPOCH'):
         save_acc_by_set_size_by_epoch = bool(strtobool(config['TRAIN']['SAVE_ACC_BY_SET_SIZE_BY_EPOCH']))
@@ -106,28 +123,26 @@ def parse_config(config_fname):
     else:
         num_workers = 4
 
-    train_config = TrainConfig(net_name,
-                               number_nets_to_train,
-                               input_shape,
-                               new_learn_rate_layers,
-                               new_layer_learning_rate,
-                               epochs_list,
-                               batch_size,
-                               random_seed,
-                               save_path,
-                               base_learning_rate,
-                               freeze_trained_weights,
-                               dropout_rate,
-                               loss_func,
-                               triplet_loss_margin,
-                               squared_dist,
-                               save_acc_by_set_size_by_epoch,
-                               use_val,
-                               val_epoch,
-                               summary_step,
-                               patience,
-                               checkpoint_epoch,
-                               num_workers)
+    train_config = TrainConfig(net_name=net_name,
+                               number_nets_to_train=number_nets_to_train,
+                               epochs_list=epochs_list,
+                               batch_size=batch_size,
+                               random_seed=random_seed,
+                               save_path=save_path,
+                               method=method,
+                               learning_rate=learning_rate,
+                               new_learn_rate_layers=new_learn_rate_layers,
+                               new_layer_learning_rate=new_layer_learning_rate,
+                               base_learning_rate=base_learning_rate,
+                               freeze_trained_weights=freeze_trained_weights,
+                               loss_func=loss_func,
+                               save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
+                               use_val=use_val,
+                               val_epoch=val_epoch,
+                               summary_step=summary_step,
+                               patience=patience,
+                               checkpoint_epoch=checkpoint_epoch,
+                               num_workers=num_workers)
 
     # ------------- unpack [DATA] section of config.ini file -----------------------------------------------------------
     csv_file_in = config['DATA']['CSV_FILE_IN']
@@ -169,17 +184,6 @@ def parse_config(config_fname):
         test_size_per_set_size = ast.literal_eval(config['DATA']['TEST_SIZE_PER_SET_SIZE'])
     else:
         test_size_per_set_size = None
-
-    if config.has_option('DATA', 'SHARD_TRAIN'):
-        shard_train = bool(strtobool(config['DATA']['SHARD_TRAIN']))
-    else:
-        shard_train = False
-    if config.has_option('DATA', 'SHARD_SIZE'):
-        shard_size = int(config['DATA']['SHARD_SIZE'])
-    else:
-        if shard_train:
-            raise ValueError('shard_train set to True inf config.ini file but shard_size not specified')
-        shard_size = None
 
     data_config = DataConfig(csv_file_in,
                              train_size,
