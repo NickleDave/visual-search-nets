@@ -111,7 +111,7 @@ def reinit(model, init_layers, num_classes=2):
     """re-initialize specified layers"""
     for init_layer in init_layers:
         if init_layer == 'fc6':
-            model.classifier[1] = nn.Linear(in_features=9216, out_features=4096, bias=True)
+            model.classifier[1] = nn.Linear(in_features=512*7*7, out_features=4096, bias=True)
         elif init_layer == 'fc7':
             model.classifier[4] = nn.Linear(in_features=4096, out_features=4096, bias=True)
         elif init_layer == 'fc8':
