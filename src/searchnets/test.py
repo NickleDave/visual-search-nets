@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from .tester import Tester
+from .classes.tester import Tester
 from .utils.general import make_save_path
 
 
