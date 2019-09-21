@@ -4,38 +4,33 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
 from tqdm import tqdm
 
-from .utils.dataset import VisSearchDataset
-from . import nets
-# from .triplet_loss import batch_all_triplet_loss, dist_squared, dist_euclid
-
-MOMENTUM = 0.9  # used for both Alexnet and VGG16
-NUM_WORKERS = 4
-
-# for preprocessing, normalize using values used when training these models on ImageNet for torchvision
-# see https://github.com/pytorch/examples/blob/632d385444ae16afe3e4003c94864f9f97dc8541/imagenet/main.py#L197-L198
-MEAN = [0.485, 0.456, 0.406]
-STD = [0.229, 0.224, 0.225]
+from searchnets.utils.dataset import VisSearchDataset
 
 
-class Trainer:
-    """class for training CNNs on visual search task"""
+class AbstractTrainer:
+    """abstract class for training CNNs on visual search task.
+    Both Trainer and TransferTrainer inherit from this class.
+    """
+    NUM_WORKERS = 4
+
+    # for preprocessing, normalize using values used when training these models on ImageNet for torchvision
+    # see https://github.com/pytorch/examples/blob/632d385444ae16afe3e4003c94864f9f97dc8541/imagenet/main.py#L197-L198
+    MEAN = [0.485, 0.456, 0.406]
+    STD = [0.229, 0.224, 0.225]
+
     def __init__(self,
                  net_name,
-                 new_learn_rate_layers,
+                 model,
                  csv_file,
                  save_path,
-                 num_classes=2,
-                 loss_func='ce',
+                 criterion,
+                 optimizers,
                  save_acc_by_set_size_by_epoch=True,
-                 freeze_trained_weights=False,
-                 base_learning_rate=1e-20,
-                 new_layer_learning_rate=0.00001,
                  batch_size=64,
                  epochs=200,
                  val_epoch=1,
@@ -46,43 +41,53 @@ class Trainer:
                  device='cuda',
                  num_workers=NUM_WORKERS,
                  ):
-        """
+        """returns new trainer instance
 
         Parameters
         ----------
-        net_name
-        new_learn_rate_layers
-        csv_file
-        save_path
-        loss_func
-        save_acc_by_set_size_by_epoch
-        freeze_trained_weights
-        base_learning_rate
-        new_layer_learning_rate
-        batch_size
-        epochs
-        val_epoch
-        use_val
-        patience
-        checkpoint_epoch
-        summary_step
-        device
-        num_workers
+        net_name : str
+            name of neural network architecture. Used when saving model, checkpoints, etc.
+        model : torch.nn.Module
+            actual instance of network.
+        csv_file : str
+            path to csv file, used by Dataset
+        save_path : str
+            path to directory where trained models and checkpoints (if any) should be saved
+        save_acc_by_set_size_by_epoch : bool
+            if True, compute and save accuracy for each visual search set size for each epoch
+        criterion : torch.nn._Loss subclass
+        optimizers : list
+            of optimizers, e.g. torch.nn.SGD
+        batch_size : int
+            number of training samples per batch
+        epochs : int
+            number of epochs to train network
+        val_epoch : int
+            epoch at which accuracy should be measured on validation step.
+            Validation occurs every time epoch % val_epoch == 0.
+        use_val : bool
+            if True, use validation set
+        patience : int
+            number of validation epochs to wait before stopping training if accuracy does not increase
+        checkpoint_epoch : int
+            epoch at which to save a checkpoint.
+            Occurs every time epoch % checkpoint_epoch == 0.
+        summary_step : int
+            step at which to save summary to file.
+            Occurs every time step % summary_step == 0.
+            Each minibatch is considered a step, and steps are counted across epochs.
+        device : str
+            One of {'cpu', 'cuda'}
+        num_workers : int
+            Number of workers used when loading data in parallel. Default is 4.
         """
         self.net_name = net_name  # for checkpointing, saving model
-        if net_name == 'alexnet':
-            model = nets.alexnet.build(pretrained=True, progress=True)
-            model = nets.alexnet.reinit(model, new_learn_rate_layers, num_classes=num_classes)
-        elif net_name == 'VGG16':
-            model = nets.vgg16.build(pretrained=True, progress=True)
-            model = nets.vgg16.reinit(model, new_learn_rate_layers, num_classes=num_classes)
-
         model.to(device)
         self.model = model
         self.device = device
 
-        normalize = transforms.Normalize(mean=MEAN,
-                                         std=STD)
+        normalize = transforms.Normalize(mean=self.MEAN,
+                                         std=self.STD)
 
         self.trainset = VisSearchDataset(csv_file=csv_file,
                                          split='train',
@@ -128,48 +133,10 @@ class Trainer:
         else:
             self.train_loader_no_shuffle = None
 
-        if loss_func == 'CE':
-            self.criterion = nn.CrossEntropyLoss().to(device)
-        # elif loss_func == 'triplet':
-        #     loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
-        #                                                squared=squared_dist)
-        # elif loss_func == 'triplet-CE':
-        #     CE_loss_op = tf.reduce_mean(
-        #         tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
-        #                                                    labels=y_onehot),
-        #         name='cross_entropy_loss')
-        #     triplet_loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
-        #                                                        squared=squared_dist)
-        #     train_summaries.extend([
-        #         tf.summary.scalar('cross_entropy_loss', CE_loss_op),
-        #         tf.summary.scalar('triplet_loss', triplet_loss_op),
-        #     ])
-        #     loss_op = CE_loss_op + triplet_loss_op
-
-        self.optimizers = []
-        classifier_params = model.classifier.parameters()
-        if freeze_trained_weights:
-            self.optimizers.append(
-                torch.optim.SGD(classifier_params,
-                                lr=new_layer_learning_rate,
-                                momentum=MOMENTUM))
-            for params in model.features.parameters():
-                params.requires_grad = False
-        else:
-            self.optimizers.append(
-                torch.optim.SGD(classifier_params,
-                                lr=new_layer_learning_rate,
-                                momentum=MOMENTUM)
-            )
-            feature_params = model.features.parameters()
-            self.optimizers.append(
-                torch.optim.SGD(feature_params,
-                                lr=base_learning_rate,
-                                momentum=MOMENTUM)
-            )
-
+        criterion.to(device)
+        self.criterion = criterion
+        self.optimizers = optimizers
         self.save_path = save_path
-
         self.summary_step = summary_step
         if summary_step:
             self.train_writer = SummaryWriter(

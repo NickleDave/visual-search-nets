@@ -9,8 +9,8 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from tqdm import tqdm
 
-from . import nets
-from .utils.dataset import VisSearchDataset
+from searchnets import nets
+from searchnets.utils.dataset import VisSearchDataset
 
 NUM_WORKERS = 4
 
