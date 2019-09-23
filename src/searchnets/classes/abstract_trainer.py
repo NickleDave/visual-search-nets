@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from torchvision import transforms
@@ -40,6 +41,7 @@ class AbstractTrainer:
                  summary_step=None,
                  device='cuda',
                  num_workers=NUM_WORKERS,
+                 data_parallel=False,
                  ):
         """returns new trainer instance
 
@@ -80,8 +82,14 @@ class AbstractTrainer:
             One of {'cpu', 'cuda'}
         num_workers : int
             Number of workers used when loading data in parallel. Default is 4.
+        data_parallel : bool
+            if True, use torch.nn.dataparallel to train network on multiple GPUs. Default is False.
         """
         self.net_name = net_name  # for checkpointing, saving model
+
+        self.data_parallel = data_parallel
+        if data_parallel:
+            model = nn.DataParallel(model)
         model.to(device)
         self.model = model
         self.device = device
@@ -233,7 +241,7 @@ class AbstractTrainer:
 
             for optimizer in self.optimizers:
                 optimizer.zero_grad()
-            loss.backward()
+            loss.mean().backward()  # mean needed for multiple GPUs
             for optimizer in self.optimizers:
                 optimizer.step()
 
