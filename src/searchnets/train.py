@@ -27,7 +27,8 @@ def train(csv_file,
           patience=None,
           checkpoint_epoch=10,
           save_acc_by_set_size_by_epoch=False,
-          num_workers=4):
+          num_workers=4,
+          data_parallel=False):
     """train neural networks to perform visual search task.
 
     Parameters
@@ -106,6 +107,8 @@ def train(csv_file,
         if not None, training will stop if accuracy on validation set has not improved in `patience` steps
     num_workers : int
         number of workers used by torch.DataLoaders. Default is 4.
+    data_parallel : bool
+        if True, use torch.nn.dataparallel to train network on multiple GPUs. Default is False.
 
     Returns
     -------
@@ -165,7 +168,8 @@ def train(csv_file,
                                                       checkpoint_epoch=checkpoint_epoch,
                                                       summary_step=summary_step,
                                                       device=device,
-                                                      num_workers=num_workers)
+                                                      num_workers=num_workers,
+                                                      data_parallel=data_parallel)
             elif method == 'initialize':
                 trainer = Trainer.from_config(net_name=net_name,
                                               csv_file=csv_file,
@@ -182,6 +186,7 @@ def train(csv_file,
                                               checkpoint_epoch=checkpoint_epoch,
                                               summary_step=summary_step,
                                               device=device,
-                                              num_workers=num_workers)
+                                              num_workers=num_workers,
+                                              data_parallel=data_parallel)
 
             trainer.train()
