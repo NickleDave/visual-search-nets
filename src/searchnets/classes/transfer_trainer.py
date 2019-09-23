@@ -19,8 +19,8 @@ class TransferTrainer(AbstractTrainer):
     @classmethod
     def from_config(cls,
                     net_name,
-                    num_classes,
                     new_learn_rate_layers,
+                    num_classes=2,
                     loss_func='ce',
                     freeze_trained_weights=False,
                     base_learning_rate=1e-20,
