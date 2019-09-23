@@ -50,7 +50,8 @@ def _call_train(config):
           patience=config.train.patience,
           checkpoint_epoch=config.train.checkpoint_epoch,
           save_acc_by_set_size_by_epoch=config.train.save_acc_by_set_size_by_epoch,
-          num_workers=config.train.num_workers)
+          num_workers=config.train.num_workers,
+          data_parallel=config.train.data_parallel)
 
 
 def _call_test(config, configfile):

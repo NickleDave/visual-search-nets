@@ -94,6 +94,8 @@ class TrainConfig:
         if not None, a checkpoint will be saved every `checkpoint_epoch` epochs. Default is None.
     num_workers : int
         number of workers used by torch.DataLoaders. Default is 4.
+    data_parallel : bool
+        if True, use torch.nn.DataParallel to train model across multiple GPUs. Default is False.        
     """
     net_name = attr.ib(validator=instance_of(str))
     number_nets_to_train = attr.ib(validator=instance_of(int))
@@ -146,6 +148,7 @@ class TrainConfig:
     patience = attr.ib(validator=optional(is_pos_int), default=None)
     checkpoint_epoch = attr.ib(validator=optional(is_pos_int), default=None)
     num_workers = attr.ib(validator=optional(is_non_neg_int), default=4)
+    data_parallel = attr.ib(validator=optional(instance_of(bool)), default=False)
 
 
 def is_list_of_pos_int(instance, attribute, value):
