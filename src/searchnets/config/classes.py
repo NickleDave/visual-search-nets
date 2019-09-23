@@ -14,6 +14,17 @@ def is_pos_int(instance, attribute, value):
         )
 
 
+def is_non_neg_int(instance, attribute, value):
+    if type(value) != int:
+        raise ValueError(
+            f'type of {attribute.name} must be an int'
+        )
+    if value < 0:
+        raise ValueError(
+            f'{attribute.name} must be a non-negative integer, but was: {value}'
+        )
+
+
 @attr.s
 class TrainConfig:
     """class to represent [TRAIN] section of config.ini file
@@ -134,7 +145,7 @@ class TrainConfig:
     summary_step = attr.ib(validator=optional(is_pos_int), default=None)
     patience = attr.ib(validator=optional(is_pos_int), default=None)
     checkpoint_epoch = attr.ib(validator=optional(is_pos_int), default=None)
-    num_workers = attr.ib(validator=optional(is_pos_int), default=4)
+    num_workers = attr.ib(validator=optional(is_non_neg_int), default=4)
 
 
 def is_list_of_pos_int(instance, attribute, value):
