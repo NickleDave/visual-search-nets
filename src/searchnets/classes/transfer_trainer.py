@@ -60,7 +60,7 @@ class TransferTrainer(AbstractTrainer):
             optimizers.append(
                 torch.optim.SGD(classifier_params,
                                 lr=new_layer_learning_rate,
-                                momentum=MOMENTUM))
+                                momentum=momentum))
             for params in model.features.parameters():
                 params.requires_grad = False
         else:
