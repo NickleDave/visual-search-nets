@@ -73,6 +73,6 @@ class Trainer(AbstractTrainer):
         #     ])
         #     loss_op = CE_loss_op + triplet_loss_op
 
-        kwargs = dict(**kwargs, model=model, optimizers=optimizers, criterion=criterion)
+        kwargs = dict(**kwargs, net_name=net_name, model=model, optimizers=optimizers, criterion=criterion)
         trainer = cls(**kwargs)
         return trainer
