@@ -123,6 +123,11 @@ def parse_config(config_fname):
     else:
         num_workers = 4
 
+    if config.has_option('TRAIN', 'DATA_PARALLEL'):
+        data_parallel = bool(strtobool(config['TRAIN']['DATA_PARALLEL']))
+    else:
+        data_parallel = False
+
     train_config = TrainConfig(net_name=net_name,
                                number_nets_to_train=number_nets_to_train,
                                epochs_list=epochs_list,
@@ -142,7 +147,8 @@ def parse_config(config_fname):
                                summary_step=summary_step,
                                patience=patience,
                                checkpoint_epoch=checkpoint_epoch,
-                               num_workers=num_workers)
+                               num_workers=num_workers,
+                               data_parallel=data_parallel)
 
     # ------------- unpack [DATA] section of config.ini file -----------------------------------------------------------
     csv_file_in = config['DATA']['CSV_FILE_IN']
