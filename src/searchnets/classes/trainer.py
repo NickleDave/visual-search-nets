@@ -1,4 +1,4 @@
-"""TransferTrainer class"""
+"""Trainer class"""
 import torch
 import torch.nn as nn
 
@@ -12,7 +12,7 @@ class Trainer(AbstractTrainer):
     Networks are trained 'from scratch', i.e. weights are randomly initialized,
     as opposed to TransferTrainer that uses weights pre-trained on ImageNet"""
     def __init__(self, **kwargs):
-        """create new TransferTrainer instance.
+        """create new Trainer instance.
         See AbstractTrainer.__init__ docstring for parameters.
         """
         super().__init__(**kwargs)
@@ -26,24 +26,30 @@ class Trainer(AbstractTrainer):
                     momentum=0.9,
                     **kwargs,
                     ):
-        """factory function that creates instance of TransferTrainer from options specified in config.ini file
+        """factory function that creates instance of Trainer from options specified in config.ini file
 
         Parameters
         ----------
         net_name : str
+            name of convolutional neural net architecture to train.
+            One of {'alexnet', 'VGG16'}
         num_classes : int
-        new_learn_rate_layers : list
-            of str
+            number of classes. Default is 2 (target present, target absent).
         loss_func : str
-        freeze_trained_weights : bool
-        base_learning_rate : float
-        new_layer_learning_rate : float
+            type of loss function to use. One of {'CE', 'InvDPrime', 'triplet'}. Default is 'CE',
+            the standard cross-entropy loss. 'InvDPrime' is inverse D prime. 'triplet' is triplet loss
+            used in face recognition and biometric applications.
+        learning_rate : float
+            value for learning rate hyperparameter. Default is 0.001 (which is what
+            was used to train AlexNet and VGG16).
         momentum : float
+            value for momentum hyperparameter of optimizer. Default is 0.9 (which is what
+            was used to train AlexNet and VGG16).
         kwargs : dict
 
         Returns
         -------
-        trainer : TransferTrainer
+        trainer : Trainer
         """
         if net_name == 'alexnet':
             model = nets.alexnet.build(pretrained=False, num_classes=num_classes)
