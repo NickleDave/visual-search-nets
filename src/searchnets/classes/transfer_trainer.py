@@ -33,14 +33,33 @@ class TransferTrainer(AbstractTrainer):
         Parameters
         ----------
         net_name : str
+            name of convolutional neural net architecture to train.
+            One of {'alexnet', 'VGG16'}
         num_classes : int
+            number of classes. Default is 2 (target present, target absent).
         new_learn_rate_layers : list
-            of str
+            of str, layer names whose weights will be initialized randomly
+        and then trained with the 'new_layer_learning_rate'.
         loss_func : str
+            type of loss function to use. One of {'CE', 'InvDPrime', 'triplet'}. Default is 'CE',
+            the standard cross-entropy loss. 'InvDPrime' is inverse D prime. 'triplet' is triplet loss
+            used in face recognition and biometric applications.
         freeze_trained_weights : bool
+            if True, freeze weights in any layer not in "new_learn_rate_layers".
+            These are the layers that have weights pre-trained on ImageNet.
+            Default is False. Done by simply not applying gradients to these weights,
+            i.e. this will ignore a base_learning_rate if you set it to something besides zero.
         base_learning_rate : float
+            Applied to layers with weights loaded from training the
+            architecture on ImageNet. Should be a very small number
+            so the trained weights don't change much.
         new_layer_learning_rate : float
+            Applied to `new_learn_rate_layers'. Should be larger than
+            `base_learning_rate` but still smaller than the usual
+            learning rate for a deep net trained with SGD,
+            e.g. 0.001 instead of 0.01
         momentum : float
+            value for momentum hyperparameter of optimizer. Default is 0.9.
         kwargs : dict
 
         Returns
