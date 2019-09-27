@@ -50,6 +50,10 @@ class Tester:
         elif net_name == 'VGG16':
             model = nets.vgg16.build(pretrained=False, progress=False, num_classes=num_classes)
 
+        self.data_parallel = data_parallel
+        if data_parallel:
+            model = nn.DataParallel(model)
+
         self.restore_path = restore_path
         model_file = str(restore_path) + '-model.pt'
         model.load_state_dict(
