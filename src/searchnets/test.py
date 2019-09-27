@@ -20,7 +20,8 @@ def test(csv_file,
          configfile,
          random_seed,
          num_classes=2,
-         num_workers=4):
+         num_workers=4,
+         data_parallel=False):
     """measure accuracy of trained convolutional neural networks on test set of visual search stimuli
 
     Parameters
@@ -53,6 +54,8 @@ def test(csv_file,
         number of classes. Default is 2 (target present, target absent).
     num_workers : int
         number of workers used by torch.DataLoaders. Default is 4.
+    data_parallel : bool
+        if True, use torch.nn.dataparallel to train network on multiple GPUs. Default is False.
 
     Returns
     -------
@@ -113,13 +116,14 @@ def test(csv_file,
             restore_path_this_net = make_save_path(restore_path, net_name, net_number, epochs)
 
             print(f'Loading model from {restore_path_this_net}')
-            tester = Tester(net_name,
-                            csv_file,
-                            restore_path_this_net,
-                            num_classes,
-                            batch_size,
-                            device,
-                            num_workers)
+            tester = Tester(net_name=net_name,
+                            csv_file=csv_file,
+                            restore_path=restore_path_this_net,
+                            num_classes=num_classes,
+                            batch_size=batch_size,
+                            device=device,
+                            num_workers=num_workers,
+                            data_parallel=data_parallel)
             acc, y_pred = tester.test()
 
             set_size_vec_test = df_dataset[df_dataset['split'] == 'test']['set_size']
