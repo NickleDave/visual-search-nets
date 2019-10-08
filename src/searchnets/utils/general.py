@@ -134,7 +134,6 @@ def results_df(data_csv_path,
                     elif target_cond == 'both':
                         cond_df = set_size_df
                     correct_bool = cond_df['y_true'] == cond_df['y_pred']
-                    import pdb;pdb.set_trace()
                     acc = np.sum(correct_bool) / correct_bool.shape[0]
 
                     if target_cond == 'both':
