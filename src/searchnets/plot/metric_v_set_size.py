@@ -85,7 +85,7 @@ def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), ax=None,
         plt.savefig(save_as)
 
 
-def metric_v_set_size_df(df, net_name, train_type, stimulus, metric, conditions,
+def metric_v_set_size_df(df, net_name, method, stimulus, metric, conditions,
                          ax=None, title=None, save_as=None, figsize=(10, 5),
                          set_xlabel=False, set_ylabel=False, set_ylim=True,
                          ylim=(0, 1.1), plot_mean=True, add_legend=False):
@@ -103,8 +103,8 @@ def metric_v_set_size_df(df, net_name, train_type, stimulus, metric, conditions,
     net_name : str
         name of neural net architecture. Must be a value in the 'net_name' column
         of df.
-    train_type : str
-        method used for training. Must be a value in the 'train_type' column of df.
+    method : str
+        method used for training. Must be a value in the 'method' column of df.
     stimulus : str
         type of visual search stimulus, e.g. 'RVvGV', '2_v_5'. Must be a value in
         the 'stimulus' column of df.
@@ -149,7 +149,7 @@ def metric_v_set_size_df(df, net_name, train_type, stimulus, metric, conditions,
         fig.set_size_inches(figsize)
 
     df = df[(df['net_name'] == net_name)
-            & (df['train_type'] == train_type)
+            & (df['method'] == method)
             & (df['stimulus'] == stimulus)]
 
     if not all(
