@@ -22,6 +22,7 @@ class Trainer(AbstractTrainer):
                     net_name,
                     num_classes,
                     loss_func='ce',
+                    optimizer='SGD',
                     learning_rate=0.001,
                     momentum=0.9,
                     **kwargs,
@@ -55,11 +56,21 @@ class Trainer(AbstractTrainer):
             model = nets.alexnet.build(pretrained=False, num_classes=num_classes)
         elif net_name == 'VGG16':
             model = nets.vgg16.build(pretrained=False, num_classes=num_classes)
+
         optimizers = list()
-        optimizers.append(
-            torch.optim.SGD(model.parameters(),
-                            lr=learning_rate,
-                            momentum=momentum))
+        if optimizer == 'SGD':
+            optimizers.append(
+                torch.optim.SGD(model.parameters(),
+                                lr=learning_rate,
+                                momentum=momentum))
+        elif optimizer == 'Adam':
+            optimizers.append(
+                torch.optim.Adam(model.parameters(),
+                                 lr=learning_rate))
+        elif optimizer == 'AdamW':
+            optimizers.append(
+                torch.optim.AdamW(model.parameters(),
+                                  lr=learning_rate))
 
         if loss_func == 'CE':
             criterion = nn.CrossEntropyLoss()

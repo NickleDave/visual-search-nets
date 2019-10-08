@@ -22,6 +22,7 @@ class TransferTrainer(AbstractTrainer):
                     new_learn_rate_layers,
                     num_classes=2,
                     loss_func='ce',
+                    optimizer='SGD',
                     freeze_trained_weights=False,
                     base_learning_rate=1e-20,
                     new_layer_learning_rate=0.00001,
@@ -73,27 +74,52 @@ class TransferTrainer(AbstractTrainer):
             model = nets.vgg16.build(pretrained=True, progress=True)
             model = nets.vgg16.reinit(model, new_learn_rate_layers, num_classes=num_classes)
 
+        if optimizer == 'SGD':
+            optimizer = torch.optim.SGD
+        elif optimizer == 'Adam':
+            optimizer = torch.optim.Adam
+        elif optimizer == 'AdamW':
+            optimizer = torch.optim.AdamW
+
         optimizers = []
         classifier_params = model.classifier.parameters()
-        if freeze_trained_weights:
+
+        if optimizer == 'SGD':
             optimizers.append(
                 torch.optim.SGD(classifier_params,
                                 lr=new_layer_learning_rate,
                                 momentum=momentum))
+        elif optimizer == 'Adam':
+            optimizers.append(
+                torch.optim.Adam(classifier_params,
+                                 lr=new_layer_learning_rate))
+        elif optimizer == 'AdamW':
+            optimizers.append(
+                torch.optim.AdamW(classifier_params,
+                                  lr=new_layer_learning_rate))
+
+        optimizers.append(
+            torch.optim.SGD(classifier_params,
+                            lr=new_layer_learning_rate,
+                            momentum=momentum))
+        if freeze_trained_weights:
             for params in model.features.parameters():
                 params.requires_grad = False
         else:
-            optimizers.append(
-                torch.optim.SGD(classifier_params,
-                                lr=new_layer_learning_rate,
-                                momentum=momentum)
-            )
             feature_params = model.features.parameters()
-            optimizers.append(
-                torch.optim.SGD(feature_params,
-                                lr=base_learning_rate,
-                                momentum=momentum)
-            )
+            if optimizer == 'SGD':
+                optimizers.append(
+                    torch.optim.SGD(feature_params,
+                                    lr=new_layer_learning_rate,
+                                    momentum=momentum))
+            elif optimizer == 'Adam':
+                optimizers.append(
+                    torch.optim.Adam(feature_params,
+                                     lr=new_layer_learning_rate))
+            elif optimizer == 'AdamW':
+                optimizers.append(
+                    torch.optim.AdamW(feature_params,
+                                      lr=new_layer_learning_rate))
 
         if loss_func == 'CE':
             criterion = nn.CrossEntropyLoss()
