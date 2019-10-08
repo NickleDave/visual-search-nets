@@ -21,6 +21,7 @@ def train(csv_file,
           new_layer_learning_rate=0.001,
           freeze_trained_weights=True,
           loss_func='CE',
+          optimizer='SGD',
           use_val=True,
           val_epoch=1,
           summary_step=None,
@@ -85,6 +86,8 @@ def train(csv_file,
         type of loss function to use. One of {'CE', 'InvDPrime', 'triplet'}. Default is 'CE',
         the standard cross-entropy loss. 'InvDPrime' is inverse D prime. 'triplet' is triplet loss
         used in face recognition and biometric applications.
+    optimizer : str
+        optimizer to use. One of {'SGD', 'Adam', 'AdamW'}.
     triplet_loss_margin : float
         Minimum margin between clusters, parameter in triplet loss function. Default is 0.5.
     squared_dist : bool
@@ -159,6 +162,7 @@ def train(csv_file,
                                                       save_path=save_path_this_net,
                                                       num_classes=num_classes,
                                                       loss_func=loss_func,
+                                                      optimizer=optimizer,
                                                       save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
                                                       batch_size=batch_size,
                                                       epochs=epochs,
@@ -176,6 +180,7 @@ def train(csv_file,
                                               save_path=save_path_this_net,
                                               num_classes=num_classes,
                                               loss_func=loss_func,
+                                              optimizer=optimizer,
                                               learning_rate=learning_rate,
                                               save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
                                               batch_size=batch_size,
