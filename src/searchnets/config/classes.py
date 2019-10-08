@@ -70,6 +70,8 @@ class TrainConfig:
     loss_func : str
         type of loss function to use. One of {'CE', 'invDPrime'}. Default is 'CE',
         the standard cross-entropy loss. 'invDprime' is inverse D prime.
+    optimizer : str
+        optimizer to use. One of {'SGD', 'Adam', 'AdamW'}.
     triplet_loss_margin : float
         Minimum margin between clusters, parameter in triplet loss function. Default is 0.5.
     squared_dist : bool
@@ -139,6 +141,13 @@ class TrainConfig:
         if value not in {'CE', 'InvDPrime', 'triplet', 'triplet-CE'}:
             raise ValueError(
                 f"loss_func must be one of {{'CE', 'InvDPrime', 'triplet', 'triplet-CE'}}, but was {value}."
+            )
+    optimizer = attr.ib(validator=instance_of(str), default='SGD')
+    @optimizer.validator
+    def check_optimizer(self, attribute, value):
+        if value not in {'SGD', 'Adam', 'AdamW'}:
+            raise ValueError(
+                f"loss_func must be one of {{'SGD', 'Adam', 'AdamW'}}, but was {value}."
             )
 
     save_acc_by_set_size_by_epoch = attr.ib(validator=instance_of(bool), default=False)

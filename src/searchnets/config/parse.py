@@ -88,6 +88,11 @@ def parse_config(config_fname):
     else:
         loss_func = 'CE'
 
+    if config.has_option('TRAIN', 'OPTIMIZER'):
+        optimizer = config['TRAIN']['OPTIMIZER']
+    else:
+        optimizer = 'SGD'
+
     if config.has_option('TRAIN', 'SAVE_ACC_BY_SET_SIZE_BY_EPOCH'):
         save_acc_by_set_size_by_epoch = bool(strtobool(config['TRAIN']['SAVE_ACC_BY_SET_SIZE_BY_EPOCH']))
     else:
@@ -141,6 +146,7 @@ def parse_config(config_fname):
                                base_learning_rate=base_learning_rate,
                                freeze_trained_weights=freeze_trained_weights,
                                loss_func=loss_func,
+                               optimizer=optimizer,
                                save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
                                use_val=use_val,
                                val_epoch=val_epoch,
