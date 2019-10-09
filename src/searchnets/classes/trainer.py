@@ -56,6 +56,8 @@ class Trainer(AbstractTrainer):
             model = nets.alexnet.build(pretrained=False, num_classes=num_classes)
         elif net_name == 'VGG16':
             model = nets.vgg16.build(pretrained=False, num_classes=num_classes)
+        elif net_name == 'CORnet_Z':
+            model = nets.cornet.build(pretrained=False, num_classes=num_classes)
 
         optimizers = list()
         if optimizer == 'SGD':
