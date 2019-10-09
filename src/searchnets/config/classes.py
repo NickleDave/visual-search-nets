@@ -100,6 +100,12 @@ class TrainConfig:
         if True, use torch.nn.DataParallel to train model across multiple GPUs. Default is False.        
     """
     net_name = attr.ib(validator=instance_of(str))
+    @net_name.validator
+    def check_net_name(self, attribute, value):
+        if value not in {'alexnet', 'VGG16', 'CORnet_Z'}:
+            raise ValueError(
+                f"net_name must be one of {{'alexnet', 'VGG16', 'CORnet_Z'}}, but was {value}."
+            )
     number_nets_to_train = attr.ib(validator=instance_of(int))
     epochs_list = attr.ib(validator=instance_of(list))
     @epochs_list.validator
@@ -147,7 +153,7 @@ class TrainConfig:
     def check_optimizer(self, attribute, value):
         if value not in {'SGD', 'Adam', 'AdamW'}:
             raise ValueError(
-                f"loss_func must be one of {{'SGD', 'Adam', 'AdamW'}}, but was {value}."
+                f"optimizer must be one of {{'SGD', 'Adam', 'AdamW'}}, but was {value}."
             )
 
     save_acc_by_set_size_by_epoch = attr.ib(validator=instance_of(bool), default=False)
