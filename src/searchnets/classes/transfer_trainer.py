@@ -73,6 +73,9 @@ class TransferTrainer(AbstractTrainer):
         elif net_name == 'VGG16':
             model = nets.vgg16.build(pretrained=True, progress=True)
             model = nets.vgg16.reinit(model, new_learn_rate_layers, num_classes=num_classes)
+        elif net_name == 'CORnet_Z':
+            model = nets.cornet.build(pretrained=True)
+            model = nets.cornet.reinit(model, num_classes=num_classes)
 
         if optimizer == 'SGD':
             optimizer = torch.optim.SGD
@@ -82,7 +85,10 @@ class TransferTrainer(AbstractTrainer):
             optimizer = torch.optim.AdamW
 
         optimizers = []
-        classifier_params = model.classifier.parameters()
+        if net_name == 'alexnet' or net_name == 'VGG16':
+            classifier_params = model.classifier.parameters()
+        elif net_name == 'CORnet_Z':
+            classifier_params = model.decoder.parameters()
 
         if optimizer == 'SGD':
             optimizers.append(
@@ -102,11 +108,19 @@ class TransferTrainer(AbstractTrainer):
             torch.optim.SGD(classifier_params,
                             lr=new_layer_learning_rate,
                             momentum=momentum))
+
+        if net_name == 'alexnet' or net_name == 'VGG16':
+            feature_params = model.features.parameters()
+        elif net_name == 'CORnet_Z':
+            feature_params = [list(p) for p in
+                              [model.V1.parameters(), model.V2.parameters(),
+                               model.V4.parameters(), model.IT.parameters()]]
+            feature_params = [p for params in feature_params for p in params]
+
         if freeze_trained_weights:
-            for params in model.features.parameters():
+            for params in feature_params:
                 params.requires_grad = False
         else:
-            feature_params = model.features.parameters()
             if optimizer == 'SGD':
                 optimizers.append(
                     torch.optim.SGD(feature_params,
