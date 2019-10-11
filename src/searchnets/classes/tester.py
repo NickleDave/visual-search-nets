@@ -1,6 +1,4 @@
 """Tester class"""
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import torch
@@ -9,15 +7,11 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from tqdm import tqdm
 
-from searchnets import nets
-from searchnets.utils.dataset import VisSearchDataset
+from .. import nets
+from ..datasets import Searchstims, VOCDetection
+from ..utils.transforms import normalize
 
 NUM_WORKERS = 4
-
-# for preprocessing, normalize using values used when training these models on ImageNet for torchvision
-# see https://github.com/pytorch/examples/blob/632d385444ae16afe3e4003c94864f9f97dc8541/imagenet/main.py#L197-L198
-MEAN = [0.485, 0.456, 0.406]
-STD = [0.229, 0.224, 0.225]
 
 
 class Tester:
@@ -76,12 +70,9 @@ class Tester:
         self.model = model
         self.device = device
 
-        normalize = transforms.Normalize(mean=MEAN,
-                                         std=STD)
-
-        self.testset = VisSearchDataset(csv_file=csv_file,
-                                        split='test',
-                                        transform=transforms.Compose(
+        self.testset = Searchstims(csv_file=csv_file,
+                                   split='test',
+                                   transform=transforms.Compose(
                                             [transforms.ToTensor(), normalize]
                                         ))
         self.test_loader = DataLoader(self.testset, batch_size=batch_size,
