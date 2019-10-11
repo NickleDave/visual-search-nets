@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import Dataset
 
 
-class SearchstimsDataset(Dataset):
+class Searchstims(Dataset):
     """dataset of visual search stimuli"""
 
     def __init__(self, csv_file, split, transform=None, return_set_size=False):
