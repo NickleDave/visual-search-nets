@@ -6,6 +6,15 @@ import os
 from .classes import TrainConfig, DataConfig, TestConfig, LearnCurveConfig, Config
 
 
+def _str_to_int_or_float(val):
+    """helper function that tries to cast a str to int and if that fails then tries casting to float"""
+    try:
+        val = int(val)
+    except ValueError:
+        val = float(val)
+    return val
+
+
 def parse_config(config_fname):
     """parse config.ini file
     Uses ConfigParser from Python standard library.
@@ -28,6 +37,64 @@ def parse_config(config_fname):
 
     config = configparser.ConfigParser()
     config.read(config_fname)
+
+    # ------------- unpack [DATA] section of config.ini file -----------------------------------------------------------
+    csv_file_in = config['DATA']['CSV_FILE_IN']
+    train_size = _str_to_int_or_float(config['DATA']['TRAIN_SIZE'])
+
+    if config.has_option('DATA', 'DATASET_TYPE'):
+        dataset_type = config['DATA']['DATASET_TYPE']
+    else:
+        dataset_type = 'searchstims'
+
+    if config.has_option('DATA', 'CSV_FILE_OUT'):
+        csv_file_out = config['DATA']['CSV_FILE_OUT']
+    else:
+        csv_file_out = None
+
+    if config.has_option('DATA', 'STIM_TYPES'):
+        stim_types = ast.literal_eval(config['DATA']['STIM_TYPES'])
+    else:
+        stim_types = None
+
+    if config.has_option('DATA', 'VALIDATION_SIZE'):
+        val_size = _str_to_int_or_float(config['DATA']['VALIDATION_SIZE'])
+    else:
+        val_size = None
+    if config.has_option('DATA', 'TEST_SIZE'):
+        test_size = _str_to_int_or_float(config['DATA']['TEST_SIZE'])
+    else:
+        test_size = None
+
+    if config.has_option('DATA', 'SET_SIZES'):
+        set_sizes = ast.literal_eval(config['DATA']['SET_SIZES'])
+    else:
+        set_sizes = None
+
+    if config.has_option('DATA', 'TRAIN_SIZE_PER_SET_SIZE'):
+        train_size_per_set_size = ast.literal_eval(config['DATA']['TRAIN_SIZE_PER_SET_SIZE'])
+    else:
+        train_size_per_set_size = None
+    if config.has_option('DATA', 'VAL_SIZE_PER_SET_SIZE'):
+        val_size_per_set_size = ast.literal_eval(config['DATA']['VAL_SIZE_PER_SET_SIZE'])
+    else:
+        val_size_per_set_size = None
+    if config.has_option('DATA', 'TEST_SIZE_PER_SET_SIZE'):
+        test_size_per_set_size = ast.literal_eval(config['DATA']['TEST_SIZE_PER_SET_SIZE'])
+    else:
+        test_size_per_set_size = None
+
+    data_config = DataConfig(csv_file_in,
+                             train_size,
+                             dataset_type,
+                             csv_file_out,
+                             stim_types,
+                             val_size,
+                             test_size,
+                             set_sizes,
+                             train_size_per_set_size,
+                             val_size_per_set_size,
+                             test_size_per_set_size)
 
     # ------------- unpack [TRAIN] section of config.ini file ----------------------------------------------------------
     # do some validation first
@@ -155,58 +222,6 @@ def parse_config(config_fname):
                                checkpoint_epoch=checkpoint_epoch,
                                num_workers=num_workers,
                                data_parallel=data_parallel)
-
-    # ------------- unpack [DATA] section of config.ini file -----------------------------------------------------------
-    csv_file_in = config['DATA']['CSV_FILE_IN']
-    train_size = int(config['DATA']['TRAIN_SIZE'])
-
-    if config.has_option('DATA', 'CSV_FILE_OUT'):
-        csv_file_out = config['DATA']['CSV_FILE_OUT']
-    else:
-        csv_file_out = None
-
-    if config.has_option('DATA', 'STIM_TYPES'):
-        stim_types = ast.literal_eval(config['DATA']['STIM_TYPES'])
-    else:
-        stim_types = None
-
-    if config.has_option('DATA', 'VALIDATION_SIZE'):
-        val_size = int(config['DATA']['VALIDATION_SIZE'])
-    else:
-        val_size = None
-    if config.has_option('DATA', 'TEST_SIZE'):
-        test_size = int(config['DATA']['TEST_SIZE'])
-    else:
-        test_size = None
-
-    if config.has_option('DATA', 'SET_SIZES'):
-        set_sizes = ast.literal_eval(config['DATA']['SET_SIZES'])
-    else:
-        set_sizes = None
-
-    if config.has_option('DATA', 'TRAIN_SIZE_PER_SET_SIZE'):
-        train_size_per_set_size = ast.literal_eval(config['DATA']['TRAIN_SIZE_PER_SET_SIZE'])
-    else:
-        train_size_per_set_size = None
-    if config.has_option('DATA', 'VAL_SIZE_PER_SET_SIZE'):
-        val_size_per_set_size = ast.literal_eval(config['DATA']['VAL_SIZE_PER_SET_SIZE'])
-    else:
-        val_size_per_set_size = None
-    if config.has_option('DATA', 'TEST_SIZE_PER_SET_SIZE'):
-        test_size_per_set_size = ast.literal_eval(config['DATA']['TEST_SIZE_PER_SET_SIZE'])
-    else:
-        test_size_per_set_size = None
-
-    data_config = DataConfig(csv_file_in,
-                             train_size,
-                             csv_file_out,
-                             stim_types,
-                             val_size,
-                             test_size,
-                             set_sizes,
-                             train_size_per_set_size,
-                             val_size_per_set_size,
-                             test_size_per_set_size)
 
     # ------------- unpack [TEST] section of config.ini file -----------------------------------------------------------
     test_results_save_path = config['TEST']['TEST_RESULTS_SAVE_PATH']
