@@ -1,7 +1,6 @@
 import unittest
 
 import numpy as np
-import tensorflow as tf
 
 import searchnets
 
@@ -35,28 +34,6 @@ class TestMetrics(unittest.TestCase):
         y_pred_not = np.logical_not(y_true).astype(int)
         hr_not, far_not, d_prime_not = searchnets.utils.metrics.compute_d_prime(y_true, y_pred_not)
         self.assertTrue(d_prime_not < -5.75)
-
-
-class TestDPrime(tf.test.TestCase):
-    def test_dprime(self):
-        N_SAMPLES = 500
-        with self.test_session() as sess:
-            y_true_ph = tf.placeholder(tf.int32, shape=[None], name='y_true_ph')
-            y_pred_ph = tf.placeholder(tf.int32, shape=[None], name='y_pred_ph')
-            y_true = np.random.choice(
-                a=np.asarray([0, 1]),
-                size=(N_SAMPLES,),
-            ).astype(np.int64)  # dtype for 'y_train' in data.gz files
-            y_pred = np.copy(y_true)
-
-            d_prime_op = searchnets.utils.metrics.d_prime_tf(y_true_ph,
-                                                             y_pred_ph)
-
-            d_prime = sess.run(d_prime_op,
-                               feed_dict={y_true_ph: y_true,
-                                          y_pred_ph: y_pred}
-                               )
-            self.assertTrue(d_prime > 5.75)
 
 
 if __name__ == '__main__':
