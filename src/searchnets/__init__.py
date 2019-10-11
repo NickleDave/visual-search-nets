@@ -12,6 +12,7 @@ from .__about__ import (
 
 from . import config
 from . import data
+from . import datasets
 from . import nets
 from . import plot
 from . import utils
