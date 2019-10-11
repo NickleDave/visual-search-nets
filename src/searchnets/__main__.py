@@ -19,6 +19,7 @@ def _call_split(config):
     """helper function to call searchstims.data.split"""
     split(csv_file_in=config.data.csv_file_in,
           train_size=config.data.train_size,
+          dataset_type=config.data.dataset_type,
           csv_file_out=config.data.csv_file_out,
           stim_types=config.data.stim_types,
           val_size=config.data.val_size,
@@ -31,6 +32,7 @@ def _call_split(config):
 def _call_train(config):
     """helper function to call searchstims.train"""
     train(csv_file=config.data.csv_file_out,
+          dataset_type=config.data.dataset_type,
           net_name=config.train.net_name,
           number_nets_to_train=config.train.number_nets_to_train,
           epochs_list=config.train.epochs_list,
@@ -58,6 +60,7 @@ def _call_train(config):
 def _call_test(config, configfile):
     """helper function to call searchstims.test"""
     test(csv_file=config.data.csv_file_out,
+         dataset_type=config.data.dataset_type,
          net_name=config.train.net_name,
          number_nets_to_train=config.train.number_nets_to_train,
          epochs_list=config.train.epochs_list,
