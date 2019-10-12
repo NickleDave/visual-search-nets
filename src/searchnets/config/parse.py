@@ -42,6 +42,11 @@ def parse_config(config_fname):
     csv_file_in = config['DATA']['CSV_FILE_IN']
     train_size = _str_to_int_or_float(config['DATA']['TRAIN_SIZE'])
 
+    if config.has_option('DATA', 'ROOT'):
+        root = config['DATA']['ROOT']
+    else:
+        root = None
+
     if config.has_option('DATA', 'DATASET_TYPE'):
         dataset_type = config['DATA']['DATASET_TYPE']
     else:
@@ -86,6 +91,7 @@ def parse_config(config_fname):
 
     data_config = DataConfig(csv_file_in,
                              train_size,
+                             root,
                              dataset_type,
                              csv_file_out,
                              stim_types,
