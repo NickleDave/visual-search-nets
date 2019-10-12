@@ -18,6 +18,7 @@ def train(csv_file,
           batch_size,
           random_seed,
           save_path,
+          root=None,
           method='transfer',
           num_classes=2,
           learning_rate=None,
@@ -61,6 +62,9 @@ def train(csv_file,
         to seed random number generator
     save_path : str
         path to directory where checkpoints and train models were saved
+    root : str
+        path to dataset root. Used with VOCDetection dataset to specify where VOC data was/should be downloaded
+        to. (Note that download will take a while.)
     method : str
         training method. One of {'initialize', 'transfer'}.
         'initialize' means randomly initialize all weights and train the
@@ -157,7 +161,8 @@ def train(csv_file,
         device = torch.device('cpu')
 
     if dataset_type == 'VSD':
-        trainset = VOCDetection(csv_file=csv_file,
+        trainset = VOCDetection(root=root,
+                                csv_file=csv_file,
                                 image_set='trainval',
                                 split='train',
                                 download=True,
@@ -165,7 +170,8 @@ def train(csv_file,
                                     [transforms.ToTensor(), normalize]
                                 ))
         if use_val:
-            valset = VOCDetection(csv_file=csv_file,
+            valset = VOCDetection(root=root,
+                                  csv_file=csv_file,
                                   image_set='trainval',
                                   split='val',
                                   download=True,
@@ -190,11 +196,17 @@ def train(csv_file,
             valset = None
 
     if save_acc_by_set_size_by_epoch:
-        trainset_set_size = Searchstims(csv_file=csv_file,
-                                        split='train',
-                                        transform=transforms.Compose(
-                                            [transforms.ToTensor(), normalize]),
-                                        return_set_size=True)
+        if dataset_type == 'VSD':
+            raise ValueError(
+                'dataset type is VSD but save_acc_by_set_size_by_epoch was set to True;'
+                'can only measure accuracy by set size with searchstims stimuli'
+            )
+        elif dataset_type == 'searchstims':
+            trainset_set_size = Searchstims(csv_file=csv_file,
+                                            split='train',
+                                            transform=transforms.Compose(
+                                                [transforms.ToTensor(), normalize]),
+                                            return_set_size=True)
     else:
         trainset_set_size = None
 
