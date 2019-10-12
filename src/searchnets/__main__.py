@@ -38,6 +38,7 @@ def _call_train(config):
           epochs_list=config.train.epochs_list,
           batch_size=config.train.batch_size,
           random_seed=config.train.random_seed,
+          root=config.data.root,
           save_path=config.train.save_path,
           method=config.train.method,
           learning_rate=config.train.learning_rate,
