@@ -144,9 +144,9 @@ class TrainConfig:
     loss_func = attr.ib(validator=instance_of(str), default='CE')
     @loss_func.validator
     def check_loss_func(self, attribute, value):
-        if value not in {'CE', 'InvDPrime', 'triplet', 'triplet-CE'}:
+        if value not in {'CE', 'BCE'}:
             raise ValueError(
-                f"loss_func must be one of {{'CE', 'InvDPrime', 'triplet', 'triplet-CE'}}, but was {value}."
+                f"loss_func must be one of {{'CE', 'BCE'}}, but was {value}."
             )
     optimizer = attr.ib(validator=instance_of(str), default='SGD')
     @optimizer.validator
