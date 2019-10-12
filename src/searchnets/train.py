@@ -1,9 +1,13 @@
 import numpy as np
 import torch
+import torch.nn as nn
+from torchvision import transforms
 
 from .classes.transfer_trainer import TransferTrainer
 from .classes.trainer import Trainer
+from .datasets import Searchstims, VOCDetection
 from .utils.general import make_save_path
+from .utils.transforms import normalize, VOCTransform
 
 
 def train(csv_file,
@@ -152,27 +156,90 @@ def train(csv_file,
     else:
         device = torch.device('cpu')
 
+    if dataset_type == 'VSD':
+        trainset = VOCDetection(csv_file=csv_file,
+                                image_set='trainval',
+                                split='train',
+                                download=True,
+                                transform=transforms.Compose(
+                                    [transforms.ToTensor(), normalize]
+                                ))
+        if use_val:
+            valset = VOCDetection(csv_file=csv_file,
+                                  image_set='trainval',
+                                  split='val',
+                                  download=True,
+                                  transform=transforms.Compose(
+                                      [transforms.ToTensor(), normalize]
+                                  ))
+        else:
+            valset = None
+
+    elif dataset_type == 'searchstims':
+        trainset = Searchstims(csv_file=csv_file,
+                               split='train',
+                               transform=transforms.Compose(
+                                   [transforms.ToTensor(), normalize]
+                               ))
+
+        if use_val:
+            valset = Searchstims(csv_file=csv_file,
+                                 split='val',
+                                 transform=transforms.Compose([transforms.ToTensor(), normalize]))
+        else:
+            valset = None
+
+    if save_acc_by_set_size_by_epoch:
+        trainset_set_size = Searchstims(csv_file=csv_file,
+                                        split='train',
+                                        transform=transforms.Compose(
+                                            [transforms.ToTensor(), normalize]),
+                                        return_set_size=True)
+    else:
+        trainset_set_size = None
+
+    if loss_func == 'CE':
+        criterion = nn.CrossEntropyLoss()
+    elif loss_func == 'BCE':
+        criterion = nn.BCEWithLogitsLoss()
+    # elif loss_func == 'triplet':
+    #     loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
+    #                                                squared=squared_dist)
+    # elif loss_func == 'triplet-CE':
+    #     CE_loss_op = tf.reduce_mean(
+    #         tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
+    #                                                    labels=y_onehot),
+    #         name='cross_entropy_loss')
+    #     triplet_loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
+    #                                                        squared=squared_dist)
+    #     train_summaries.extend([
+    #         tf.summary.scalar('cross_entropy_loss', CE_loss_op),
+    #         tf.summary.scalar('triplet_loss', triplet_loss_op),
+    #     ])
+    #     loss_op = CE_loss_op + triplet_loss_op
+
     for epochs in epochs_list:
         print(f'training {net_name} model for {epochs} epochs')
         for net_number in range(1, number_nets_to_train + 1):
             save_path_this_net = make_save_path(save_path, net_name, net_number, epochs)
             if method == 'transfer':
                 trainer = TransferTrainer.from_config(net_name=net_name,
+                                                      trainset=trainset,
                                                       new_learn_rate_layers=new_learn_rate_layers,
                                                       freeze_trained_weights=freeze_trained_weights,
                                                       base_learning_rate=base_learning_rate,
                                                       new_layer_learning_rate=new_layer_learning_rate,
-                                                      csv_file=csv_file,
-                                                      dataset_type=dataset_type,
                                                       save_path=save_path_this_net,
                                                       num_classes=num_classes,
-                                                      loss_func=loss_func,
+                                                      criterion=criterion,
                                                       optimizer=optimizer,
                                                       save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
+                                                      trainset_set_size=trainset_set_size,
                                                       batch_size=batch_size,
                                                       epochs=epochs,
-                                                      val_epoch=val_epoch,
                                                       use_val=use_val,
+                                                      valset=valset,
+                                                      val_epoch=val_epoch,
                                                       patience=patience,
                                                       checkpoint_epoch=checkpoint_epoch,
                                                       summary_step=summary_step,
@@ -181,18 +248,19 @@ def train(csv_file,
                                                       data_parallel=data_parallel)
             elif method == 'initialize':
                 trainer = Trainer.from_config(net_name=net_name,
-                                              csv_file=csv_file,
-                                              dataset_type=dataset_type,
+                                              trainset=trainset,
                                               save_path=save_path_this_net,
                                               num_classes=num_classes,
-                                              loss_func=loss_func,
+                                              criterion=criterion,
                                               optimizer=optimizer,
                                               learning_rate=learning_rate,
                                               save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
+                                              trainset_set_size=trainset_set_size,
                                               batch_size=batch_size,
                                               epochs=epochs,
-                                              val_epoch=val_epoch,
                                               use_val=use_val,
+                                              valset=valset,
+                                              val_epoch=val_epoch,
                                               patience=patience,
                                               checkpoint_epoch=checkpoint_epoch,
                                               summary_step=summary_step,
