@@ -2,15 +2,11 @@
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from torchvision import transforms
 from tqdm import tqdm
-
-from searchnets.utils.dataset import VisSearchDataset
 
 
 class AbstractTrainer:
@@ -19,23 +15,20 @@ class AbstractTrainer:
     """
     NUM_WORKERS = 4
 
-    # for preprocessing, normalize using values used when training these models on ImageNet for torchvision
-    # see https://github.com/pytorch/examples/blob/632d385444ae16afe3e4003c94864f9f97dc8541/imagenet/main.py#L197-L198
-    MEAN = [0.485, 0.456, 0.406]
-    STD = [0.229, 0.224, 0.225]
-
     def __init__(self,
                  net_name,
                  model,
-                 csv_file,
+                 trainset,
                  save_path,
                  criterion,
                  optimizers,
-                 save_acc_by_set_size_by_epoch=True,
+                 save_acc_by_set_size_by_epoch=False,
+                 trainset_set_size=None,
                  batch_size=64,
                  epochs=200,
-                 val_epoch=1,
-                 use_val=True,
+                 use_val=False,
+                 valset=None,
+                 val_epoch=None,
                  patience=20,
                  checkpoint_epoch=10,
                  summary_step=None,
@@ -51,8 +44,8 @@ class AbstractTrainer:
             name of neural network architecture. Used when saving model, checkpoints, etc.
         model : torch.nn.Module
             actual instance of network.
-        csv_file : str
-            path to csv file, used by Dataset
+        trainset : torch.Dataset or torchvision.Visiondataset
+            training data, represented as a class.
         save_path : str
             path to directory where trained models and checkpoints (if any) should be saved
         save_acc_by_set_size_by_epoch : bool
@@ -68,7 +61,9 @@ class AbstractTrainer:
             epoch at which accuracy should be measured on validation step.
             Validation occurs every time epoch % val_epoch == 0.
         use_val : bool
-            if True, use validation set
+            if True, use validation set. Default is False.
+        valset : torch.Dataset or torchvision.VisionDataset
+            validation data, represented as a class.
         patience : int
             number of validation epochs to wait before stopping training if accuracy does not increase
         checkpoint_epoch : int
@@ -93,29 +88,17 @@ class AbstractTrainer:
         model.to(device)
         self.model = model
         self.device = device
-
-        normalize = transforms.Normalize(mean=self.MEAN,
-                                         std=self.STD)
-
-        self.trainset = VisSearchDataset(csv_file=csv_file,
-                                         split='train',
-                                         transform=transforms.Compose(
-                                             [transforms.ToTensor(), normalize]
-                                         ))
+        self.trainset = trainset
         self.train_loader = DataLoader(self.trainset, batch_size=batch_size,
                                        shuffle=True, num_workers=num_workers,
                                        pin_memory=True)
 
-        self.csv_file = csv_file
-        self.dataset_df = pd.read_csv(csv_file)
-
         if use_val:
-            self.valset = VisSearchDataset(csv_file=csv_file,
-                                           split='val',
-                                           transform=transforms.Compose([transforms.ToTensor(), normalize]))
+            self.valset = valset
             self.val_loader = DataLoader(self.valset, batch_size=batch_size,
                                          shuffle=False, num_workers=num_workers)
         else:
+            self.valset = None
             self.val_loader = None
 
         self.batch_size = batch_size
@@ -127,13 +110,9 @@ class AbstractTrainer:
 
         self.save_acc_by_set_size_by_epoch = save_acc_by_set_size_by_epoch
         if save_acc_by_set_size_by_epoch:
-            self.set_sizes = self.dataset_df['set_size'].unique()
+            self.trainset_set_size = trainset_set_size
+            self.set_sizes = np.unique(self.trainset_set_size.set_size)
             self.acc_epoch_set_size_savepath = str(save_path) + '_acc_by_epoch_by_set_size.txt'
-            self.trainset_set_size = VisSearchDataset(csv_file=csv_file,
-                                                      split='train',
-                                                      transform=transforms.Compose(
-                                                          [transforms.ToTensor(), normalize]),
-                                                      return_set_size=True)
             self.train_loader_no_shuffle = DataLoader(self.trainset_set_size, batch_size=batch_size,
                                                       shuffle=False, num_workers=num_workers)
             self.acc_by_epoch_by_set_size = np.full(shape=(epochs, self.set_sizes.shape[0]), fill_value=np.nan)
