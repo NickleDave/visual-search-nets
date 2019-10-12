@@ -19,6 +19,9 @@ def train(csv_file,
           random_seed,
           save_path,
           root=None,
+          random_crop=True,
+          crop_size=224,
+          threshold=0.5,
           method='transfer',
           num_classes=2,
           learning_rate=None,
@@ -166,18 +169,20 @@ def train(csv_file,
                                 image_set='trainval',
                                 split='train',
                                 download=True,
-                                transform=transforms.Compose(
-                                    [transforms.ToTensor(), normalize]
-                                ))
+                                transforms=VOCTransform(random_crop=random_crop,
+                                                        crop_size=crop_size,
+                                                        threshold=threshold)
+                                )
         if use_val:
             valset = VOCDetection(root=root,
                                   csv_file=csv_file,
                                   image_set='trainval',
                                   split='val',
                                   download=True,
-                                  transform=transforms.Compose(
-                                      [transforms.ToTensor(), normalize]
-                                  ))
+                                  transforms=VOCTransform(random_crop=random_crop,
+                                                          crop_size=crop_size,
+                                                          threshold=threshold)
+                                  )
         else:
             valset = None
 
@@ -214,21 +219,6 @@ def train(csv_file,
         criterion = nn.CrossEntropyLoss()
     elif loss_func == 'BCE':
         criterion = nn.BCEWithLogitsLoss()
-    # elif loss_func == 'triplet':
-    #     loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
-    #                                                squared=squared_dist)
-    # elif loss_func == 'triplet-CE':
-    #     CE_loss_op = tf.reduce_mean(
-    #         tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
-    #                                                    labels=y_onehot),
-    #         name='cross_entropy_loss')
-    #     triplet_loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
-    #                                                        squared=squared_dist)
-    #     train_summaries.extend([
-    #         tf.summary.scalar('cross_entropy_loss', CE_loss_op),
-    #         tf.summary.scalar('triplet_loss', triplet_loss_op),
-    #     ])
-    #     loss_op = CE_loss_op + triplet_loss_op
 
     for epochs in epochs_list:
         print(f'training {net_name} model for {epochs} epochs')
