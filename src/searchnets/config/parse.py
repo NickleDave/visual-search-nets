@@ -42,15 +42,35 @@ def parse_config(config_fname):
     csv_file_in = config['DATA']['CSV_FILE_IN']
     train_size = _str_to_int_or_float(config['DATA']['TRAIN_SIZE'])
 
+    if config.has_option('DATA', 'DATASET_TYPE'):
+        dataset_type = config['DATA']['DATASET_TYPE']
+    else:
+        dataset_type = 'searchstims'
+
+    if config.has_option('DATA', 'NUM_CLASSES'):
+        num_classes = int(config['DATA']['NUM_CLASSES'])
+    else:
+        num_classes = 2
+
     if config.has_option('DATA', 'ROOT'):
         root = config['DATA']['ROOT']
     else:
         root = None
 
-    if config.has_option('DATA', 'DATASET_TYPE'):
-        dataset_type = config['DATA']['DATASET_TYPE']
+    if config.has_option('DATA', 'RANDOM_CROP'):
+        random_crop = bool(strtobool(config['DATA']['RANDOM_CROP']))
     else:
-        dataset_type = 'searchstims'
+        random_crop = True
+
+    if config.has_option('DATA', 'CROP_SIZE'):
+        crop_size = int(config['DATA']['CROP_SIZE'])
+    else:
+        crop_size = 224
+
+    if config.has_option('DATA', 'THRESHOLD'):
+        threshold = float(config['DATA']['THRESHOLD'])
+    else:
+        threshold = 0.5
 
     if config.has_option('DATA', 'CSV_FILE_OUT'):
         csv_file_out = config['DATA']['CSV_FILE_OUT']
@@ -91,8 +111,12 @@ def parse_config(config_fname):
 
     data_config = DataConfig(csv_file_in,
                              train_size,
-                             root,
                              dataset_type,
+                             num_classes,
+                             root,
+                             random_crop,
+                             crop_size,
+                             threshold,
                              csv_file_out,
                              stim_types,
                              val_size,
