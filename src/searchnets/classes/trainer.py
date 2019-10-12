@@ -1,6 +1,5 @@
 """Trainer class"""
 import torch
-import torch.nn as nn
 
 from .. import nets
 from .abstract_trainer import AbstractTrainer
@@ -74,24 +73,6 @@ class Trainer(AbstractTrainer):
                 torch.optim.AdamW(model.parameters(),
                                   lr=learning_rate))
 
-        if loss_func == 'CE':
-            criterion = nn.CrossEntropyLoss()
-        # elif loss_func == 'triplet':
-        #     loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
-        #                                                squared=squared_dist)
-        # elif loss_func == 'triplet-CE':
-        #     CE_loss_op = tf.reduce_mean(
-        #         tf.nn.softmax_cross_entropy_with_logits_v2(logits=model.output,
-        #                                                    labels=y_onehot),
-        #         name='cross_entropy_loss')
-        #     triplet_loss_op, fraction = batch_all_triplet_loss(y, embeddings, margin=triplet_loss_margin,
-        #                                                        squared=squared_dist)
-        #     train_summaries.extend([
-        #         tf.summary.scalar('cross_entropy_loss', CE_loss_op),
-        #         tf.summary.scalar('triplet_loss', triplet_loss_op),
-        #     ])
-        #     loss_op = CE_loss_op + triplet_loss_op
-
-        kwargs = dict(**kwargs, net_name=net_name, model=model, optimizers=optimizers, criterion=criterion)
+        kwargs = dict(**kwargs, net_name=net_name, model=model, optimizers=optimizers)
         trainer = cls(**kwargs)
         return trainer
