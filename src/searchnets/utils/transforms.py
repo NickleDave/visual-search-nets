@@ -50,6 +50,10 @@ class VOCTransform:
         class_to_ind : dict
             dictionary lookup of classnames -> indexes
             (default: alphabetic indexing of VOC's 20 classes)
+        random_crop : bool
+            if True, crop randomly
+        crop_size : int
+            Default is 224 (size of input to AlexNet).
         threshold : float
             between 0 and 1. Amount of target bounding box that must still be within the image
             after cropping for it to be included in annotation.
@@ -62,7 +66,7 @@ class VOCTransform:
                     f'threshold must be between 0.0 and 1.0 but was {threshold}'
                 )
 
-        if self.random_crop and threshold is None:
+        if random_crop and threshold is None:
             raise ValueError(
                 'must specify threshold when random_crop is not None; otherwise, '
                 'annotation may return labels for objects that are not present in image after it is cropped'
@@ -74,9 +78,15 @@ class VOCTransform:
         self.crop_size = crop_size
         self.threshold = threshold
 
+        self.to_tensor = transforms.ToTensor()
+
     def _random_crop(self, img):
         c, h, w = img.shape
         h = h - self.crop_size
+        if h < 0:
+            raise ValueError(
+                f'h was less than 0, was {h} after subtracting crop size. c was {c} and w was {w}'
+            )
         ymin = np.random.choice(np.arange(h))
         w = w - self.crop_size
         xmin = np.random.choice(np.arange(w))
@@ -127,9 +137,10 @@ class VOCTransform:
             img, converted to Tensor, randomly cropped, and then normalized.
             target, converted from .xml annotation to one-hot encoding of objects present after cropping.
         """
-        img = transforms.ToTensor(img)
-        img, img_xmin, img_ymin = self._random_crop(img)
-        img_bbox = Rectangle(img_xmin, img_ymin, img_xmin + self.crop_size, img_ymin + self.crop_size)
+        img = self.to_tensor(img)
+        if self.random_crop:
+            img, img_xmin, img_ymin = self._random_crop(img)
+            img_bbox = Rectangle(img_xmin, img_ymin, img_xmin + self.crop_size, img_ymin + self.crop_size)
 
         target_out = []
         objects = target['annotation']['object']
@@ -137,11 +148,11 @@ class VOCTransform:
             objects = [objects]  # wrap in a list so we can iterate over it
         for obj in objects:  # will be a list
             name = obj['name']
-            obj_bbox = obj['bndbox']
-            obj_bbox = {k: int(v) for k, v in obj_bbox.items()}  # convert string values to int
-            obj_bbox = Rectangle(**obj_bbox)
-            if self.threshold:
+            if self.random_crop:
                 # only add if overlap is above threshold
+                obj_bbox = obj['bndbox']
+                obj_bbox = {k: int(v) for k, v in obj_bbox.items()}  # convert string values to int
+                obj_bbox = Rectangle(**obj_bbox)
                 overlap = self.overlap(img_bbox, obj_bbox)
                 if overlap >= self.threshold:
                     label_idx = self.class_to_ind[name]
@@ -157,6 +168,6 @@ class VOCTransform:
         # are present; can't pass an array of "nothing" to functional.one_hot to get that output
         onehot = torch.FloatTensor(len(self.class_to_ind))  # number of classes
         onehot.zero_()
-        target_out = onehot.scatter_(0, target_out, 1)
+        target_out = onehot.scatter_(0, torch.LongTensor(target_out), 1)
 
         return img, target_out
