@@ -42,7 +42,7 @@ class VOCTransform:
                  class_to_ind=None,
                  random_crop=True,
                  crop_size=224,
-                 threshold=None
+                 threshold=0.5
                  ):
         """
         Parameters
@@ -54,7 +54,7 @@ class VOCTransform:
             between 0 and 1. Amount of target bounding box that must still be within the image
             after cropping for it to be included in annotation.
             If None, overlap is not calculated and all annotations are included.
-            Default is None.
+            Default is 0.5.
         """
         if threshold is not None:
             if threshold < 0. or threshold > 1.:
