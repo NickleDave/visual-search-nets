@@ -2,6 +2,7 @@
 from collections import namedtuple
 
 import numpy as np
+import torch
 from torchvision import transforms
 
 # for preprocessing, normalize using values used when training these models on ImageNet for torchvision
@@ -119,18 +120,12 @@ class VOCTransform:
         target : dict
             target annotation, .xml annotation file loaded by Elementree and then converted to Python dict
             by VOCDetection. Will be converted into a Tensor of bounding box co-ordinates and integer label
-        img_xmin: int
-            of image. Used to determine if an object is still within image after cropping.
-        img_ymin : int
-            of image. Used to determine if an object is still within image after cropping.
-        img_size : int
-            of image. Used to determine if an object is still within image after cropping.
 
         Returns
         -------
-        tensor : list
-            containing lists of [bounding boxes co-ordinates, class name].
-            Gets converted to Tensor of size (batch size, 5)
+        img, target_out : torch.Tensor
+            img, converted to Tensor, randomly cropped, and then normalized.
+            target, converted from .xml annotation to one-hot encoding of objects present after cropping.
         """
         img = transforms.ToTensor(img)
         img, img_xmin, img_ymin = self._random_crop(img)
@@ -150,16 +145,18 @@ class VOCTransform:
                 overlap = self.overlap(img_bbox, obj_bbox)
                 if overlap >= self.threshold:
                     label_idx = self.class_to_ind[name]
-                    row = list(obj_bbox)
-                    row.append(label_idx)  # [xmin, ymin, xmax, ymax, label_ind]
-                    target_out.append(row)
+                    target_out.append(label_idx)
                 else:
                     continue
             else:
                 # add no matter what, there's no threshold
                 label_idx = self.class_to_ind[name]
-                row = list(obj_bbox)
-                row.append(label_idx)  # [xmin, ymin, xmax, ymax, label_ind]
-                target_out.append(row)
+                target_out.append(label_idx)
 
-        return img, target  # [[xmin, ymin, xmax, ymax, label_ind], ... ]
+        # we don't use functional.one_hot because we want to return an array of all zeros if none of the objects
+        # are present; can't pass an array of "nothing" to functional.one_hot to get that output
+        onehot = torch.FloatTensor(len(self.class_to_ind))  # number of classes
+        onehot.zero_()
+        target_out = onehot.scatter_(0, target_out, 1)
+
+        return img, target_out
