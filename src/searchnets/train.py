@@ -19,9 +19,7 @@ def train(csv_file,
           random_seed,
           save_path,
           root=None,
-          random_crop=True,
-          crop_size=224,
-          threshold=0.5,
+          pad_size=500,
           method='transfer',
           num_classes=2,
           learning_rate=None,
@@ -103,11 +101,6 @@ def train(csv_file,
         used in face recognition and biometric applications.
     optimizer : str
         optimizer to use. One of {'SGD', 'Adam', 'AdamW'}.
-    triplet_loss_margin : float
-        Minimum margin between clusters, parameter in triplet loss function. Default is 0.5.
-    squared_dist : bool
-        if True, when computing similarity of embeddings (e.g. for triplet loss), use pairwise squared
-        distance, i.e. Euclidean distance.
     save_acc_by_set_size_by_epoch : bool
         if True, compute accuracy on training set for each epoch separately
         for each unique set size in the visual search stimuli. These values
@@ -169,9 +162,7 @@ def train(csv_file,
                                 image_set='trainval',
                                 split='train',
                                 download=True,
-                                transforms=VOCTransform(random_crop=random_crop,
-                                                        crop_size=crop_size,
-                                                        threshold=threshold)
+                                transforms=VOCTransform(pad_size=pad_size)
                                 )
         if use_val:
             valset = VOCDetection(root=root,
@@ -179,9 +170,7 @@ def train(csv_file,
                                   image_set='trainval',
                                   split='val',
                                   download=True,
-                                  transforms=VOCTransform(random_crop=random_crop,
-                                                          crop_size=crop_size,
-                                                          threshold=threshold)
+                                  transforms=VOCTransform(pad_size=pad_size)
                                   )
         else:
             valset = None
@@ -204,7 +193,7 @@ def train(csv_file,
         if dataset_type == 'VSD':
             raise ValueError(
                 'dataset type is VSD but save_acc_by_set_size_by_epoch was set to True;'
-                'can only measure accuracy by set size with searchstims stimuli'
+                'can only measure accuracy by set size with searchstims stimuli, not VSD dataset'
             )
         elif dataset_type == 'searchstims':
             trainset_set_size = Searchstims(csv_file=csv_file,
