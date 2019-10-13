@@ -94,9 +94,7 @@ class DataConfig:
     dataset_type = attr.ib(validator=instance_of(str), default='searchstims')
     num_classes = attr.ib(validator=optional(instance_of(int)), default=2)
     root = attr.ib(validator=optional(instance_of(str)), default=None)
-    random_crop = attr.ib(validator=optional(instance_of(bool)), default=True)
-    crop_size = attr.ib(validator=optional(instance_of(int)), default=224)
-    threshold = attr.ib(validator=optional([instance_of(float), is_valid_proportion]), default=0.5)
+    pad_size = attr.ib(validator=optional(instance_of(int)), default=500)
     @dataset_type.validator
     def check_dataset_type(self, attribute, value):
         if value not in {'searchstims', 'VSD'}:
