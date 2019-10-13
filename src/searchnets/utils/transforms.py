@@ -1,6 +1,4 @@
 """transforms used with Torch Datasets"""
-from collections import namedtuple
-
 import numpy as np
 import torch
 from torchvision import transforms
@@ -20,29 +18,21 @@ VOC_CLASSES = (
     'motorbike', 'person', 'pottedplant',
     'sheep', 'sofa', 'train', 'tvmonitor')
 
-Rectangle = namedtuple('Rectangle', 'xmin ymin xmax ymax')
-
 
 class VOCTransform:
-    """Randomly crops VOC image, and transforms bounding box annotation for the image into a vector of classes
-    that are present in the image after cropping
+    """Pads VOC image "randomly", so that size is constant but location of image is random,
+    and transforms bounding box annotation for the image into a vector of classes
+
 
     Attributes
     ----------
     class_to_ind : dict
         dictionary lookup of classnames -> indexes
         (default: alphabetic indexing of VOC's 20 classes)
-    threshold : float
-        between 0 and 1. Amount of target bounding box that must still be within the image
-        after cropping for it to be included in annotation.
-        If None, overlap is not calculated and all annotations are included.
-        Default is None.
     """
     def __init__(self,
                  class_to_ind=None,
-                 random_crop=True,
-                 crop_size=224,
-                 threshold=0.5
+                 pad_size=500,
                  ):
         """
         Parameters
@@ -50,75 +40,40 @@ class VOCTransform:
         class_to_ind : dict
             dictionary lookup of classnames -> indexes
             (default: alphabetic indexing of VOC's 20 classes)
-        random_crop : bool
-            if True, crop randomly
-        crop_size : int
-            Default is 224 (size of input to AlexNet).
-        threshold : float
-            between 0 and 1. Amount of target bounding box that must still be within the image
-            after cropping for it to be included in annotation.
-            If None, overlap is not calculated and all annotations are included.
-            Default is 0.5.
+        pad_size : int
+            Size of image after padding. Default is 500, maximum size of VOC images.
         """
-        if threshold is not None:
-            if threshold < 0. or threshold > 1.:
-                raise ValueError(
-                    f'threshold must be between 0.0 and 1.0 but was {threshold}'
-                )
-
-        if random_crop and threshold is None:
-            raise ValueError(
-                'must specify threshold when random_crop is not None; otherwise, '
-                'annotation may return labels for objects that are not present in image after it is cropped'
-            )
-
         self.class_to_ind = class_to_ind or dict(
             zip(VOC_CLASSES, range(len(VOC_CLASSES))))
-        self.random_crop = random_crop
-        self.crop_size = crop_size
-        self.threshold = threshold
-
+        self.pad_size = pad_size
         self.to_tensor = transforms.ToTensor()
 
-    def _random_crop(self, img):
+    def _random_pad(self, img):
         c, h, w = img.shape
-        h = h - self.crop_size
-        if h < 0:
+        if h > self.pad_size:
             raise ValueError(
-                f'h was less than 0, was {h} after subtracting crop size. c was {c} and w was {w}'
+                f'height of image {h} is greater than pad size {self.pad_size}'
             )
-        ymin = np.random.choice(np.arange(h))
-        w = w - self.crop_size
-        xmin = np.random.choice(np.arange(w))
-        img = img[:, ymin:ymin + self.crop_size, xmin:xmin + self.crop_size]
-        return img, xmin, ymin
-
-    @staticmethod
-    def overlap(img_rect, object_rect):
-        """calculates overlap of object bounding box with image bounding box,
-        after image has been cropped
-
-        Parameters
-        ----------
-        img_rect : Rectangle
-            image bounding box, represented as a Rectangle (named tuple defined in this module)
-        object_rect : Rectangle
-            object bounding box, represented as a Rectangle (named tuple defined in this module)
-
-        Returns
-        -------
-        normal_overlap : float
-            between 0 and 1, area of overlap divided by area of object rectangle, i.e. bounding box
-        """
-        dx = min(img_rect.xmax, object_rect.xmax) - max(img_rect.xmin, object_rect.xmin)
-        dy = min(img_rect.ymax, object_rect.ymax) - max(img_rect.ymin, object_rect.ymin)
-        if (dx >= 0) and (dy >= 0):
-            overlap_area = dx * dy
-            object_area = (object_rect.xmax - object_rect.xmin) * (object_rect.ymax - object_rect.ymin)
-            normal_overlap = overlap_area / object_area
-            return normal_overlap
+        if w > self.pad_size:
+            raise ValueError(
+                f'width of image {w} is greater than pad size {self.pad_size}'
+            )
+        padded = torch.FloatTensor(c, self.pad_size, self.pad_size)
+        padded.zero_()
+        h_range = self.pad_size - h
+        if h_range > 0:
+            y_topleft = torch.randint(h_range, (1,))
         else:
-            return 0
+            y_topleft = 0
+        w_range = self.pad_size - w
+        if w_range > 0:
+            x_topleft = torch.randint(w_range, (1,))
+        else:
+            x_topleft = 0
+
+        padded[:, y_topleft:y_topleft + h, x_topleft:x_topleft + w] = img
+
+        return padded
 
     def __call__(self, img, target):
         """converts img to Tensor, performs a random crop, and normalizes using ImageNet mean and standard deviation.
@@ -127,6 +82,7 @@ class VOCTransform:
         Parameters
         ----------
         img : PIL.image
+            image from VOC dataset
         target : dict
             target annotation, .xml annotation file loaded by Elementree and then converted to Python dict
             by VOCDetection. Will be converted into a Tensor of bounding box co-ordinates and integer label
@@ -134,13 +90,11 @@ class VOCTransform:
         Returns
         -------
         img, target_out : torch.Tensor
-            img, converted to Tensor, randomly cropped, and then normalized.
+            img, converted to Tensor, randomly padded, and then normalized.
             target, converted from .xml annotation to one-hot encoding of objects present after cropping.
         """
         img = self.to_tensor(img)
-        if self.random_crop:
-            img, img_xmin, img_ymin = self._random_crop(img)
-            img_bbox = Rectangle(img_xmin, img_ymin, img_xmin + self.crop_size, img_ymin + self.crop_size)
+        img = self._random_pad(img)
 
         target_out = []
         objects = target['annotation']['object']
@@ -148,21 +102,8 @@ class VOCTransform:
             objects = [objects]  # wrap in a list so we can iterate over it
         for obj in objects:  # will be a list
             name = obj['name']
-            if self.random_crop:
-                # only add if overlap is above threshold
-                obj_bbox = obj['bndbox']
-                obj_bbox = {k: int(v) for k, v in obj_bbox.items()}  # convert string values to int
-                obj_bbox = Rectangle(**obj_bbox)
-                overlap = self.overlap(img_bbox, obj_bbox)
-                if overlap >= self.threshold:
-                    label_idx = self.class_to_ind[name]
-                    target_out.append(label_idx)
-                else:
-                    continue
-            else:
-                # add no matter what, there's no threshold
-                label_idx = self.class_to_ind[name]
-                target_out.append(label_idx)
+            label_idx = self.class_to_ind[name]
+            target_out.append(label_idx)
 
         # we don't use functional.one_hot because we want to return an array of all zeros if none of the objects
         # are present; can't pass an array of "nothing" to functional.one_hot to get that output
