@@ -230,45 +230,6 @@ class AbstractTrainer:
             if self.summary_step:
                 if self.step % self.summary_step == 0:
                     print('would save summary here')
-                    # train_summaries = []
-                    # embeddings = model.fc7
-                    # # t = target, d = distractor
-                    # t_inds = tf.where(tf.math.equal(y, 1))
-                    # t_vecs = tf.gather(embeddings, t_inds)
-                    # t_vecs = tf.squeeze(t_vecs)
-                    # if squared_dist:
-                    #     t_distances = dist_squared(t_vecs)
-                    # else:
-                    #     t_distances = dist_euclid(t_vecs)
-                    # train_summaries.extend([
-                    #     tf.summary.histogram('target_distances', t_distances),
-                    #     tf.summary.scalar('target_distances_mean', tf.reduce_mean(t_distances)),
-                    #     tf.summary.scalar('target_distances_std', tf.math.reduce_std(t_distances)),
-                    # ])
-                    #
-                    # d_inds = tf.where(tf.math.equal(y, 0))
-                    # d_vecs = tf.gather(embeddings, d_inds)
-                    # d_vecs = tf.squeeze(d_vecs)
-                    # if squared_dist:
-                    #     d_distances = dist_squared(d_vecs)
-                    # else:
-                    #     d_distances = dist_euclid(d_vecs)
-                    # train_summaries.extend([
-                    #     tf.summary.histogram('distractor_distances', d_distances),
-                    #     tf.summary.scalar('distractor_distances_mean', tf.reduce_mean(d_distances)),
-                    #     tf.summary.scalar('distractor_distances_std', tf.math.reduce_std(d_distances)),
-                    # ])
-                    #
-                    # if squared_dist:
-                    #     td_distances = dist_squared(t_vecs, d_vecs)
-                    # else:
-                    #     td_distances = dist_euclid(t_vecs, d_vecs)
-                    # train_summaries.extend([
-                    #     tf.summary.histogram('target_distractor_distances', td_distances),
-                    #     tf.summary.scalar('target_distractor_distances_mean', tf.reduce_mean(td_distances)),
-                    #     tf.summary.scalar('target_distractor_distances_std', tf.math.reduce_std(td_distances)),
-                    # ])
-                    # self.train_writer.add_summary(summary, step)
 
         avg_loss = total_loss / batch_total
         print(f'\tTraining Avg. Loss: {avg_loss:7.3f}')
@@ -286,7 +247,11 @@ class AbstractTrainer:
                 output = self.model(batch_x)
                 # below, _ because torch.max returns (values, indices)
                 _, predicted = torch.max(output.data, 1)
-                acc = (predicted == batch_y).sum().item() / batch_y.size(0)
+                if batch_y.size(1) > 1:
+                    _, batch_y_class = torch.max(batch_y, 1)
+                    acc = (predicted == batch_y_class).sum().item() / batch_y_class.size(0)
+                else:
+                    acc = (predicted == batch_y).sum().item() / batch_y.size(0)
                 val_acc_this_epoch.append(acc)
 
         val_acc_this_epoch = np.asarray(val_acc_this_epoch).mean()
