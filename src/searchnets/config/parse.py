@@ -57,20 +57,10 @@ def parse_config(config_fname):
     else:
         root = None
 
-    if config.has_option('DATA', 'RANDOM_CROP'):
-        random_crop = bool(strtobool(config['DATA']['RANDOM_CROP']))
+    if config.has_option('DATA', 'PAD_SIZE'):
+        pad_size = int(config['DATA']['PAD_SIZE'])
     else:
-        random_crop = True
-
-    if config.has_option('DATA', 'CROP_SIZE'):
-        crop_size = int(config['DATA']['CROP_SIZE'])
-    else:
-        crop_size = 224
-
-    if config.has_option('DATA', 'THRESHOLD'):
-        threshold = float(config['DATA']['THRESHOLD'])
-    else:
-        threshold = 0.5
+        pad_size = 500
 
     if config.has_option('DATA', 'CSV_FILE_OUT'):
         csv_file_out = config['DATA']['CSV_FILE_OUT']
@@ -114,9 +104,7 @@ def parse_config(config_fname):
                              dataset_type,
                              num_classes,
                              root,
-                             random_crop,
-                             crop_size,
-                             threshold,
+                             pad_size,
                              csv_file_out,
                              stim_types,
                              val_size,
