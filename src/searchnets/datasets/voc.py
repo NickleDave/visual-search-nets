@@ -92,12 +92,6 @@ class VOCDetection(VisionDataset):
             target and transforms it.
         transforms (callable, optional): A function/transform that takes input sample and its target as entry
             and returns a transformed version.
-        crop_size : int
-            size of random crop (height and width of image after cropping).
-            Default is 224 (input size to Alexnet).
-        threshold : float
-            between 0 and 1. Amount of target bounding box that must still be within the image
-            after cropping for it to be included in annotation. Default is 0.5
         """
         super(VOCDetection, self).__init__(root, transforms, transform, target_transform)
         self.year = year
@@ -153,9 +147,7 @@ class VOCDetection(VisionDataset):
         image : torch.Tensor
             image as a tensor
         target : torch.Tensor
-            one-hot encoding of what objects are present in the image after the random crop.
-            "Present" meaning the amount of overlap of the bounding box of the object
-            with the image after cropping is greater than the threshold.
+            one-hot encoding of what objects are present in the image.
         """
         img = Image.open(self.images[index]).convert('RGB')
         target = self.parse_voc_xml(
