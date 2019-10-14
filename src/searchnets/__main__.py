@@ -72,6 +72,9 @@ def _call_test(config, configfile):
          test_results_save_path=config.test.test_results_save_path,
          configfile=configfile,
          random_seed=config.train.random_seed,
+         root=config.data.root,
+         pad_size=config.data.pad_size,
+         num_classes=config.data.num_classes,
          num_workers=config.train.num_workers,
          data_parallel=config.train.data_parallel)
 
