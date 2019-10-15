@@ -84,8 +84,24 @@ def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), ax=None,
     if save_as:
         plt.savefig(save_as)
 
+# default colors used for 'sampling units' (statistics term) in each condition
+# in our case, a training replicate, one trained neural network
+UNIT_COLORS = {
+    'present': 'violet',
+    'absent': 'lightgreen',
+    'both': 'darkgrey'
+}
+
+# default colors used for plotting mean across sampling units in each condition
+MN_COLORS = {
+    'present': 'magenta',
+    'absent': 'lawngreen',
+    'both': 'black'
+}
+
 
 def metric_v_set_size_df(df, net_name, method, stimulus, metric, conditions,
+                         unit_colors=UNIT_COLORS, mn_colors=MN_COLORS,
                          ax=None, title=None, save_as=None, figsize=(10, 5),
                          set_xlabel=False, set_ylabel=False, set_ylim=True,
                          ylim=(0, 1.1), plot_mean=True, add_legend=False):
@@ -116,6 +132,12 @@ def metric_v_set_size_df(df, net_name, method, stimulus, metric, conditions,
 
     Other Parameters
     ----------------
+    unit_colors : dict
+        mapping of conditions to colors used for plotting 'sampling units', i.e. each trained
+        network. Default is UNIT_COLORS defined in this module.
+    mn_colors : dict
+        mapping of conditions to colors used for plotting mean across 'sampling units'
+        (i.e., each trained network). Default is MN_COLORS defined in this module.
     ax : matplotlib.Axis
         axis on which to plot figure. Default is None, in which case a new figure with
         a single axis is created for the plot.
@@ -158,28 +180,6 @@ def metric_v_set_size_df(df, net_name, method, stimulus, metric, conditions,
         raise ValueError(f'not all target conditions specified were found in dataframe.'
                          f'Target conditions specified were: {conditions}')
 
-    net_colors = []
-    mn_colors = []
-    for targ_cond in conditions:
-        if 'present' in targ_cond:
-            net_colors.append('violet')
-            if plot_mean:
-                mn_colors.append('magenta')
-            else:
-                mn_colors.append(None)
-        elif 'absent' in targ_cond:
-            net_colors.append('lightgreen')
-            if plot_mean:
-                mn_colors.append('lawngreen')
-            else:
-                mn_colors.append(None)
-        elif 'both' in targ_cond:
-            net_colors.append('darkgrey')
-            if plot_mean:
-                mn_colors.append('black')
-            else:
-                mn_colors.append(None)
-
     handles = []
     labels = []
 
@@ -188,7 +188,7 @@ def metric_v_set_size_df(df, net_name, method, stimulus, metric, conditions,
     # get metric across set sizes for each training replicate
     # we end up with a list of vectors we can pass to ax.plot,
     # so that the 'line' for each training replicate gets plotted
-    for targ_cond, net_color, mn_color in zip(conditions, net_colors, mn_colors):
+    for targ_cond in conditions:
         metric_vals = []
         for net_num in net_nums:
             metric_vals.append(
@@ -208,7 +208,7 @@ def metric_v_set_size_df(df, net_name, method, stimulus, metric, conditions,
                     )
 
         for arr_metric in metric_vals:
-            ax.plot(set_sizes, arr_metric, color=net_color, linewidth=2,
+            ax.plot(set_sizes, arr_metric, color=unit_colors[targ_cond], linewidth=2,
                     linestyle='--', marker='o', zorder=1, alpha=0.85, label=None)
 
         if plot_mean:
@@ -216,7 +216,7 @@ def metric_v_set_size_df(df, net_name, method, stimulus, metric, conditions,
             mn_metric_label = f'mean {metric},\n{targ_cond}'
             labels.append(mn_metric_label)
             mn_metric_line, = ax.plot(set_sizes, mn_metric,
-                                      color=mn_color, linewidth=4,
+                                      color=mn_colors[targ_cond], linewidth=4,
                                       zorder=0,
                                       label=mn_metric_label)
             handles.append(mn_metric_line)
