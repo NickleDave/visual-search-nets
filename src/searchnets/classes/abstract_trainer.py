@@ -2,6 +2,7 @@
 from pathlib import Path
 
 import numpy as np
+import sklearn.metrics
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -32,6 +33,7 @@ class AbstractTrainer:
                  patience=20,
                  checkpoint_epoch=10,
                  summary_step=None,
+                 sigmoid_threshold=0.5,
                  device='cuda',
                  num_workers=NUM_WORKERS,
                  data_parallel=False,
@@ -73,6 +75,9 @@ class AbstractTrainer:
             step at which to save summary to file.
             Occurs every time step % summary_step == 0.
             Each minibatch is considered a step, and steps are counted across epochs.
+        sigmoid_threshold : float
+            threshold to use when converting sigmoid outputs to binary vectors.
+            Only used for VSD dataset, where multi-label outputs are expected.
         device : str
             One of {'cpu', 'cuda'}
         num_workers : int
@@ -131,6 +136,8 @@ class AbstractTrainer:
             )
         else:
             self.train_writer = None
+
+        self.sigmoid_threshold = sigmoid_threshold
 
     def save_checkpoint(self, epoch):
         print(f'Saving checkpoint in {self.save_path}')
@@ -245,12 +252,14 @@ class AbstractTrainer:
                 pbar.set_description(f'batch {i} of {total}')
                 batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
                 output = self.model(batch_x)
-                # below, _ because torch.max returns (values, indices)
-                _, predicted = torch.max(output.data, 1)
-                if batch_y.size(1) > 1:
-                    _, batch_y_class = torch.max(batch_y, 1)
-                    acc = (predicted == batch_y_class).sum().item() / batch_y_class.size(0)
+                if batch_y.dims() > 1:
+                    # convert to one hot vector
+                    predicted = (output > self.sigmoid_threshold).float()
+                    acc = sklearn.metrics.f1_score(batch_y.cpu().numpy(), predicted.cpu().numpy(),
+                                                   average='macro')
                 else:
+                    # below, _ because torch.max returns (values, indices)
+                    _, predicted = torch.max(output.data, 1)
                     acc = (predicted == batch_y).sum().item() / batch_y.size(0)
                 val_acc_this_epoch.append(acc)
 
