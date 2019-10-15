@@ -212,7 +212,7 @@ def train(csv_file,
     if loss_func == 'CE':
         criterion = nn.CrossEntropyLoss()
     elif loss_func == 'BCE':
-        criterion = nn.BCEWithLogitsLoss()
+        criterion = nn.BCELoss()
 
     for epochs in epochs_list:
         print(f'training {net_name} model for {epochs} epochs')
