@@ -204,6 +204,11 @@ def train(csv_file,
     else:
         trainset_set_size = None
 
+    if dataset_type == 'searchstims':
+        apply_sigmoid = False
+    elif dataset_type == 'VSD':
+        apply_sigmoid = True  # for multi-label prediction
+
     if loss_func == 'CE':
         criterion = nn.CrossEntropyLoss()
     elif loss_func == 'BCE':
@@ -222,6 +227,7 @@ def train(csv_file,
                                                       new_layer_learning_rate=new_layer_learning_rate,
                                                       save_path=save_path_this_net,
                                                       num_classes=num_classes,
+                                                      apply_sigmoid=apply_sigmoid,
                                                       criterion=criterion,
                                                       optimizer=optimizer,
                                                       save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
@@ -242,6 +248,7 @@ def train(csv_file,
                                               trainset=trainset,
                                               save_path=save_path_this_net,
                                               num_classes=num_classes,
+                                              apply_sigmoid=apply_sigmoid,
                                               criterion=criterion,
                                               optimizer=optimizer,
                                               learning_rate=learning_rate,
