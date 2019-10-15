@@ -42,9 +42,9 @@ class CORblock_Z(nn.Module):
         return x
 
 
-def CORnet_Z(num_classes=1000):
+def CORnet_Z(num_classes=1000, apply_sigmoid=False):
     """returns CORnet_Z model"""
-    model = nn.Sequential(OrderedDict([
+    model_list = [
         ('V1', CORblock_Z(3, 64, kernel_size=7, stride=2)),
         ('V2', CORblock_Z(64, 128)),
         ('V4', CORblock_Z(128, 256)),
@@ -55,7 +55,12 @@ def CORnet_Z(num_classes=1000):
             ('linear', nn.Linear(512, num_classes)),
             ('output', Identity())
         ])))
-    ]))
+    ]
+    if apply_sigmoid:
+        model_list.append(
+            ('sigmoid', nn.Sigmoid())
+        )
+    model = nn.Sequential(OrderedDict(model_list))
 
     # weight initialization
     for m in model.modules():
@@ -70,11 +75,11 @@ def CORnet_Z(num_classes=1000):
     return model
 
 
-def build(pretrained=False, map_location=None, num_classes=1000):
-    model_hash = HASH
-    model_letter= 'z'
-    model = CORnet_Z(num_classes)
+def build(pretrained=False, map_location=None, **kwargs):
+    model = CORnet_Z(**kwargs)
     if pretrained:
+        model_hash = HASH
+        model_letter = 'z'
         url = f'https://s3.amazonaws.com/cornet-models/cornet_{model_letter.lower()}-{model_hash}.pth'
         ckpt_data = torch.utils.model_zoo.load_url(url, map_location=map_location)
         # remove the 'module.' from keys in state_dict, since we don't have the model wrapped in nn.DataParallel yet

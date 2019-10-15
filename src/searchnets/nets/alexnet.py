@@ -12,7 +12,7 @@ model_urls = {
 
 class AlexNet(nn.Module):
 
-    def __init__(self, num_classes=1000):
+    def __init__(self, num_classes=1000, apply_sigmoid=False):
         super(AlexNet, self).__init__()
         self.features = nn.Sequential(
             nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2),
@@ -30,7 +30,7 @@ class AlexNet(nn.Module):
             nn.MaxPool2d(kernel_size=3, stride=2),
         )
         self.avgpool = nn.AdaptiveAvgPool2d((6, 6))
-        self.classifier = nn.Sequential(
+        classifier_list = [
             nn.Dropout(),
             nn.Linear(256 * 6 * 6, 4096),
             nn.ReLU(inplace=True),
@@ -38,7 +38,11 @@ class AlexNet(nn.Module):
             nn.Linear(4096, 4096),
             nn.ReLU(inplace=True),
             nn.Linear(4096, num_classes),
-        )
+
+        ]
+        if apply_sigmoid:
+            classifier_list.append(nn.Sigmoid())
+        self.classifier = nn.Sequential(*classifier_list)
 
     def forward(self, x):
         x = self.features(x)
