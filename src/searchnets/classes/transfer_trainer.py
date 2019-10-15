@@ -20,7 +20,7 @@ class TransferTrainer(AbstractTrainer):
                     net_name,
                     new_learn_rate_layers,
                     num_classes=2,
-                    loss_func='ce',
+                    apply_sigmoid=False,
                     optimizer='SGD',
                     freeze_trained_weights=False,
                     base_learning_rate=1e-20,
@@ -37,9 +37,12 @@ class TransferTrainer(AbstractTrainer):
             One of {'alexnet', 'VGG16'}
         num_classes : int
             number of classes. Default is 2 (target present, target absent).
+        apply_sigmoid : bool
+            if True, apply sigmoid to output of last layer. Default is False.
+            Used for multi-label prediction.
         new_learn_rate_layers : list
             of str, layer names whose weights will be initialized randomly
-        and then trained with the 'new_layer_learning_rate'.
+            and then trained with the 'new_layer_learning_rate'.
         loss_func : str
             type of loss function to use. One of {'CE', 'InvDPrime', 'triplet'}. Default is 'CE',
             the standard cross-entropy loss. 'InvDPrime' is inverse D prime. 'triplet' is triplet loss
@@ -67,13 +70,13 @@ class TransferTrainer(AbstractTrainer):
         trainer : TransferTrainer
         """
         if net_name == 'alexnet':
-            model = nets.alexnet.build(pretrained=True, progress=True)
+            model = nets.alexnet.build(pretrained=True, progress=True, apply_sigmoid=apply_sigmoid)
             model = nets.alexnet.reinit(model, new_learn_rate_layers, num_classes=num_classes)
         elif net_name == 'VGG16':
-            model = nets.vgg16.build(pretrained=True, progress=True)
+            model = nets.vgg16.build(pretrained=True, progress=True, apply_sigmoid=apply_sigmoid)
             model = nets.vgg16.reinit(model, new_learn_rate_layers, num_classes=num_classes)
         elif net_name == 'CORnet_Z':
-            model = nets.cornet.build(pretrained=True)
+            model = nets.cornet.build(pretrained=True, apply_sigmoid=apply_sigmoid)
             model = nets.cornet.reinit(model, num_classes=num_classes)
 
         if optimizer == 'SGD':
@@ -123,16 +126,16 @@ class TransferTrainer(AbstractTrainer):
             if optimizer == 'SGD':
                 optimizers.append(
                     torch.optim.SGD(feature_params,
-                                    lr=new_layer_learning_rate,
+                                    lr=base_learning_rate,
                                     momentum=momentum))
             elif optimizer == 'Adam':
                 optimizers.append(
                     torch.optim.Adam(feature_params,
-                                     lr=new_layer_learning_rate))
+                                     lr=base_learning_rate))
             elif optimizer == 'AdamW':
                 optimizers.append(
                     torch.optim.AdamW(feature_params,
-                                      lr=new_layer_learning_rate))
+                                      lr=base_learning_rate))
 
         kwargs = dict(**kwargs,
                       net_name=net_name,

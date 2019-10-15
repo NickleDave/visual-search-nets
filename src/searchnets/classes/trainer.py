@@ -3,7 +3,6 @@ import torch
 
 from .. import nets
 from .abstract_trainer import AbstractTrainer
-# from .triplet_loss import batch_all_triplet_loss, dist_squared, dist_euclid
 
 
 class Trainer(AbstractTrainer):
@@ -20,6 +19,7 @@ class Trainer(AbstractTrainer):
     def from_config(cls,
                     net_name,
                     num_classes,
+                    apply_sigmoid=False,
                     optimizer='SGD',
                     learning_rate=0.001,
                     momentum=0.9,
@@ -34,6 +34,9 @@ class Trainer(AbstractTrainer):
             One of {'alexnet', 'VGG16'}
         num_classes : int
             number of classes. Default is 2 (target present, target absent).
+        apply_sigmoid : bool
+            if True, apply sigmoid to output of last layer. Default is False.
+            Used for multi-label prediction.
         optimizer : str
             optimizer to use. One of {'SGD', 'Adam', 'AdamW'}.
         learning_rate : float
@@ -49,11 +52,11 @@ class Trainer(AbstractTrainer):
         trainer : Trainer
         """
         if net_name == 'alexnet':
-            model = nets.alexnet.build(pretrained=False, num_classes=num_classes)
+            model = nets.alexnet.build(pretrained=False, num_classes=num_classes, apply_sigmoid=apply_sigmoid)
         elif net_name == 'VGG16':
-            model = nets.vgg16.build(pretrained=False, num_classes=num_classes)
+            model = nets.vgg16.build(pretrained=False, num_classes=num_classes, apply_sigmoid=apply_sigmoid)
         elif net_name == 'CORnet_Z':
-            model = nets.cornet.build(pretrained=False, num_classes=num_classes)
+            model = nets.cornet.build(pretrained=False, num_classes=num_classes, apply_sigmoid=apply_sigmoid)
 
         optimizers = list()
         if optimizer == 'SGD':
