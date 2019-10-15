@@ -10,8 +10,9 @@ https://github.com/amdegroot/ssd.pytorch/blob/master/data/voc0712.py
 under MIT license
 https://github.com/amdegroot/ssd.pytorch/blob/master/LICENSE
 """
-import os
 import collections
+import os
+from pathlib import Path
 import tarfile
 import xml.etree.ElementTree as ET
 
@@ -75,7 +76,8 @@ class VOCDetection(VisionDataset):
                  download=False,
                  transform=None,
                  target_transform=None,
-                 transforms=None):
+                 transforms=None,
+                 return_img_name=False):
         """
         Parameters
         ----------
@@ -92,6 +94,9 @@ class VOCDetection(VisionDataset):
             target and transforms it.
         transforms (callable, optional): A function/transform that takes input sample and its target as entry
             and returns a transformed version.
+        return_img_name : bool
+            if True, return image name (without extension, i.e. 'stem' of filename). Used with test set,
+            in order to correlate accuracy on a given image with its Visual Search Difficulty score.
         """
         super(VOCDetection, self).__init__(root, transforms, transform, target_transform)
         self.year = year
@@ -135,6 +140,8 @@ class VOCDetection(VisionDataset):
                 self.annotations.append(os.path.join(annotation_dir, file_name + ".xml"))
         assert (len(self.images) == len(self.annotations))
 
+        self.return_img_name = return_img_name
+
     def __getitem__(self, index):
         """
         Parameters
@@ -148,12 +155,18 @@ class VOCDetection(VisionDataset):
             image as a tensor
         target : torch.Tensor
             one-hot encoding of what objects are present in the image.
+        img_name : str
+            file name without extension. Only returned if return_img_name attribute is set to True.
         """
-        img = Image.open(self.images[index]).convert('RGB')
+        img_path = self.images[index]
+        img = Image.open(img_path).convert('RGB')
         target = self.parse_voc_xml(
             ET.parse(self.annotations[index]).getroot())
         img, target = self.transforms(img, target)  # will be VOCTransform
-        return img, target
+        if self.return_img_name:
+            return img, target, Path(img_path).stem
+        else:
+            return img, target
 
     def __len__(self):
         return len(self.images)
