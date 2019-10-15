@@ -1,15 +1,13 @@
 """Tester class"""
 import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from torchvision import transforms
 from tqdm import tqdm
 
 from .. import nets
-from ..datasets import Searchstims, VOCDetection
-from ..utils.transforms import normalize
+from ..datasets import VOCDetection
+
 
 NUM_WORKERS = 4
 
@@ -114,8 +112,17 @@ class Tester:
         pbar = tqdm(self.test_loader)
         acc = []
         pred = []
+        if type(self.testset) == VOCDetection:
+            img_names = []
+        else:
+            img_names = None
+
         with torch.no_grad():
-            for i, (batch_x, batch_y) in enumerate(pbar):
+            for i, sample in enumerate(pbar):
+                if img_names is not None:
+                    batch_x, batch_y, batch_img_name = sample
+                else:
+                    batch_x, batch_y = sample
                 pbar.set_description(f'batch {i} of {total}')
                 batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
                 output = self.model(batch_x)
@@ -131,8 +138,13 @@ class Tester:
 
                 pred_batch = pred_batch.cpu().numpy()
                 pred.append(pred_batch)
+                if img_names is not None:
+                    img_names.extend(batch_img_name)
 
         acc = np.asarray(acc).mean()
         pred = np.concatenate(pred)
 
-        return acc, pred
+        if img_names is not None:
+            return acc, pred, img_names
+        else:
+            return acc, pred
