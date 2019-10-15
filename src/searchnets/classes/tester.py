@@ -1,5 +1,6 @@
 """Tester class"""
 import numpy as np
+import sklearn.metrics
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -20,6 +21,7 @@ class Tester:
                  testset,
                  restore_path,
                  batch_size=64,
+                 sigmoid_threshold=0.5,
                  device='cuda',
                  num_workers=NUM_WORKERS,
                  data_parallel=False,
@@ -39,6 +41,9 @@ class Tester:
             path to directory where checkpoints and train models were saved
         batch_size : int
             number of training samples per batch
+        sigmoid_threshold : float
+            threshold to use when converting sigmoid outputs to binary vectors.
+            Only used for VSD dataset, where multi-label outputs are expected.
         device : str
             One of {'cpu', 'cuda'}
         num_workers : int
@@ -67,6 +72,8 @@ class Tester:
                                       pin_memory=True)
 
         self.batch_size = batch_size
+
+        self.sigmoid_threshold = sigmoid_threshold
 
     @classmethod
     def from_config(cls,
@@ -126,12 +133,14 @@ class Tester:
                 pbar.set_description(f'batch {i} of {total}')
                 batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
                 output = self.model(batch_x)
-                # below, _ because torch.max returns (values, indices)
-                _, pred_batch = torch.max(output.data, 1)
-                if batch_y.size(1) > 1:
-                    _, batch_y_class = torch.max(batch_y, 1)
-                    acc_batch = (pred_batch == batch_y_class).sum().item() / batch_y_class.size(0)
+                if batch_y.dim() > 1:
+                    # convert to one hot vector
+                    pred_batch = (output > self.sigmoid_threshold).float()
+                    acc_batch = sklearn.metrics.f1_score(batch_y.cpu().numpy(), pred_batch.cpu().numpy(),
+                                                         average='macro')
                 else:
+                    # below, _ because torch.max returns (values, indices)
+                    _, pred_batch = torch.max(output.data, 1)
                     acc_batch = (pred_batch == batch_y).sum().item() / batch_y.size(0)
 
                 acc.append(acc_batch)
