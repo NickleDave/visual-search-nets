@@ -125,6 +125,7 @@ def test(csv_file,
         elif dataset_type == 'VSD':
             acc_per_model = []
             acc_per_model_dict = {}
+            img_names_per_model_dict = {}
         predictions_per_model_dict = {}
 
         for net_number in range(1, number_nets_to_train + 1):
@@ -135,15 +136,16 @@ def test(csv_file,
                                        image_set='trainval',
                                        split='test',
                                        download=True,
-                                       transforms=VOCTransform(pad_size=pad_size)
+                                       transforms=VOCTransform(pad_size=pad_size),
+                                       return_img_name=True
                                        )
 
             elif dataset_type == 'searchstims':
                 testset = Searchstims(csv_file=csv_file,
-                                       split='test',
-                                       transform=transforms.Compose(
-                                           [transforms.ToTensor(), normalize]
-                                       ))
+                                      split='test',
+                                      transform=transforms.Compose(
+                                          [transforms.ToTensor(), normalize]
+                                      ))
 
             restore_path_this_net = make_save_path(restore_path, net_name, net_number, epochs)
 
@@ -156,7 +158,11 @@ def test(csv_file,
                                         device=device,
                                         num_workers=num_workers,
                                         data_parallel=data_parallel)
-            acc, y_pred = tester.test()
+
+            if dataset_type == 'searchstims':
+                acc, y_pred = tester.test()
+            elif dataset_type == 'VSD':
+                acc, y_pred, image_names = tester.test()
 
             if dataset_type == 'searchstims':
                 set_size_vec_test = df_dataset[df_dataset['split'] == 'test']['set_size']
@@ -181,6 +187,7 @@ def test(csv_file,
             elif dataset_type == 'VSD':
                 acc_per_model_dict[restore_path_this_net] = acc
                 acc_per_model.append(acc)
+                img_names_per_model_dict[restore_path_this_net] = image_names
 
             predictions_per_model_dict[restore_path_this_net] = y_pred
 
@@ -205,6 +212,7 @@ def test(csv_file,
                                 )
         elif dataset_type == 'VSD':
             results_dict.update(dict(acc_per_model_dict=acc_per_model_dict,
-                                     acc_per_model=acc_per_model))
+                                     acc_per_model=acc_per_model,
+                                     img_names_per_model_dict=img_names_per_model_dict))
 
         joblib.dump(results_dict, results_fname)
