@@ -188,6 +188,7 @@ def test(csv_file,
                 acc_per_model_dict[restore_path_this_net] = acc
                 acc_per_model.append(acc)
                 img_names_per_model_dict[restore_path_this_net] = image_names
+                print(f'f1 score for this network: {acc}')
 
             predictions_per_model_dict[restore_path_this_net] = y_pred
 
