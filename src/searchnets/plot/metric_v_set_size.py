@@ -213,7 +213,10 @@ def metric_v_set_size_df(df, net_name, method, stimulus, metric, conditions,
 
         if plot_mean:
             mn_metric = np.asarray(metric_vals).mean(axis=0)
-            mn_metric_label = f'mean {metric},\n{targ_cond}'
+            if targ_cond == 'both':
+                mn_metric_label = f'mean {metric}, all trials, {method}'
+            else:
+                mn_metric_label = f'mean {metric}, {targ_cond}, {method}'
             labels.append(mn_metric_label)
             mn_metric_line, = ax.plot(set_sizes, mn_metric,
                                       color=mn_colors[targ_cond], linewidth=4,
