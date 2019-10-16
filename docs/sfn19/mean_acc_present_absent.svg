@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="533.38428mm"
+   height="259.64447mm"
+   viewBox="0 0 1889.9444 920.00003"
+   id="svg4505"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="mean_acc_present_absent.svg"
+   inkscape:export-filename="/home/bart/Documents/repos/L2M/visual-search-nets/docs/static/fig2/fig2.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <defs
+     id="defs4507">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath219">
+      <rect
+         style="fill:none;stroke:#000000;stroke-width:14.17322826;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect221"
+         width="1121.0714"
+         height="385.35693"
+         x="255.05585"
+         y="673.79077"
+         rx="65.825623"
+         ry="18.317343" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath227">
+      <rect
+         style="fill:none;stroke:#000000;stroke-width:14.17322826;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect229"
+         width="1213.3928"
+         height="433.92856"
+         x="-3.3370166"
+         y="1321.6477"
+         rx="65.825623"
+         ry="18.317343" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath3471">
+      <rect
+         style="fill:#ffffff;fill-opacity:1"
+         id="rect3473"
+         width="1807.75"
+         height="343.83932"
+         x="267.48428"
+         y="1100.9333" />
+    </clipPath>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.7"
+     inkscape:cx="1130.2141"
+     inkscape:cy="487.48178"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer5"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:window-width="2495"
+     inkscape:window-height="1416"
+     inkscape:window-x="65"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <sodipodi:guide
+       position="-631.42863,1051.4286"
+       orientation="0,1"
+       id="guide4215"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="114.28569,1331.4287"
+       orientation="1,0"
+       id="guide4217"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="-62.946441,570.98234"
+       orientation="0,1"
+       id="guide4223"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="-362.85717,440.0002"
+       orientation="0,1"
+       id="guide4225"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="158.57141,880.00001"
+       orientation="0,1"
+       id="guide4227"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="-101.4286,880.00001"
+       orientation="0,1"
+       id="guide4169"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="247.35485,905.07145"
+       orientation="0,1"
+       id="guide4171"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="62.857137,784.28591"
+       orientation="1,0"
+       id="guide5482"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="62.857137,131.69659"
+       orientation="0,1"
+       id="guide231"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata4510">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer5"
+     inkscape:label="bg_box"
+     transform="translate(-280,-246.54425)"
+     style="display:inline">
+    <rect
+       style="fill:#ffffff;fill-opacity:1"
+       id="rect4755"
+       width="1889.9442"
+       height="907.14276"
+       x="280"
+       y="259.40152"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
+    <rect
+       style="display:inline;fill:#ffffff;fill-opacity:1"
+       id="rect4755-3"
+       width="1862.8014"
+       height="907.14276"
+       x="305.28561"
+       y="246.54422"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
+    <rect
+       style="display:inline;fill:#ffffff;fill-opacity:1"
+       id="rect4755-3-6"
+       width="1862.8014"
+       height="907.14276"
+       x="305.28561"
+       y="246.54422"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
+  </g>
+  <g
+     inkscape:label="img"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-192.19869,-633.79068)"
+     style="display:inline">
+    <image
+       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/searchstims_CORnet_Z_transfer_initialize_120000samples_mean_acc_present_absent.png"
+       xlink:href="searchstims_CORnet_Z_transfer_initialize_120000samples_mean_acc_present_absent.png"
+       width="1807.5"
+       height="376.25"
+       preserveAspectRatio="none"
+       style="display:inline;image-rendering:optimizeQuality"
+       id="image3433"
+       x="267.73431"
+       y="1068.5227"
+       clip-path="url(#clipPath3471)"
+       transform="translate(0,48)" />
+    <image
+       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/searchstims_alexnet_transfer_initialize_120000samples_mean_acc_present_absent.png"
+       xlink:href="searchstims_alexnet_transfer_initialize_120000samples_mean_acc_present_absent.png"
+       y="675.95123"
+       x="267.73431"
+       id="image3422"
+       style="image-rendering:optimizeQuality"
+       preserveAspectRatio="none"
+       height="376.25"
+       width="1807.5" />
+    <image
+       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/RVvGV_set_size_4_target_present_2677.png"
+       xlink:href="RVvGV_set_size_4_target_present_2677.png"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
+       id="image3410"
+       x="315.41278"
+       y="899.86194" />
+    <image
+       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/RVvRHGV_set_size_4_target_present_1583.png"
+       xlink:href="RVvRHGV_set_size_4_target_present_1583.png"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
+       id="image3421"
+       x="494.40659"
+       y="899.86194" />
+    <image
+       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/PWVvCV_set_size_4_target_present_1118.png"
+       xlink:href="PWVvCV_set_size_4_target_present_1118.png"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
+       id="image3432"
+       x="671.40039"
+       y="899.86194" />
+    <image
+       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/PWVvPWHCV_set_size_4_target_present_12403.png"
+       xlink:href="PWVvPWHCV_set_size_4_target_present_12403.png"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
+       id="image3443"
+       x="851.53711"
+       y="899.86194" />
+    <image
+       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/2_v_5_set_size_4_target_present_11786.png"
+       xlink:href="2_v_5_set_size_4_target_present_11786.png"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
+       id="image3454"
+       x="1087.0101"
+       y="734.19562" />
+    <image
+       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/YT_v_BTYL_set_size_4_target_present_10944.png"
+       xlink:href="YT_v_BTYL_set_size_4_target_present_10944.png"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
+       id="image3465"
+       x="1203.1469"
+       y="899.86194" />
+    <image
+       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/YT_v_BTBL_set_size_4_target_present_12126.png"
+       xlink:href="YT_v_BTBL_set_size_4_target_present_12126.png"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
+       id="image3476"
+       x="1381.5691"
+       y="899.86194" />
+    <image
+       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/Bx_v_RxBo_set_size_4_target_present_14259.png"
+       xlink:href="Bx_v_RxBo_set_size_4_target_present_14259.png"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
+       id="image3487"
+       x="1558.2772"
+       y="899.86194" />
+    <image
+       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/Bx_v_RxRo_set_size_4_target_present_8329.png"
+       xlink:href="Bx_v_RxRo_set_size_4_target_present_8329.png"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
+       id="image3498"
+       x="1735.8424"
+       y="899.86194" />
+    <image
+       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/TvT_set_size_4_target_present_8089.png"
+       xlink:href="TvT_set_size_4_target_present_8089.png"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
+       id="image3509"
+       x="1914.2648"
+       y="899.86194" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer4"
+     inkscape:label="text"
+     transform="translate(-24.34153,-134.28561)"
+     style="display:inline">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="139.92189"
+       y="570.60712"
+       id="text4525"
+       sodipodi:linespacing="0%"><tspan
+         sodipodi:role="line"
+         id="tspan4527"
+         x="139.92189"
+         y="570.60712"
+         style="font-weight:bold;font-size:40px;line-height:1.25">AlexNet</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="139.99332"
+       y="1030.6443"
+       id="text4525-6"
+       sodipodi:linespacing="0%"><tspan
+         sodipodi:role="line"
+         id="tspan4527-2"
+         x="139.99332"
+         y="1030.6443"
+         style="font-weight:bold;font-size:40px;line-height:1.25">CORnet Z</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="-486.1123"
+       y="87.290192"
+       id="text4525-2"
+       transform="matrix(0,-1,1,0,0,0)"
+       sodipodi:linespacing="0%"><tspan
+         sodipodi:role="line"
+         id="tspan4527-89"
+         x="-486.1123"
+         y="87.290192"
+         style="font-size:40px;line-height:1.25">accuracy</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="913.15137"
+       y="1031.5015"
+       id="text4525-0-2"
+       sodipodi:linespacing="0%"><tspan
+         sodipodi:role="line"
+         id="tspan4527-23-9"
+         x="913.15137"
+         y="1031.5015"
+         style="font-size:40px;line-height:1.25">set size</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="-925.98737"
+       y="87.290192"
+       id="text4525-2-3"
+       transform="matrix(0,-1,1,0,0,0)"
+       sodipodi:linespacing="0%"><tspan
+         sodipodi:role="line"
+         id="tspan4527-89-6"
+         x="-925.98737"
+         y="87.290192"
+         style="font-size:40px;line-height:1.25">accuracy</tspan></text>
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3436"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"><flowRegion
+         id="flowRegion3438"><rect
+           id="rect3440"
+           width="361.42856"
+           height="225.71428"
+           x="610"
+           y="582.85681" /></flowRegion><flowPara
+         id="flowPara3442" /></flowRoot>    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3444"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"><flowRegion
+         id="flowRegion3446"><rect
+           id="rect3448"
+           width="171.42857"
+           height="127.14286"
+           x="1037.1428"
+           y="377.14252" /></flowRegion><flowPara
+         id="flowPara3450" /></flowRoot>  </g>
+</svg>
