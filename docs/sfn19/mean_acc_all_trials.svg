@@ -15,7 +15,7 @@
    viewBox="0 0 2250.0003 938.57103"
    id="svg4505"
    version="1.1"
-   inkscape:version="0.91 r13725"
+   inkscape:version="0.92.4 (f8dce91, 2019-08-02)"
    sodipodi:docname="mean_acc_all_trials.svg"
    inkscape:export-filename="/home/bart/Documents/repos/L2M/visual-search-nets/docs/static/fig2/fig2.png"
    inkscape:export-xdpi="90"
@@ -68,7 +68,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.7"
-     inkscape:cx="990.51734"
+     inkscape:cx="813.37448"
      inkscape:cy="720.69738"
      inkscape:document-units="px"
      inkscape:current-layer="layer4"
@@ -77,8 +77,8 @@
      fit-margin-left="0"
      fit-margin-right="0"
      fit-margin-bottom="0"
-     inkscape:window-width="2495"
-     inkscape:window-height="1416"
+     inkscape:window-width="1301"
+     inkscape:window-height="744"
      inkscape:window-x="65"
      inkscape:window-y="24"
      inkscape:window-maximized="1"
@@ -138,7 +138,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -166,127 +166,127 @@
      transform="translate(-31.769997,-608.0766)"
      style="display:inline">
     <image
-       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/searchstims_CORnet_Z_transfer_initialize_120000samples.png"
+       sodipodi:absref="/home/ildefonso/Documents/repositories/coding/L2M/visual-search-nets/docs/sfn19/searchstims_CORnet_Z_transfer_initialize_120000samples.png"
        xlink:href="searchstims_CORnet_Z_transfer_initialize_120000samples.png"
-       transform="translate(0,48)"
-       clip-path="url(#clipPath3471)"
-       y="1068.5227"
-       x="267.73431"
-       id="image3433"
+       width="1807.5"
+       height="376.25"
+       preserveAspectRatio="none"
        style="display:inline;image-rendering:optimizeQuality"
+       id="image3433"
+       x="267.73431"
+       y="1068.5227"
+       clip-path="url(#clipPath3471)"
+       transform="translate(0,61.125)" />
+    <image
+       sodipodi:absref="/home/ildefonso/Documents/repositories/coding/L2M/visual-search-nets/docs/sfn19/searchstims_alexnet_transfer_initialize_120000samples.png"
+       xlink:href="searchstims_alexnet_transfer_initialize_120000samples.png"
+       y="692.82623"
+       x="267.73431"
+       id="image3422"
+       style="image-rendering:optimizeQuality"
        preserveAspectRatio="none"
        height="376.25"
        width="1807.5" />
     <image
-       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/searchstims_alexnet_transfer_initialize_120000samples.png"
-       xlink:href="searchstims_alexnet_transfer_initialize_120000samples.png"
-       width="1807.5"
-       height="376.25"
-       preserveAspectRatio="none"
-       style="image-rendering:optimizeQuality"
-       id="image3422"
-       x="267.73431"
-       y="675.95123" />
-    <image
-       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/RVvGV_set_size_4_target_present_2677.png"
+       sodipodi:absref="/home/ildefonso/Documents/repositories/coding/L2M/visual-search-nets/docs/sfn19/RVvGV_set_size_4_target_present_2677.png"
        xlink:href="RVvGV_set_size_4_target_present_2677.png"
-       y="899.86194"
-       x="315.41278"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
        id="image3410"
-       style="image-rendering:optimizeQuality"
-       preserveAspectRatio="none"
-       height="76.136665"
-       width="76.136665" />
+       x="326.66278"
+       y="899.86194" />
     <image
-       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/RVvRHGV_set_size_4_target_present_1583.png"
+       sodipodi:absref="/home/ildefonso/Documents/repositories/coding/L2M/visual-search-nets/docs/sfn19/RVvRHGV_set_size_4_target_present_1583.png"
        xlink:href="RVvRHGV_set_size_4_target_present_1583.png"
-       y="899.86194"
-       x="494.40659"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
        id="image3421"
-       style="image-rendering:optimizeQuality"
-       preserveAspectRatio="none"
-       height="76.136665"
-       width="76.136665" />
+       x="505.65659"
+       y="899.86194" />
     <image
-       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/PWVvCV_set_size_4_target_present_1118.png"
+       sodipodi:absref="/home/ildefonso/Documents/repositories/coding/L2M/visual-search-nets/docs/sfn19/PWVvCV_set_size_4_target_present_1118.png"
        xlink:href="PWVvCV_set_size_4_target_present_1118.png"
-       y="899.86194"
-       x="671.40039"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
        id="image3432"
-       style="image-rendering:optimizeQuality"
-       preserveAspectRatio="none"
-       height="76.136665"
-       width="76.136665" />
+       x="682.65039"
+       y="899.86194" />
     <image
-       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/PWVvPWHCV_set_size_4_target_present_12403.png"
+       sodipodi:absref="/home/ildefonso/Documents/repositories/coding/L2M/visual-search-nets/docs/sfn19/PWVvPWHCV_set_size_4_target_present_12403.png"
        xlink:href="PWVvPWHCV_set_size_4_target_present_12403.png"
-       y="899.86194"
-       x="851.53711"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
        id="image3443"
-       style="image-rendering:optimizeQuality"
-       preserveAspectRatio="none"
-       height="76.136665"
-       width="76.136665" />
+       x="857.16211"
+       y="899.86194" />
     <image
-       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/2_v_5_set_size_4_target_present_11786.png"
+       sodipodi:absref="/home/ildefonso/Documents/repositories/coding/L2M/visual-search-nets/docs/sfn19/2_v_5_set_size_4_target_present_11786.png"
        xlink:href="2_v_5_set_size_4_target_present_11786.png"
-       y="734.19562"
-       x="1087.0101"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
        id="image3454"
-       style="image-rendering:optimizeQuality"
-       preserveAspectRatio="none"
-       height="76.136665"
-       width="76.136665" />
+       x="1088.8851"
+       y="754.82062" />
     <image
-       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/YT_v_BTYL_set_size_4_target_present_10944.png"
+       sodipodi:absref="/home/ildefonso/Documents/repositories/coding/L2M/visual-search-nets/docs/sfn19/YT_v_BTYL_set_size_4_target_present_10944.png"
        xlink:href="YT_v_BTYL_set_size_4_target_present_10944.png"
-       y="899.86194"
-       x="1203.1469"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
        id="image3465"
-       style="image-rendering:optimizeQuality"
-       preserveAspectRatio="none"
-       height="76.136665"
-       width="76.136665" />
+       x="1208.7719"
+       y="899.86194" />
     <image
-       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/YT_v_BTBL_set_size_4_target_present_12126.png"
+       sodipodi:absref="/home/ildefonso/Documents/repositories/coding/L2M/visual-search-nets/docs/sfn19/YT_v_BTBL_set_size_4_target_present_12126.png"
        xlink:href="YT_v_BTBL_set_size_4_target_present_12126.png"
-       y="899.86194"
-       x="1381.5691"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
        id="image3476"
-       style="image-rendering:optimizeQuality"
-       preserveAspectRatio="none"
-       height="76.136665"
-       width="76.136665" />
+       x="1383.4441"
+       y="899.86194" />
     <image
-       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/Bx_v_RxBo_set_size_4_target_present_14259.png"
+       sodipodi:absref="/home/ildefonso/Documents/repositories/coding/L2M/visual-search-nets/docs/sfn19/Bx_v_RxBo_set_size_4_target_present_14259.png"
        xlink:href="Bx_v_RxBo_set_size_4_target_present_14259.png"
-       y="899.86194"
-       x="1558.2772"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
        id="image3487"
-       style="image-rendering:optimizeQuality"
-       preserveAspectRatio="none"
-       height="76.136665"
-       width="76.136665" />
+       x="1558.2772"
+       y="899.86194" />
     <image
-       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/Bx_v_RxRo_set_size_4_target_present_8329.png"
+       sodipodi:absref="/home/ildefonso/Documents/repositories/coding/L2M/visual-search-nets/docs/sfn19/Bx_v_RxRo_set_size_4_target_present_8329.png"
        xlink:href="Bx_v_RxRo_set_size_4_target_present_8329.png"
-       y="899.86194"
-       x="1735.8424"
+       width="76.136665"
+       height="76.136665"
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
        id="image3498"
-       style="image-rendering:optimizeQuality"
-       preserveAspectRatio="none"
-       height="76.136665"
-       width="76.136665" />
+       x="1735.8424"
+       y="899.86194" />
     <image
-       sodipodi:absref="/home/bart/Documents/repos/L2M/visual-search-nets/docs/sfn19/TvT_set_size_4_target_present_8089.png"
+       sodipodi:absref="/home/ildefonso/Documents/repositories/coding/L2M/visual-search-nets/docs/sfn19/TvT_set_size_4_target_present_8089.png"
        xlink:href="TvT_set_size_4_target_present_8089.png"
-       y="899.86194"
-       x="1914.2648"
-       id="image3509"
-       style="image-rendering:optimizeQuality"
-       preserveAspectRatio="none"
+       width="76.136665"
        height="76.136665"
-       width="76.136665" />
+       preserveAspectRatio="none"
+       style="image-rendering:optimizeQuality"
+       id="image3509"
+       x="1912.3898"
+       y="899.86194" />
   </g>
   <g
      inkscape:groupmode="layer"
@@ -298,21 +298,19 @@
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="139.92189"
-       y="570.60712"
-       id="text4525"
-       sodipodi:linespacing="0%"><tspan
+       y="591.23212"
+       id="text4525"><tspan
          sodipodi:role="line"
          id="tspan4527"
          x="139.92189"
-         y="570.60712"
+         y="591.23212"
          style="font-weight:bold;font-size:40px;line-height:1.25">AlexNet</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="139.99332"
        y="1030.6443"
-       id="text4525-6"
-       sodipodi:linespacing="0%"><tspan
+       id="text4525-6"><tspan
          sodipodi:role="line"
          id="tspan4527-2"
          x="139.99332"
@@ -324,8 +322,7 @@
        x="-486.1123"
        y="87.290192"
        id="text4525-2"
-       transform="matrix(0,-1,1,0,0,0)"
-       sodipodi:linespacing="0%"><tspan
+       transform="matrix(0,-1,1,0,0,0)"><tspan
          sodipodi:role="line"
          id="tspan4527-89"
          x="-486.1123"
@@ -336,8 +333,7 @@
        style="font-style:normal;font-weight:normal;line-height:0%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        x="913.15137"
        y="1031.5015"
-       id="text4525-0-2"
-       sodipodi:linespacing="0%"><tspan
+       id="text4525-0-2"><tspan
          sodipodi:role="line"
          id="tspan4527-23-9"
          x="913.15137"
@@ -349,8 +345,7 @@
        x="-925.98737"
        y="87.290192"
        id="text4525-2-3"
-       transform="matrix(0,-1,1,0,0,0)"
-       sodipodi:linespacing="0%"><tspan
+       transform="matrix(0,-1,1,0,0,0)"><tspan
          sodipodi:role="line"
          id="tspan4527-89-6"
          x="-925.98737"
@@ -366,7 +361,7 @@
            height="225.71428"
            x="610"
            y="582.85681" /></flowRegion><flowPara
-         id="flowPara3442"></flowPara></flowRoot>    <flowRoot
+         id="flowPara3442" /></flowRoot>    <flowRoot
        xml:space="preserve"
        id="flowRoot3444"
        style="fill:black;stroke:none;stroke-opacity:1;stroke-width:1px;stroke-linejoin:miter;stroke-linecap:butt;fill-opacity:1;font-family:sans-serif;font-style:normal;font-weight:normal;font-size:40px;line-height:125%;letter-spacing:0px;word-spacing:0px"><flowRegion
@@ -376,5 +371,5 @@
            height="127.14286"
            x="1037.1428"
            y="377.14252" /></flowRegion><flowPara
-         id="flowPara3450"></flowPara></flowRoot>  </g>
+         id="flowPara3450" /></flowRoot>  </g>
 </svg>
