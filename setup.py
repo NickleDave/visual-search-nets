@@ -33,6 +33,7 @@ REQUIRED = [
     'torch', 'torchvision', 'numpy', 'scipy',  'matplotlib', 'jupyterlab',
     'pandas', 'seaborn', 'imageio',
     'joblib', 'tqdm', 'attrs', 'searchstims>=2.3.1',
+    'scikit-posthocs'
 ]
 
 # What packages are optional?
