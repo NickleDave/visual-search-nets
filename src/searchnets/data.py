@@ -137,6 +137,11 @@ def split(csv_file_in,
 
             # if all stim_types are valid, filter by them
             df = df[df['stimulus'].isin(stim_types)]
+            # reset index to zero, don't keep the original indices
+            # this is necessary if we don't use all stimuli, because old
+            # indices if used for indexing might not correspond to 
+            # new rows of the shorter DataFrame
+            df = df.reset_index(drop=True)
         else:
             stim_types = df_stim_types
         num_stim_types = len(stim_types)
