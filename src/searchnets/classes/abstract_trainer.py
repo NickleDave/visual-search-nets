@@ -252,7 +252,7 @@ class AbstractTrainer:
                 pbar.set_description(f'batch {i} of {total}')
                 batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
                 output = self.model(batch_x)
-                if batch_y.dims() > 1:
+                if batch_y.dim() > 1:
                     # convert to one hot vector
                     predicted = (output > self.sigmoid_threshold).float()
                     acc = sklearn.metrics.f1_score(batch_y.cpu().numpy(), predicted.cpu().numpy(),
