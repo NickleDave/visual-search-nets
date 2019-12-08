@@ -12,6 +12,7 @@ results/*
 bvlc_alexnet.npy
 *.npz
 data/checkpoints/*/
+data/csv/
 data/experiment_*/
 data/expt_*/
 data/for_figshare/*
