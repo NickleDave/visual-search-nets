@@ -75,6 +75,11 @@ class Tester:
 
         self.sigmoid_threshold = sigmoid_threshold
 
+        if type(self.testset) == VOCDetection:
+            self.sigmoid_activation = torch.nn.Sigmoid()
+        else:
+            self.sigmoid_activation = None
+
     @classmethod
     def from_config(cls,
                     net_name,
@@ -133,9 +138,16 @@ class Tester:
                 pbar.set_description(f'batch {i} of {total}')
                 batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
                 output = self.model(batch_x)
-                if batch_y.dim() > 1:
-                    # convert to one hot vector
-                    pred_batch = (output > self.sigmoid_threshold).float()
+                if type(self.testset) == VOCDetection:
+                    if batch_y.dim() > 1:
+                        # convert to one hot vector
+                        output = self.sigmoid_activation(output)
+                        pred_batch = (output > self.sigmoid_threshold).float()
+                    else:
+                        raise ValueError(
+                            'output of network for VOCDetection dataset only had one dimension, '
+                            'should have more than one'
+                        )
                     acc_batch = sklearn.metrics.f1_score(batch_y.cpu().numpy(), pred_batch.cpu().numpy(),
                                                          average='macro')
                 else:
