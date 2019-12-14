@@ -223,18 +223,28 @@ def vsd_results_df(results_gz,
             # (because we need votes from multiple models for an f1 score)
             f1_scores_all_models = []
             acc_scores_all_models = []
+            hamming_loss_all_models = []
             for model_key, model_num in model_key_num_map.items():
                 y_pred = results['predictions_per_model_dict'][model_key][row]
+
                 f1 = sklearn.metrics.f1_score(y_true, y_pred, average='macro')
                 new_columns[f'f1_score_{model_num}'][row] = f1
                 f1_scores_all_models.append(f1)  # we'll use to get means after
+
                 acc = sklearn.metrics.accuracy_score(y_true, y_pred)
                 new_columns[f'acc_{model_num}'][row] = acc
                 acc_scores_all_models.append(acc)
+
+                hl = sklearn.metrics.hamming_loss(y_true, y_pred)
+                new_columns[f'hamming_loss_{model_num}'][row] = hl
+                hamming_loss_all_models.append(hl)
+
             mean_f1 = np.mean(f1_scores_all_models)
             new_columns['mean_f1_score'][row] = mean_f1
             mean_acc = np.mean(acc_scores_all_models)
             new_columns['mean_acc'][row] = mean_acc
+            mean_hamming_loss = np.mean(hamming_loss_all_models)
+            new_columns['mean_hamming_loss'][row] = mean_hamming_loss
 
     for column_name, values in new_columns.items():
         vsd_df_test[column_name] = values
