@@ -1,20 +1,19 @@
 from pathlib import Path
 
 import joblib
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import sklearn.metrics
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-import searchnets
 from searchnets.datasets import VOCDetection
 from searchnets.utils.transforms import VOCTransform
 
 DATA_ROOT = Path('../../data')
 vsd_results_dir = DATA_ROOT.joinpath('results/VSD_alexnet_transfer_lr_1e-03_no_finetune')
 vsd_cornet_z_results_gz = vsd_results_dir.joinpath('VSD_alexnet_transfer_lr_1e-03_no_finetune_trained_200_epochs_test_results.gz')
+
 
 def main():
     vsd_split_csv = DATA_ROOT.joinpath('Visual_Search_Difficulty_v1.0/VSD_dataset_split.csv')
@@ -79,6 +78,7 @@ def main():
 
     vsd_df_test['f1'] = f1_scores
     vsd_df_test.to_csv('../../data/csv/VSD_alexnet_transfer_lr_1e-03_no_finetune_test.csv')
+
 
 if __name__ == '__main__':
     main()
