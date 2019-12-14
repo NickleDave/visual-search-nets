@@ -9,6 +9,9 @@ from .datasets import Searchstims, VOCDetection
 from .utils.general import make_save_path
 from .utils.transforms import normalize, VOCTransform
 
+# declare as a constant because also referenced by munge.VSD_results_df
+VSD_PAD_SIZE = 500
+
 
 def train(csv_file,
           dataset_type,
@@ -19,7 +22,7 @@ def train(csv_file,
           random_seed,
           save_path,
           root=None,
-          pad_size=500,
+          pad_size=VSD_PAD_SIZE,
           method='transfer',
           num_classes=2,
           learning_rate=None,
