@@ -17,7 +17,6 @@ from . import nets
 from . import plot
 from . import utils
 
-from .learncurve import learning_curve
 from .train import train
 from .test import test
 

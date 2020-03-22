@@ -12,7 +12,6 @@ from .config import parse_config
 from .data import split
 from .train import train
 from .test import test
-from .learncurve import learning_curve
 
 
 def _call_split(config):
@@ -79,25 +78,6 @@ def _call_test(config, configfile):
          data_parallel=config.train.data_parallel)
 
 
-def _call_learncurve(config):
-    """helper function to call searchstims.learncurve"""
-    learning_curve(gz_filename=config.data.gz_filename,
-                   net_name=config.train.net_name,
-                   number_nets_to_train=config.train.number_nets_to_train,
-                   input_shape=config.train.input_shape,
-                   new_learn_rate_layers=config.train.new_learn_rate_layers,
-                   base_learning_rate=config.train.base_learning_rate,
-                   new_layer_learning_rate=config.train.new_layer_learning_rate,
-                   epochs_list=config.train.epochs_list,
-                   train_size_list=config.learncurve.train_size_list,
-                   batch_size=config.train.batch_size,
-                   random_seed=config.train.random_seed,
-                   model_save_path=config.train.model_save_path,
-                   test_results_save_path=config.test.test_results_save_path,
-                   dropout_rate=config.train.dropout_rate,
-                   val_size=config.data.val_size)
-
-
 def cli(command, configfile):
     """command-line interface
     Called by main() when user runs from the command-line by typing 'searchnets'
@@ -142,11 +122,12 @@ def cli(command, configfile):
         _call_train(config)
         _call_test(config, configfile)
 
-    elif command == 'learncurve':
-        _call_learncurve(config)
 
-
-CHOICES = ['split', 'train', 'test', 'all', 'learncurve']
+CHOICES = ['split',
+           'train',
+           'test',
+           'all',
+           ]
 
 
 def get_parser():

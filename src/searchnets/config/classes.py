@@ -314,25 +314,6 @@ class TestConfig:
 
 
 @attr.s
-class LearnCurveConfig:
-    """class to represent [LEARNCURVE] section of config.ini file
-
-    Attributes
-    ----------
-    train_size_list : list
-        of ints, sizes of training sets used to generate learning curve
-    """
-    train_size_list = attr.ib(validator=instance_of(list))
-
-    @train_size_list.validator
-    def check_train_size_list(self, attribute, value):
-        for ind, train_size in enumerate(value):
-            if type(train_size) != int:
-                raise TypeError('all values in train_size_list should be int but '
-                                f'got type {type(train_size)} for element {ind}')
-
-
-@attr.s
 class Config:
     """class to represent all sections of config.ini file
 
@@ -344,10 +325,7 @@ class Config:
         represents [DATA] section
     test: TestConfig
         represents [TEST] section
-    learncurve: LearnCurveConfig
-        represents [LEARNCURVE] section
     """
     train = attr.ib(validator=instance_of(TrainConfig))
     data = attr.ib(validator=instance_of(DataConfig))
     test = attr.ib(validator=instance_of(TestConfig))
-    learncurve = attr.ib(validator=optional(instance_of(LearnCurveConfig)), default=None)
