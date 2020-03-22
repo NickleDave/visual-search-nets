@@ -16,6 +16,9 @@ class AbstractTrainer:
     """
     NUM_WORKERS = 4
 
+    DEFAULT_CKPT_SUFFIX = '-ckpt.pt'
+    BEST_VAL_ACC_CKPT_SUFFIX = '-best-val-acc-ckpt.pt'
+
     def __init__(self,
                  net_name,
                  model,
@@ -48,7 +51,7 @@ class AbstractTrainer:
             actual instance of network.
         trainset : torch.Dataset or torchvision.Visiondataset
             training data, represented as a class.
-        save_path : str
+        save_path : Path
             path to directory where trained models and checkpoints (if any) should be saved
         save_acc_by_set_size_by_epoch : bool
             if True, compute and save accuracy for each visual search set size for each epoch
@@ -139,7 +142,7 @@ class AbstractTrainer:
 
         self.sigmoid_threshold = sigmoid_threshold
 
-    def save_checkpoint(self, epoch):
+    def save_checkpoint(self, epoch, ckpt_path=None):
         print(f'Saving checkpoint in {self.save_path}')
         ckpt = {
             'epoch': epoch,
@@ -148,12 +151,9 @@ class AbstractTrainer:
         }
         for ind, optimizer in enumerate(self.optimizers):
             ckpt[f'optimizer_{ind}'] = optimizer.state_dict()
-        ckpt_file = str(self.save_path) + '-ckpt.tar'
-        torch.save(ckpt, ckpt_file)
-
-    def save_model(self):
-        model_file = str(self.save_path) + '-model.pt'
-        torch.save(self.model.state_dict(), model_file)
+        if ckpt_path is None:
+            ckpt_path = self.save_path.joinpath(self.DEFAULT_CKPT_SUFFIX)
+        torch.save(ckpt, str(ckpt_path))  # torch.save expects path as a string
 
     def train(self):
         if self.val_loader is not None:
@@ -177,7 +177,9 @@ class AbstractTrainer:
                             best_val_acc = val_acc_this_epoch
                             epochs_without_improvement = 0
                             print(f'Validation accuracy improved, saving model in {self.save_path}')
-                            self.save_model()
+                            self.save_ckpt(
+                                ckpt_path=self.save_path.joinpath(self.BEST_VAL_ACC_CKPT_SUFFIX)
+                            )
                         else:
                             epochs_without_improvement += 1
                             if epochs_without_improvement > self.patience:
@@ -198,11 +200,8 @@ class AbstractTrainer:
                 print('Computing accuracy per visual search stimulus set size on training set')
                 self.train_acc_by_set_size(epoch)
 
-        # --------------- done training, save model + training history info -------------------------------
-        if self.patience is None:
-            # only save at end if we haven't already been saving checkpoints
-            print(f'Saving model in {self.save_path}')
-            self.save_model()
+        # --------------- done training, save checkpoint again + training history info -------------------------------
+        self.save_checkpoint(epoch)
 
         if self.save_acc_by_set_size_by_epoch:
             # and save matrix with accuracy by epoch by set size
