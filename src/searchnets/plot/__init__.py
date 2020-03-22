@@ -16,5 +16,5 @@ plt.rcParams['axes.axisbelow'] = True
 
 
 from .heatmaps import p_item_heatmap
-from .metric_v_set_size import acc_v_set_size, ftr_v_spt_conj, metric_v_set_size_df, mn_slope_by_epoch
+from .metric_v_set_size import metric_v_set_size_df, mn_slope_by_epoch
 from .trainhistory import train_history

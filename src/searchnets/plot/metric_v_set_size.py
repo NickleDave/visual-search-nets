@@ -1,88 +1,8 @@
-import os
-
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
 
-
-def acc_v_set_size(results, set_sizes=(1, 2, 4, 8), ax=None,
-                   title=None, save_as=None, figsize=(10, 5),
-                   set_xlabel=False, set_ylabel=False, set_ylim=True,
-                   ylim=(0, 1.1), plot_mean=True, add_legend=False,
-                   task_name=None):
-    """plot accuracy as a function of visual search task set size
-    for models trained on a single task or dataset
-
-    Parameters
-    ----------
-    results
-        path to results.gz file saved after measuring accuracy of trained networks
-        on test set of visual search stimuli
-    set_sizes : list
-        of int, set sizes of visual search stimuli. Default is [1, 2, 4, 8].
-    ax : matplotlib.Axis
-        axis on which to plot figure. Default is None, in which case a new figure with
-        a single axis is created for the plot.
-    title : str
-        string to use as title of figure. Default is None.
-    save_as : str
-        path to directory where figure should be saved. Default is None, in which
-        case figure is not saved.
-    figsize : tuple
-        (width, height) in inches. Default is (10, 5). Only used if ax is None and a new
-        figure is created.
-    set_xlabel : bool
-        if True, set the value of xlabel to "set size". Default is False.
-    set_ylabel : bool
-        if True, set the value of ylabel to "accuracy". Default is False.
-    set_ylim : bool
-        if True, set the y-axis limits to the value of ylim.
-    ylim : tuple
-        with two elements, limits for y-axis. Default is (0, 1.1).
-    plot_mean : bool
-        if True, find mean accuracy and plot as a separate solid line. Default is True.
-    add_legend : bool
-        if True, add legend to axis. Default is False.
-    task_name : str
-
-
-    Returns
-    -------
-    None
-    """
-    accs = joblib.load(results)['acc_per_set_size_per_model']
-    accs = np.squeeze(accs)
-
-    if ax is None:
-        fig, ax = plt.subplots()
-        fig.set_size_inches(figsize)
-
-    for net_num, acc in enumerate(accs):
-        label = f'net num. {net_num}'
-        if task_name:
-            label += ', task {task_name}'
-        ax.plot(set_sizes, acc, linestyle='--', label=label)
-    if plot_mean:
-        mn_acc = accs.mean(axis=0)
-        ax.plot(set_sizes, mn_acc, linewidth=3, label='mean', color='k')
-
-    ax.set_xticks(set_sizes)
-
-    if title:
-        ax.set_title(title)
-    if set_xlabel:
-        ax.set_xlabel('set size')
-    if set_ylabel:
-        ax.set_ylabel('accuracy')
-    if set_ylim:
-        ax.set_ylim(ylim)
-
-    if add_legend:
-        ax.legend()
-
-    if save_as:
-        plt.savefig(save_as)
 
 # default colors used for 'sampling units' (statistics term) in each condition
 # in our case, a training replicate, one trained neural network
@@ -242,63 +162,6 @@ def metric_v_set_size_df(df, net_name, method, stimulus, metric, conditions,
 
     if save_as:
         plt.savefig(save_as)
-
-
-def ftr_v_spt_conj(ftr_results, spt_conj_results, epochs,
-                   set_sizes=(1, 2, 4, 8), savefig=False, savedir=None,
-                   figsize=(10, 5)):
-    """plot accuracy of trained models on visual search task
-    with separate plots for feature and spatial conjunction search stimuli
-
-    Parameters
-    ----------
-    ftr_results : str
-        path to results.gz file saved after measuring accuracy of trained convnets
-        on test set of feature search stimuli
-    spt_conj_results
-        path to results.gz file saved after measuring accuracy of trained convnets
-        on test set of feature search stimuli
-    epochs : int
-        number of epochs that nets were trained
-    set_sizes : list
-        of int, set sizes of visual search stimuli. Default is [1, 2, 4, 8].
-    savefig : bool
-        if True, save figure. Default is False.
-    savedir : str
-        path to directory where figure should be saved. Default is None.
-    figsize : tuple
-        (width, height) in inches. Default is (10, 5).
-
-    Returns
-    -------
-    None
-    """
-    ftr_accs = joblib.load(ftr_results)['acc_per_set_size_per_model']
-    ftr_accs = np.squeeze(ftr_accs)
-    spt_conj_accs = joblib.load(spt_conj_results)['acc_per_set_size_per_model']
-    spt_conj_accs = np.squeeze(spt_conj_accs)
-
-    fig, ax = plt.subplots(1, 2, sharey=True)
-    fig.set_size_inches(figsize)
-    ax = ax.ravel()
-
-    ax[0].plot(set_sizes, ftr_accs.T)
-    ax[0].set_xticks(set_sizes)
-    ax[0].set_title('feature')
-    ax[0].set_xlabel('set size')
-    ax[0].set_ylabel('accuracy')
-
-    ax[1].plot(set_sizes, spt_conj_accs.T)
-    ax[1].set_xticks(set_sizes)
-    ax[1].set_title('spatial conjunction')
-    ax[1].set_xlabel('set size')
-    ax[1].set_ylim([0, 1.1])
-
-    fig.suptitle(f'{epochs} epochs')
-
-    if savefig:
-        fname = os.path.join(savedir, f'alexnet_ftr_v_spt_conj_{epochs}_epochs.png')
-        plt.savefig(fname)
 
 
 def mn_slope_by_epoch(ftr_results_list, spt_conj_results_list, epochs_list,
