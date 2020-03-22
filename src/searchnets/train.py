@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 from torchvision import transforms
 
-from .classes.transfer_trainer import TransferTrainer
-from .classes.trainer import Trainer
+from .engine.transfer_trainer import TransferTrainer
+from .engine.trainer import Trainer
 from .datasets import Searchstims, VOCDetection
 from .utils.general import make_save_path
 from .utils.transforms import normalize, VOCTransform

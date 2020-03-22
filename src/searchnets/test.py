@@ -7,7 +7,7 @@ import pandas as pd
 import torch
 from torchvision import transforms
 
-from .classes.tester import Tester
+from .engine.tester import Tester
 from .datasets import Searchstims, VOCDetection
 from .utils.general import make_save_path
 from .utils.transforms import normalize, VOCTransform
