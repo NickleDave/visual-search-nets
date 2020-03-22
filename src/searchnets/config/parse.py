@@ -3,7 +3,30 @@ import configparser
 from distutils.util import strtobool
 import os
 
-from .classes import TrainConfig, DataConfig, TestConfig, Config
+import attr
+from attr.validators import instance_of
+
+from .data import DataConfig
+from .test import TestConfig
+from .train import TrainConfig
+
+
+@attr.s
+class Config:
+    """class to represent all sections of config.ini file
+
+    Attributes
+    ----------
+    train: TrainConfig
+        represents [TRAIN] section
+    data: DataConfig
+        represents [DATA] section
+    test: TestConfig
+        represents [TEST] section
+    """
+    train = attr.ib(validator=instance_of(TrainConfig))
+    data = attr.ib(validator=instance_of(DataConfig))
+    test = attr.ib(validator=instance_of(TestConfig))
 
 
 def _str_to_int_or_float(val):
