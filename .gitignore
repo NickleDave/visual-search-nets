@@ -9,7 +9,6 @@ __pycache__/
 .DS_Store
 
 # data
-results/*
 bvlc_alexnet.npy
 *.npz
 data/checkpoints/*/
