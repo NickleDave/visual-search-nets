@@ -37,6 +37,7 @@ REQUIRED = [
     'numpy',
     'matplotlib',
     'pandas',
+    'pyprojroot',
     'scipy',
     'scikit-learn',
     'scikit-posthocs',
