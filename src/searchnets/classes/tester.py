@@ -9,6 +9,7 @@ from tqdm import tqdm
 from .. import nets
 from ..datasets import VOCDetection
 
+from .abstract_trainer import AbstractTrainer
 
 NUM_WORKERS = 4
 
@@ -37,7 +38,7 @@ class Tester:
             actual instance of network.
         testset : torch.Dataset or torchvision.Visiondataset
             test data, represented as a class.
-        restore_path : str
+        restore_path : Path
             path to directory where checkpoints and train models were saved
         batch_size : int
             number of training samples per batch
@@ -58,9 +59,22 @@ class Tester:
             model = nn.DataParallel(model)
 
         self.restore_path = restore_path
-        model_file = str(restore_path) + '-model.pt'
+
+        best_ckpt_path = restore_path.joinpath(AbstractTrainer.BEST_VAL_ACC_CKPT_SUFFIX)
+        if not best_ckpt_path.exists():
+            ckpt_path = restore_path.joinpath(AbstractTrainer.DEFAULT_CKPT_SUFFIX)
+            if not ckpt_path.exists():
+                raise ValueError(
+                    f'did not find a checkpoint file in restore path: {restore_path}.\n'
+                    f'Looked for a checkpoint saved upon best val accuracy: {best_ckpt_path.name} \n'
+                    f'and for a checkpoint saved during or at the end of training: {ckpt_path.name}'
+                )
+            self.ckpt_path_loaded_from = ckpt_path
+        else:
+            self.ckpt_path_loaded_from = best_ckpt_path
+
         model.load_state_dict(
-            torch.load(model_file)
+            torch.load(self.ckpt_path_loaded_from)
         )
         model.to(device)
         self.model = model
