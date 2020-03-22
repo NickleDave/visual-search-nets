@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 import tarfile
 
+from pyprojroot import here
+
 
 def make_save_path(save_path, net_name, net_number, epochs):
     """make a unique save path for model and checkpoints,
@@ -83,3 +85,20 @@ def reorder_paths(paths, order_strs):
     assert len(paths_out) == len(paths), "not all paths in paths_out"
 
     return paths_out
+
+
+def projroot_path(relative_path):
+    """convert relative path to path with root set to project root
+
+    just a wrapper around pyprojroot.here, used as converter in config and elsewhere
+
+    Parameters
+    ----------
+    relative_path : str, Path
+
+    Returns
+    -------
+    projroot_path : Path
+        relative to project root, as determined by pyprojroot package
+    """
+    return here(relative_project_path=relative_path)
