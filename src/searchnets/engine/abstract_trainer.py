@@ -235,7 +235,7 @@ class AbstractTrainer:
 
             if self.summary_step:
                 if self.step % self.summary_step == 0:
-                    print('would save summary here')
+                    self.train_writer.add_scalar('Loss/train', loss.mean(), self.step)
 
         avg_loss = total_loss / batch_total
         print(f'\tTraining Avg. Loss: {avg_loss:7.3f}')
@@ -243,7 +243,9 @@ class AbstractTrainer:
     def validate(self):
         self.model.eval()
 
-        val_acc_this_epoch = []
+        val_acc = []
+        val_loss = []
+
         with torch.no_grad():
             total = int(np.ceil(len(self.valset) / self.batch_size))
             pbar = tqdm(self.val_loader)
@@ -251,6 +253,9 @@ class AbstractTrainer:
                 pbar.set_description(f'batch {i} of {total}')
                 batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
                 output = self.model(batch_x)
+                loss = self.criterion(output, batch_y)
+                val_loss.append(loss.mean())  # mean needed for multiple GPUs
+
                 if batch_y.dim() > 1:
                     # convert to one hot vector
                     predicted = (output > self.sigmoid_threshold).float()
@@ -260,16 +265,20 @@ class AbstractTrainer:
                     # below, _ because torch.max returns (values, indices)
                     _, predicted = torch.max(output.data, 1)
                     acc = (predicted == batch_y).sum().item() / batch_y.size(0)
-                val_acc_this_epoch.append(acc)
+                val_acc.append(acc)
 
-        val_acc_this_epoch = np.asarray(val_acc_this_epoch).mean()
-        print(' Validation Acc: %7.3f' % val_acc_this_epoch)
+        val_acc = np.asarray(val_acc).mean()
+        val_loss = np.asarray(val_loss).mean()
+        print(
+            f' Validation: accuracy {val_acc:7.3f} loss {val_loss:.4f}'
+        )
 
         if self.summary_step:
-            print('would write val summary')
-            # self.train_writer.add_summary(val_acc_summary, step)
+            # just always add val acc regardless of step -- want to capture it every time
+            self.train_writer.add_scalar('Acc/val', val_acc, self.step)
+            self.train_writer.add_scalar('Loss/val', val_loss, self.step)
 
-        return val_acc_this_epoch
+        return val_acc
 
     def train_acc_by_set_size(self, epoch):
         self.model.eval()
