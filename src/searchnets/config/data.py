@@ -1,4 +1,6 @@
 """class to represent data section of config.ini file """
+from pathlib import Path
+
 import attr
 from attr import validators, converters
 from attr.validators import instance_of
@@ -92,12 +94,12 @@ class DataConfig:
         samples for each stimulus type will be divided by the number of set sizes, so that an equal number is used
         for each set size.
     """
-    csv_file_in = attr.ib(converter=projroot_path, validator=instance_of(str))
+    csv_file_in = attr.ib(converter=projroot_path, validator=instance_of(Path))
     train_size = attr.ib(validator=[instance_of((int, float)), is_valid_proportion])
     dataset_type = attr.ib(validator=instance_of(str), default='searchstims')
     num_classes = attr.ib(validator=validators.optional(instance_of(int)), default=2)
     root = attr.ib(converter=converters.optional(projroot_path),
-                   validator=validators.optional(instance_of(str)),
+                   validator=validators.optional(instance_of(Path)),
                    default=None)
     pad_size = attr.ib(validator=validators.optional(instance_of(int)), default=500)
     @dataset_type.validator
@@ -108,7 +110,7 @@ class DataConfig:
             )
 
     csv_file_out = attr.ib(converter=converters.optional(projroot_path),
-                           validator=validators.optional(instance_of(str)),
+                           validator=validators.optional(instance_of(Path)),
                            default=None)
     stim_types = attr.ib(validator=validators.optional(is_list_of_str), default=None)
     val_size = attr.ib(validator=validators.optional([instance_of((int, float)), is_valid_proportion]), default=None)

@@ -1,4 +1,6 @@
 """class to represent train section of config.ini file """
+from pathlib import Path
+
 import attr
 from attr import validators
 from attr.validators import instance_of
@@ -121,7 +123,7 @@ class TrainConfig:
     batch_size = attr.ib(validator=instance_of(int))
     random_seed = attr.ib(validator=instance_of(int))
     save_path = attr.ib(converter=projroot_path,
-                        validator=instance_of(str))
+                        validator=instance_of(Path))
 
     # ------------------------ have defaults ------------------------------------------------
     method = attr.ib(validator=instance_of(str), default='transfer')
