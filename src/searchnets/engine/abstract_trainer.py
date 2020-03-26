@@ -152,7 +152,7 @@ class AbstractTrainer:
         for ind, optimizer in enumerate(self.optimizers):
             ckpt[f'optimizer_{ind}'] = optimizer.state_dict()
         if ckpt_path is None:
-            ckpt_path = self.save_path.joinpath(self.DEFAULT_CKPT_SUFFIX)
+            ckpt_path = self.save_path.parent.joinpath(self.save_path.name + self.DEFAULT_CKPT_SUFFIX)
         torch.save(ckpt, str(ckpt_path))  # torch.save expects path as a string
 
     def train(self):
@@ -177,8 +177,14 @@ class AbstractTrainer:
                             best_val_acc = val_acc_this_epoch
                             epochs_without_improvement = 0
                             print(f'Validation accuracy improved, saving model in {self.save_path}')
-                            self.save_ckpt(
-                                ckpt_path=self.save_path.joinpath(self.BEST_VAL_ACC_CKPT_SUFFIX)
+                            # notice here we use a different "suffix" so there will be *two* checkpoint files
+                            # one of which is the best validation accuracy, and the other saved on the checkpoint step
+                            # (if specified) and at the end of training
+                            self.save_checkpoint(
+                                epoch=epoch,
+                                ckpt_path=self.save_path.parent.joinpath(
+                                    self.save_path.name + self.BEST_VAL_ACC_CKPT_SUFFIX
+                                )
                             )
                         else:
                             epochs_without_improvement += 1
@@ -192,6 +198,7 @@ class AbstractTrainer:
                     val_acc.append(None)
 
             if self.checkpoint_epoch:
+                #
                 if epoch % self.checkpoint_epoch == 0:
                     self.save_checkpoint(epoch)
 
@@ -254,7 +261,7 @@ class AbstractTrainer:
                 batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
                 output = self.model(batch_x)
                 loss = self.criterion(output, batch_y)
-                val_loss.append(loss.mean())  # mean needed for multiple GPUs
+                val_loss.append(loss.mean().cpu())  # mean needed for multiple GPUs
 
                 if batch_y.dim() > 1:
                     # convert to one hot vector
