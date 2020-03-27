@@ -60,9 +60,12 @@ class Tester:
 
         self.restore_path = restore_path
 
-        best_ckpt_path = restore_path.joinpath(AbstractTrainer.BEST_VAL_ACC_CKPT_SUFFIX)
+        best_ckpt_path = restore_path.parent.joinpath(
+            restore_path.name + AbstractTrainer.BEST_VAL_ACC_CKPT_SUFFIX
+        )
         if not best_ckpt_path.exists():
-            ckpt_path = restore_path.joinpath(AbstractTrainer.DEFAULT_CKPT_SUFFIX)
+            ckpt_path = restore_path.parent.joinpath(
+                restore_path.name + AbstractTrainer.DEFAULT_CKPT_SUFFIX)
             if not ckpt_path.exists():
                 raise ValueError(
                     f'did not find a checkpoint file in restore path: {restore_path}.\n'
@@ -73,9 +76,8 @@ class Tester:
         else:
             self.ckpt_path_loaded_from = best_ckpt_path
 
-        model.load_state_dict(
-            torch.load(self.ckpt_path_loaded_from)
-        )
+        checkpoint = torch.load(self.ckpt_path_loaded_from)
+        model.load_state_dict(checkpoint['model'])
         model.to(device)
         self.model = model
         self.device = device
