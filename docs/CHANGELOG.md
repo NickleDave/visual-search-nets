@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0]
+This is the version used for SfN 2019 poster, and for the paper
+### Added
+- logging to a `tf.events` file [#49](https://github.com/NickleDave/visual-search-nets/pull/49)
+
+### Fixed
+- fix checkpoint saving [#46](https://github.com/NickleDave/visual-search-nets/pull/46)
+  + save "best" checkpoint as well as intermittent / last epoch checkpoint
+  + don't save a separate model file
+
+### Changed
+- switched to `torch` [#33](https://github.com/NickleDave/visual-search-nets/pull/33)
+- use `pyprojroot` [#45](https://github.com/NickleDave/visual-search-nets/pull/33)
+- clean up codebase [#44](https://github.com/NickleDave/visual-search-nets/pull/33)
+- rename `classes` subpackage to `engine` [#48](https://github.com/NickleDave/visual-search-nets/pull/48)
+
 ## [0.3.0]
 This is the version used for presentation at SciPy 2019
 ### Added
