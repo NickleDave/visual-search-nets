@@ -3,8 +3,10 @@ from . import functional as F
 
 __all__ = [
     'ClassIntsFromXml',
+    'LargestClassIntFromXml',
     'OneHotFromClassInts',
     'ParseVocXml',
+    'RandomClassInt',
     'RandomPad',
 ]
 
@@ -76,6 +78,52 @@ class ClassIntsFromXml:
 
     def __call__(self, xml_dict):
         return F.class_ints_from_xml(xml_dict, self.class_int_map)
+
+
+class RandomClassInt:
+    """transform that takes list of classes present in a PascalVOC dataset image,
+    and returns one chosen randomly.
+
+    Parameters
+    ----------
+    class_ints : list
+        of ints, corresponding to the classes present in the image.
+        As returned by searchnets.transforms.functional.class_ints_from_xml
+
+    Returns
+    -------
+    random_class_int
+    """
+    def __init__(self):
+        pass
+
+    def __call__(self, class_ints):
+        return F.random_class_int(class_ints)
+
+
+class LargestClassIntFromXml:
+    """get list of classes in an image from the PascalVOC dataset as a list of ints,
+    given the .xml annotation file in a Python dictionary
+
+    Parameters
+    ----------
+    xml_dict : dict
+        that contains .xml annotation.
+    class_int_map : dict
+        that maps class names from the PascalVOC dataset to integer values.
+        Keys are classes in PascalVoc, e.g., 'aeroplane', and values are ints.
+        Default is None, in which case searchnets.transforms.functional.VOC_CLASS_INT_MAP is used.
+
+    Returns
+    -------
+    class_ints : list
+        of ints, the classes present in the image.
+    """
+    def __init__(self, class_int_map=F.VOC_CLASS_INT_MAP):
+        self.class_int_map = class_int_map
+
+    def __call__(self, xml_dict):
+        return F.largest_class_int_from_xml(xml_dict, self.class_int_map)
 
 
 class OneHotFromClassInts:
