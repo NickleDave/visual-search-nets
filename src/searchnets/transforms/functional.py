@@ -1,14 +1,18 @@
 """transforms used with Torch Datasets"""
 import collections
 import xml.etree.ElementTree as ET
+import random
 
+import numpy as np
 import torch
 
 __all__ = [
     'random_pad',
     'class_ints_from_xml',
+    'largest_class_int_from_xml',
     'onehot_from_class_ints',
     'parse_voc_xml',
+    'random_class_int',
 ]
 
 # declare as a constant because also referenced by munge.VSD_results_df
@@ -137,6 +141,66 @@ def class_ints_from_xml(xml_dict, class_int_map=None):
         name = obj['name']
         class_ints.append(class_int_map[name])
     return class_ints
+
+
+def random_class_int(class_ints):
+    """transform that takes list of classes present in a PascalVOC dataset image,
+    and returns one chosen randomly.
+
+    Parameters
+    ----------
+    class_ints : list
+        of ints, corresponding to the classes present in the image.
+        As returned by searchnets.transforms.functional.class_ints_from_xml
+
+    Returns
+    -------
+    random_class_int
+    """
+    return random.choice(class_ints)
+
+
+def _size_from_bbox(bbox):
+    """helper function that determines size of bounding box from Pascal VOC .xml annotation file"""
+    bbox = {k: int(v) for k, v in bbox.items()}  # cast string to int
+    height = bbox['ymax'] - bbox['ymin']
+    width = bbox['xmax'] - bbox['xmin']
+    return height * width
+
+
+def largest_class_int_from_xml(xml_dict, class_int_map=None):
+    """get class of largest object in an image from the PascalVOC dataset,
+    as determined by the size of its bounding box in the .xml annotation file
+
+    Parameters
+    ----------
+    xml_dict : dict
+        that contains .xml annotation.
+    class_int_map : dict
+        that maps class names from the PascalVOC dataset to integer values.
+        Keys are classes in PascalVoc, e.g., 'aeroplane', and values are ints.
+        Default is None, in which case searchnets.transforms.functional.VOC_CLASS_INT_MAP is used.
+
+    Returns
+    -------
+    class_int : int
+        of largest object, as determined by the size of its bounding box
+    """
+    class_int_map = class_int_map or VOC_CLASS_INT_MAP
+
+    objects = xml_dict['annotation']['object']
+    if type(objects) == dict:  # only a single object, just return it
+        name = objects['name']
+        return class_int_map[name]
+    elif type(objects) == list:
+        sizes = [_size_from_bbox(obj['box'] for obj in objects)]
+        largest_obj_ind = np.argmax(sizes)
+        name = objects[largest_obj_ind]['name']
+        return class_int_map[name]
+    else:
+        raise ValueError(
+            f'unexpected type in xml_dict: {type(objects)}'
+        )
 
 
 def onehot_from_class_ints(class_ints, n_classes=None):
