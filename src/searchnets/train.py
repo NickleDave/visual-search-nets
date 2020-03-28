@@ -210,15 +210,16 @@ def train(csv_file,
     else:
         trainset_set_size = None
 
-    if dataset_type == 'searchstims':
+    if loss_func in {'CE', 'CE-largest', 'CE-random'}:
         apply_sigmoid = False
-    elif dataset_type == 'VSD':
-        apply_sigmoid = True  # for multi-label prediction
-
-    if loss_func == 'CE':
         criterion = nn.CrossEntropyLoss()
     elif loss_func == 'BCE':
+        apply_sigmoid = True  # for multi-label prediction
         criterion = nn.BCELoss()
+    else:
+        raise ValueError(
+            f'invalid value for loss function: {loss_func}'
+        )
 
     for epochs in epochs_list:
         print(f'training {net_name} model for {epochs} epochs')
