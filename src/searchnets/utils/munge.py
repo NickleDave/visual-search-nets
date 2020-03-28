@@ -9,8 +9,8 @@ import sklearn.metrics
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from searchnets.datasets import VOCDetection
-from searchnets.utils.transforms import VOCTransform
+from ..datasets import VOCDetection
+from ..transforms.util import get_transforms
 
 from .metrics import compute_d_prime
 from ..train import VSD_PAD_SIZE
@@ -187,13 +187,16 @@ def vsd_results_df(results_gz,
     # grab one of them to use to find index for the img from each sample from the Dataset
     test_img_names = results['img_names_per_model_dict'][model_keys_for_results_gz[0]]
 
+    transform, target_transform = get_transforms(dataset_type='VSD', loss_func='BCE')
+
     # need to make Dataset so we know what ground truth labels are
     testset = VOCDetection(root=root,
                            csv_file=vsd_split_csv,
                            image_set='trainval',
                            split='test',
                            download=True,
-                           transforms=VOCTransform(pad_size=pad_size),
+                           transform=transform,
+                           target_transform=target_transform,
                            return_img_name=True
                            )
 
