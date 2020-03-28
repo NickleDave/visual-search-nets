@@ -5,12 +5,11 @@ import joblib
 import numpy as np
 import pandas as pd
 import torch
-from torchvision import transforms
 
+from .transforms.util import get_transforms
 from .engine.tester import Tester
 from .datasets import Searchstims, VOCDetection
 from .utils.general import make_save_path
-from .utils.transforms import normalize, VOCTransform
 
 
 def test(csv_file,
@@ -24,8 +23,9 @@ def test(csv_file,
          configfile,
          random_seed,
          root=None,
-         pad_size=500,
          num_classes=2,
+         pad_size=500,
+         loss_func='CE',
          num_workers=4,
          data_parallel=False):
     """measure accuracy of trained convolutional neural networks on test set of visual search stimuli
@@ -63,6 +63,16 @@ def test(csv_file,
         path to dataset root. Used with VOCDetection dataset to specify where VOC data was downloaded to.
     num_classes : int
         number of classes. Default is 2 (target present, target absent).
+    pad_size : int
+        size to which images in PascalVOC / Visual Search Difficulty dataset should be padded.
+        Images are padded by making an array of zeros and randomly placing the image within it
+        so that the entire image is still within the boundaries of (pad size x pad size).
+        Default value is specified by searchnets.transforms.functional.VSD_PAD_SIZE.
+        Argument has no effect if the dataset_type is not 'VOC'.
+        Used to determine transforms to use at test time.
+    loss_func : str
+        type of loss function to use. One of {'CE', 'BCE'}. Default is 'CE',
+        the standard cross-entropy loss. Used to determine transforms to use at test time.
     num_workers : int
         number of workers used by torch.DataLoaders. Default is 4.
     data_parallel : bool
@@ -129,6 +139,7 @@ def test(csv_file,
         predictions_per_model_dict = {}
 
         for net_number in range(1, number_nets_to_train + 1):
+            transform, target_transform = get_transforms(dataset_type, loss_func, pad_size)
 
             if dataset_type == 'VSD':
                 testset = VOCDetection(root=root,
@@ -136,16 +147,15 @@ def test(csv_file,
                                        image_set='trainval',
                                        split='test',
                                        download=True,
-                                       transforms=VOCTransform(pad_size=pad_size),
+                                       transform=transform,
+                                       target_transform=target_transform,
                                        return_img_name=True
                                        )
 
             elif dataset_type == 'searchstims':
                 testset = Searchstims(csv_file=csv_file,
                                       split='test',
-                                      transform=transforms.Compose(
-                                          [transforms.ToTensor(), normalize]
-                                      ))
+                                      transform=transform)
 
             restore_path_this_net = make_save_path(restore_path, net_name, net_number, epochs)
 
