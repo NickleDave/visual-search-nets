@@ -30,6 +30,14 @@ def is_non_neg_int(instance, attribute, value):
         )
 
 
+VALID_LOSS_FUNCTIONS = {
+    'BCE',
+    'CE',
+    'CE-largest',
+    'CE-random'
+}
+
+
 @attr.s
 class TrainConfig:
     """class to represent [TRAIN] section of config.ini file
@@ -150,9 +158,9 @@ class TrainConfig:
     loss_func = attr.ib(validator=instance_of(str), default='CE')
     @loss_func.validator
     def check_loss_func(self, attribute, value):
-        if value not in {'CE', 'BCE'}:
+        if value not in VALID_LOSS_FUNCTIONS:
             raise ValueError(
-                f"loss_func must be one of {{'CE', 'BCE'}}, but was {value}."
+                f"loss_func must be one of {VALID_LOSS_FUNCTIONS}, but was {value}."
             )
     optimizer = attr.ib(validator=instance_of(str), default='SGD')
     @optimizer.validator
