@@ -10,11 +10,9 @@ https://github.com/amdegroot/ssd.pytorch/blob/master/data/voc0712.py
 under MIT license
 https://github.com/amdegroot/ssd.pytorch/blob/master/LICENSE
 """
-import collections
 import os
 from pathlib import Path
 import tarfile
-import xml.etree.ElementTree as ET
 
 import numpy as np
 import pandas as pd
@@ -160,9 +158,11 @@ class VOCDetection(VisionDataset):
         """
         img_path = self.images[index]
         img = Image.open(img_path).convert('RGB')
-        target = self.parse_voc_xml(
-            ET.parse(self.annotations[index]).getroot())
-        img, target = self.transforms(img, target)  # will be VOCTransform
+        target = self.annotations[index]
+
+        img = self.transform(img)
+        target = self.target_transform(target)
+
         if self.return_img_name:
             return img, target, Path(img_path).stem
         else:
@@ -170,26 +170,6 @@ class VOCDetection(VisionDataset):
 
     def __len__(self):
         return len(self.images)
-
-    @staticmethod
-    def parse_voc_xml(node):
-        voc_dict = {}
-        children = list(node)
-        if children:
-            def_dic = collections.defaultdict(list)
-            for dc in map(VOCDetection.parse_voc_xml, children):
-                for ind, v in dc.items():
-                    def_dic[ind].append(v)
-            voc_dict = {
-                node.tag:
-                    {ind: v[0] if len(v) == 1 else v
-                     for ind, v in def_dic.items()}
-            }
-        if node.text:
-            text = node.text.strip()
-            if not children:
-                voc_dict[node.tag] = text
-        return voc_dict
 
 
 def download_extract(url, root, filename, md5):
