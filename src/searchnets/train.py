@@ -1,16 +1,13 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from torchvision import transforms
 
 from .engine.transfer_trainer import TransferTrainer
 from .engine.trainer import Trainer
 from .datasets import Searchstims, VOCDetection
 from .utils.general import make_save_path
-from .utils.transforms import normalize, VOCTransform
-
-# declare as a constant because also referenced by munge.VSD_results_df
-VSD_PAD_SIZE = 500
+from .transforms.functional import VSD_PAD_SIZE
+from .transforms.util import get_transforms
 
 
 def train(csv_file,
@@ -99,11 +96,16 @@ def train(csv_file,
         learning rate for a deep net trained with SGD,
         e.g. 0.001 instead of 0.01
     loss_func : str
-        type of loss function to use. One of {'CE', 'InvDPrime', 'triplet'}. Default is 'CE',
-        the standard cross-entropy loss. 'InvDPrime' is inverse D prime. 'triplet' is triplet loss
-        used in face recognition and biometric applications.
+        type of loss function to use. One of {'CE', 'BCE'}.
+        Default is 'CE', the standard cross-entropy loss.
     optimizer : str
         optimizer to use. One of {'SGD', 'Adam', 'AdamW'}.
+    pad_size : int
+        size to which images in PascalVOC / Visual Search Difficulty dataset should be padded.
+        Images are padded by making an array of zeros and randomly placing the image within it
+        so that the entire image is still within the boundaries of (pad size x pad size).
+        Default value is specified by searchnets.transforms.functional.VSD_PAD_SIZE.
+        Argument has no effect if the dataset_type is not 'VOC'.
     save_acc_by_set_size_by_epoch : bool
         if True, compute accuracy on training set for each epoch separately
         for each unique set size in the visual search stimuli. These values
@@ -159,13 +161,16 @@ def train(csv_file,
     else:
         device = torch.device('cpu')
 
+    transform, target_transform = get_transforms(dataset_type, loss_func, pad_size)
+
     if dataset_type == 'VSD':
         trainset = VOCDetection(root=root,
                                 csv_file=csv_file,
                                 image_set='trainval',
                                 split='train',
                                 download=True,
-                                transforms=VOCTransform(pad_size=pad_size)
+                                transform=transform,
+                                target_transform=target_transform
                                 )
         if use_val:
             valset = VOCDetection(root=root,
@@ -173,7 +178,8 @@ def train(csv_file,
                                   image_set='trainval',
                                   split='val',
                                   download=True,
-                                  transforms=VOCTransform(pad_size=pad_size)
+                                  transform=transform,
+                                  target_transform=target_transform
                                   )
         else:
             valset = None
@@ -181,14 +187,12 @@ def train(csv_file,
     elif dataset_type == 'searchstims':
         trainset = Searchstims(csv_file=csv_file,
                                split='train',
-                               transform=transforms.Compose(
-                                   [transforms.ToTensor(), normalize]
-                               ))
+                               transform=transform)
 
         if use_val:
             valset = Searchstims(csv_file=csv_file,
                                  split='val',
-                                 transform=transforms.Compose([transforms.ToTensor(), normalize]))
+                                 transform=transform)
         else:
             valset = None
 
@@ -201,8 +205,7 @@ def train(csv_file,
         elif dataset_type == 'searchstims':
             trainset_set_size = Searchstims(csv_file=csv_file,
                                             split='train',
-                                            transform=transforms.Compose(
-                                                [transforms.ToTensor(), normalize]),
+                                            transform=transform,
                                             return_set_size=True)
     else:
         trainset_set_size = None
