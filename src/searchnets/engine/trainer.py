@@ -55,8 +55,13 @@ class Trainer(AbstractTrainer):
             model = nets.alexnet.build(pretrained=False, num_classes=num_classes, apply_sigmoid=apply_sigmoid)
         elif net_name == 'VGG16':
             model = nets.vgg16.build(pretrained=False, num_classes=num_classes, apply_sigmoid=apply_sigmoid)
-        elif net_name == 'CORnet_Z':
-            model = nets.cornet.build(pretrained=False, num_classes=num_classes, apply_sigmoid=apply_sigmoid)
+        elif 'cornet' in net_name.lower():
+            model = nets.cornet.build(model_name=net_name, pretrained=False,
+                                      num_classes=num_classes, apply_sigmoid=apply_sigmoid)
+        else:
+            raise ValueError(
+                f'invalid value for net_name: {net_name}'
+            )
 
         optimizers = list()
         if optimizer == 'SGD':
