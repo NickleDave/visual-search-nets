@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `transforms` sub-package [#58](https://github.com/NickleDave/visual-search-nets/pull/58)
   + decouples transforms from datasets
   + documents transforms used with each combination of datasets and loss function, in `util.get_transforms` function  
+- transforms for VOC target that pick either largest class (based on bounding box)
+  or a random bounding box [#59](https://github.com/NickleDave/visual-search-nets/pull/59)
+- other `CORnet` models [#66](https://github.com/NickleDave/visual-search-nets/pull/66)
 
 ## [1.0.0]
 This is the version used for SfN 2019 poster, and for the paper
