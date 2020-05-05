@@ -75,9 +75,14 @@ class TransferTrainer(AbstractTrainer):
         elif net_name == 'VGG16':
             model = nets.vgg16.build(pretrained=True, progress=True, apply_sigmoid=apply_sigmoid)
             model = nets.vgg16.reinit(model, new_learn_rate_layers, num_classes=num_classes)
-        elif net_name == 'CORnet_Z':
-            model = nets.cornet.build(pretrained=True, apply_sigmoid=apply_sigmoid)
+        elif 'cornet' in net_name.lower():
+            model = nets.cornet.build(model_name=net_name, pretrained=False,
+                                      num_classes=num_classes, apply_sigmoid=apply_sigmoid)
             model = nets.cornet.reinit(model, num_classes=num_classes)
+        else:
+            raise ValueError(
+                f'invalid value for net_name: {net_name}'
+            )
 
         if optimizer == 'SGD':
             optimizer = torch.optim.SGD
@@ -89,7 +94,7 @@ class TransferTrainer(AbstractTrainer):
         optimizers = []
         if net_name == 'alexnet' or net_name == 'VGG16':
             classifier_params = model.classifier.parameters()
-        elif net_name == 'CORnet_Z':
+        elif 'cornet' in net_name.lower():
             classifier_params = model.decoder.parameters()
 
         if optimizer == 'SGD':
@@ -113,7 +118,7 @@ class TransferTrainer(AbstractTrainer):
 
         if net_name == 'alexnet' or net_name == 'VGG16':
             feature_params = model.features.parameters()
-        elif net_name == 'CORnet_Z':
+        elif 'cornet' in net_name.lower():
             feature_params = [list(p) for p in
                               [model.V1.parameters(), model.V2.parameters(),
                                model.V4.parameters(), model.IT.parameters()]]

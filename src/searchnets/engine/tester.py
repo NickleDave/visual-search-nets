@@ -118,8 +118,12 @@ class Tester:
             model = nets.alexnet.build(pretrained=False, progress=False, num_classes=num_classes)
         elif net_name == 'VGG16':
             model = nets.vgg16.build(pretrained=False, progress=False, num_classes=num_classes)
-        elif net_name == 'CORnet_Z':
-            model = nets.cornet.build(pretrained=False, num_classes=num_classes)
+        elif 'cornet' in net_name.lower():
+            model = nets.cornet.build(model_name=net_name, pretrained=False, num_classes=num_classes)
+        else:
+            raise ValueError(
+                f'invalid value for net_name: {net_name}'
+            )
 
         kwargs = dict(**kwargs, net_name=net_name, model=model)
         return cls(**kwargs)

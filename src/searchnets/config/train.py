@@ -115,9 +115,9 @@ class TrainConfig:
     net_name = attr.ib(validator=instance_of(str))
     @net_name.validator
     def check_net_name(self, attribute, value):
-        if value not in {'alexnet', 'VGG16', 'CORnet_Z'}:
+        if value not in {'alexnet', 'VGG16', 'CORnet_Z', 'CORnet_RT', 'CORnet_S'}:
             raise ValueError(
-                f"net_name must be one of {{'alexnet', 'VGG16', 'CORnet_Z'}}, but was {value}."
+                f"net_name must be one of {{'alexnet', 'VGG16', 'CORnet_Z', 'CORnet_RT', 'CORnet_S'}}, but was {value}."
             )
     number_nets_to_train = attr.ib(validator=instance_of(int))
     epochs_list = attr.ib(validator=instance_of(list))
