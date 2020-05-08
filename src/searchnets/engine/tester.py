@@ -150,13 +150,11 @@ class Tester:
             img_names = None
 
         with torch.no_grad():
-            for i, sample in enumerate(pbar):
+            for i, batch in enumerate(pbar):
+                batch_x, batch_y = batch['img'].to(self.device), batch['target'].to(self.device)
                 if img_names is not None:
-                    batch_x, batch_y, batch_img_name = sample
-                else:
-                    batch_x, batch_y = sample
+                    batch_img_name = batch['name'].cpu().numpy().tolist()
                 pbar.set_description(f'batch {i} of {total}')
-                batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
                 output = self.model(batch_x)
                 if type(self.testset) == VOCDetection:
                     if batch_y.dim() > 1:
