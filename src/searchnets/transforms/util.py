@@ -1,3 +1,4 @@
+import torch
 import torchvision.transforms as vis_transforms
 
 from . import functional as F
@@ -41,7 +42,7 @@ def get_transforms(dataset_type,
                 [vis_transforms.ToTensor(),
                  vis_transforms.Normalize(mean=MEAN, std=STD)]
             )
-            target_transform = None
+            target_transform = transforms.TensorFromNumpyScalar()
         else:
             raise ValueError(
                 f"no transforms specified for dataset_type '{dataset_type}' and loss_func '{loss_func}'"
