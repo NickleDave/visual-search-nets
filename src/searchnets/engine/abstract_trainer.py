@@ -143,6 +143,10 @@ class AbstractTrainer:
             self.train_writer = None
 
         self.sigmoid_threshold = sigmoid_threshold
+        if isinstance(self.trainset, datasets.VOCDetection):
+            self.sigmoid_activation = torch.nn.Sigmoid()
+        else:
+            self.sigmoid_activation = None
 
     def save_checkpoint(self, epoch, ckpt_path=None):
         print(f'Saving checkpoint in {self.save_path}')
@@ -307,11 +311,11 @@ class AbstractTrainer:
                     val_f1.append(f1)
 
                     batch_largest = batch['largest'].to(self.device)
-                    acc_largest = (pred_max == batch_largest).sum().item() / batch_y.size(0)
+                    acc_largest = (pred_max == batch_largest).sum().item() / batch_largest.size(0)
                     val_acc_largest.append(acc_largest)
 
                     batch_random = batch['random'].to(self.device)
-                    acc_random = (pred_max == batch_random).sum().item() / batch_y.size(0)
+                    acc_random = (pred_max == batch_random).sum().item() / batch_random.size(0)
                     val_acc_random.append(acc_random)
 
         val_metrics = {
