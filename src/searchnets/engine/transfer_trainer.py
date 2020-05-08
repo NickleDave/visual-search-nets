@@ -20,7 +20,6 @@ class TransferTrainer(AbstractTrainer):
                     net_name,
                     new_learn_rate_layers,
                     num_classes=2,
-                    apply_sigmoid=False,
                     optimizer='SGD',
                     freeze_trained_weights=False,
                     base_learning_rate=1e-20,
@@ -37,9 +36,6 @@ class TransferTrainer(AbstractTrainer):
             One of {'alexnet', 'VGG16'}
         num_classes : int
             number of classes. Default is 2 (target present, target absent).
-        apply_sigmoid : bool
-            if True, apply sigmoid to output of last layer. Default is False.
-            Used for multi-label prediction.
         new_learn_rate_layers : list
             of str, layer names whose weights will be initialized randomly
             and then trained with the 'new_layer_learning_rate'.
@@ -70,14 +66,14 @@ class TransferTrainer(AbstractTrainer):
         trainer : TransferTrainer
         """
         if net_name == 'alexnet':
-            model = nets.alexnet.build(pretrained=True, progress=True, apply_sigmoid=apply_sigmoid)
+            model = nets.alexnet.build(pretrained=True, progress=True)
             model = nets.alexnet.reinit(model, new_learn_rate_layers, num_classes=num_classes)
         elif net_name == 'VGG16':
-            model = nets.vgg16.build(pretrained=True, progress=True, apply_sigmoid=apply_sigmoid)
+            model = nets.vgg16.build(pretrained=True, progress=True)
             model = nets.vgg16.reinit(model, new_learn_rate_layers, num_classes=num_classes)
         elif 'cornet' in net_name.lower():
             model = nets.cornet.build(model_name=net_name, pretrained=False,
-                                      num_classes=num_classes, apply_sigmoid=apply_sigmoid)
+                                      num_classes=num_classes)
             model = nets.cornet.reinit(model, num_classes=num_classes)
         else:
             raise ValueError(

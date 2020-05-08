@@ -19,7 +19,6 @@ class Trainer(AbstractTrainer):
     def from_config(cls,
                     net_name,
                     num_classes,
-                    apply_sigmoid=False,
                     optimizer='SGD',
                     learning_rate=0.001,
                     momentum=0.9,
@@ -34,9 +33,6 @@ class Trainer(AbstractTrainer):
             One of {'alexnet', 'VGG16'}
         num_classes : int
             number of classes. Default is 2 (target present, target absent).
-        apply_sigmoid : bool
-            if True, apply sigmoid to output of last layer. Default is False.
-            Used for multi-label prediction.
         optimizer : str
             optimizer to use. One of {'SGD', 'Adam', 'AdamW'}.
         learning_rate : float
@@ -52,12 +48,12 @@ class Trainer(AbstractTrainer):
         trainer : Trainer
         """
         if net_name == 'alexnet':
-            model = nets.alexnet.build(pretrained=False, num_classes=num_classes, apply_sigmoid=apply_sigmoid)
+            model = nets.alexnet.build(pretrained=False, num_classes=num_classes)
         elif net_name == 'VGG16':
-            model = nets.vgg16.build(pretrained=False, num_classes=num_classes, apply_sigmoid=apply_sigmoid)
+            model = nets.vgg16.build(pretrained=False, num_classes=num_classes)
         elif 'cornet' in net_name.lower():
             model = nets.cornet.build(model_name=net_name, pretrained=False,
-                                      num_classes=num_classes, apply_sigmoid=apply_sigmoid)
+                                      num_classes=num_classes)
         else:
             raise ValueError(
                 f'invalid value for net_name: {net_name}'
