@@ -13,7 +13,7 @@ model_urls = {
 
 class VGG(nn.Module):
 
-    def __init__(self, features, num_classes=1000, init_weights=True, apply_sigmoid=False):
+    def __init__(self, features, num_classes=1000, init_weights=True):
         super(VGG, self).__init__()
         self.features = features
         self.avgpool = nn.AdaptiveAvgPool2d((7, 7))
@@ -26,8 +26,6 @@ class VGG(nn.Module):
             nn.Dropout(),
             nn.Linear(4096, num_classes),
         ]
-        if apply_sigmoid:
-            classifier_list.append(nn.Sigmoid())
         self.classifier = nn.Sequential(*classifier_list)
         if init_weights:
             self._initialize_weights()

@@ -27,7 +27,7 @@ class CORblock_Z(nn.Module):
         return x
 
 
-def CORnet_Z(num_classes=1000, apply_sigmoid=False):
+def CORnet_Z(num_classes=1000):
     """returns CORnet_Z model"""
     model_list = [
         ('V1', CORblock_Z(3, 64, kernel_size=7, stride=2)),
@@ -41,10 +41,6 @@ def CORnet_Z(num_classes=1000, apply_sigmoid=False):
             ('output', Identity())
         ])))
     ]
-    if apply_sigmoid:
-        model_list.append(
-            ('sigmoid', nn.Sigmoid())
-        )
     model = nn.Sequential(OrderedDict(model_list))
 
     # weight initialization

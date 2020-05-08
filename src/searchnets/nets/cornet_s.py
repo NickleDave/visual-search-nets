@@ -73,7 +73,7 @@ class CORblock_S(nn.Module):
         return output
 
 
-def CORnet_S(num_classes=1000, apply_sigmoid=False):
+def CORnet_S(num_classes=1000):
     model_list = [
         ('V1', nn.Sequential(OrderedDict([  # this one is custom to save GPU memory
             ('conv1', nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
@@ -97,10 +97,6 @@ def CORnet_S(num_classes=1000, apply_sigmoid=False):
             ('output', Identity())
         ])))
     ]
-    if apply_sigmoid:
-        model_list.append(
-            ('sigmoid', nn.Sigmoid())
-        )
     model = nn.Sequential(OrderedDict(model_list))
 
     # weight initialization
