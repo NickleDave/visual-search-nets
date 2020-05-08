@@ -148,14 +148,13 @@ def test(csv_file,
                                        split='test',
                                        download=True,
                                        transform=transform,
-                                       target_transform=target_transform,
-                                       return_img_name=True
-                                       )
+                                       target_transform=target_transform)
 
             elif dataset_type == 'searchstims':
                 testset = Searchstims(csv_file=csv_file,
                                       split='test',
-                                      transform=transform)
+                                      transform=transform,
+                                      target_transform=target_transform)
 
             restore_path_this_net = make_save_path(restore_path, net_name, net_number, epochs)
 
