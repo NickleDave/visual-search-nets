@@ -11,7 +11,11 @@ from torch.utils.data import Dataset
 class Searchstims(Dataset):
     """dataset of visual search stimuli"""
 
-    def __init__(self, csv_file, split, transform=None, return_set_size=False):
+    def __init__(self,
+                 csv_file,
+                 split,
+                 transform=None,
+                 target_transform=None):
         """
 
         Parameters
@@ -21,11 +25,9 @@ class Searchstims(Dataset):
         split : str
             Split of entire dataset to use. One of {'train', 'val', 'test'}.
         transform : callable
-            transform to be applied to a single sample from the dataset
-        return_set_size : bool
-            if True, return visual search stimulus set size for each sample,
-            which is the total number of items (targets + distractors) in the image.
-            Default is False. Used for calculating accuracy per set size.
+            transform to be applied to a single image from the dataset
+        target_transform : callable
+            transform to be applied to target
         """
         if split not in {'train', 'val', 'test'}:
             raise ValueError("split must be one of: {'train', 'val', 'test'}")
@@ -39,42 +41,43 @@ class Searchstims(Dataset):
 
         img_files = df['img_file'].values
         root_output_dir = df['root_output_dir'].values
-        self.x = np.asarray(
+        self.img_paths = np.asarray(
             [str(Path(root).joinpath(img_file))
              for root, img_file in zip(root_output_dir, img_files)]
         )
 
-        targ_cond = df['target_condition'].values
-        targ_cond = np.asarray(
-            [1 if tc == 'present' else 0 for tc in targ_cond]
+        target_condition = df['target_condition'].values
+        target_condition = np.asarray(
+            [1 if tc == 'present' else 0 for tc in target_condition]
         )
-        self.y = targ_cond
+        self.target_condition = target_condition
 
         self.transform = transform
+        self.target_transform = target_transform
 
-        self.return_set_size = return_set_size
-        if return_set_size:
-            self.set_size = df['set_size'].values
+        self.set_size = df['set_size'].values
 
     def __len__(self):
-        return len(self.x)
+        return len(self.img_paths)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        x = imageio.imread(self.x[idx])
-        y = self.y[idx]
+        img = imageio.imread(self.img_paths[idx])
+        target = self.target_condition[idx]
 
         if self.transform:
-            x = self.transform(x)
+            img = self.transform(img)
 
-        y = torch.from_numpy(np.asarray(y))
+        if self.target_transform:
 
-        if self.return_set_size:
-            set_size = self.set_size[idx]
-            sample = (x, y, set_size)
-        else:
-            sample = (x, y)
+            target = torch.from_numpy(np.asarray(target))
+
+        sample = {
+            'img': img,
+            'target': target,
+            'set_size': self.set_size[idx],
+        }
 
         return sample
