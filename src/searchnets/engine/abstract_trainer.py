@@ -9,6 +9,8 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
+from .. import datasets
+
 
 class AbstractTrainer:
     """abstract class for training CNNs on visual search task.
@@ -25,9 +27,9 @@ class AbstractTrainer:
                  trainset,
                  save_path,
                  criterion,
+                 loss_func,
                  optimizers,
                  save_acc_by_set_size_by_epoch=False,
-                 trainset_set_size=None,
                  batch_size=64,
                  epochs=200,
                  use_val=False,
@@ -56,6 +58,11 @@ class AbstractTrainer:
         save_acc_by_set_size_by_epoch : bool
             if True, compute and save accuracy for each visual search set size for each epoch
         criterion : torch.nn._Loss subclass
+        loss_func : str
+            that represents loss function and target that should be used with it.
+            Used to determine targets for computing loss, and for metrics to use
+            when determining whether to stop early due to metrics computed on
+            validation set.
         optimizers : list
             of optimizers, e.g. torch.nn.SGD
         batch_size : int
@@ -118,18 +125,13 @@ class AbstractTrainer:
 
         self.save_acc_by_set_size_by_epoch = save_acc_by_set_size_by_epoch
         if save_acc_by_set_size_by_epoch:
-            self.trainset_set_size = trainset_set_size
-            self.set_sizes = np.unique(self.trainset_set_size.set_size)
+            self.set_sizes = np.unique(self.trainset.set_size)
             self.acc_epoch_set_size_savepath = str(save_path) + '_acc_by_epoch_by_set_size.txt'
-            self.train_loader_no_shuffle = DataLoader(self.trainset_set_size, batch_size=batch_size,
-                                                      shuffle=False, num_workers=num_workers)
             self.acc_by_epoch_by_set_size = np.full(shape=(epochs, self.set_sizes.shape[0]), fill_value=np.nan)
-
-        else:
-            self.train_loader_no_shuffle = None
 
         criterion.to(device)
         self.criterion = criterion
+        self.loss_func = loss_func
         self.optimizers = optimizers
         self.save_path = save_path
         self.summary_step = summary_step
@@ -170,7 +172,15 @@ class AbstractTrainer:
             if self.val_loader is not None:
                 if epoch % self.val_epoch == 0:
 
-                    val_acc_this_epoch = self.validate()
+                    val_metrics = self.validate()
+                    if self.loss_func == 'CE':
+                        val_acc_this_epoch = val_metrics['acc']
+                    elif self.loss_func == 'BCE':
+                        val_acc_this_epoch = val_metrics['f1']
+                    elif self.loss_func == 'CE-largest':
+                        val_acc_this_epoch = val_metrics['acc_largest']
+                    elif self.loss_func == 'CE-random':
+                        val_acc_this_epoch = val_metrics['acc_random']
 
                     if self.patience is not None:
                         if val_acc_this_epoch > best_val_acc:
@@ -224,10 +234,17 @@ class AbstractTrainer:
 
         batch_total = int(np.ceil(len(self.trainset) / self.batch_size))
         batch_pbar = tqdm(self.train_loader)
-        for i, (batch_x, batch_y) in enumerate(batch_pbar):
+        for i, batch in enumerate(batch_pbar):
             self.step += 1
 
-            batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
+            batch_x = batch['img'].to(self.device)
+            if self.loss_func == 'BCE' or self.loss_func == 'CE':
+                batch_y = batch['target'].to(self.device)
+            elif self.loss_func == 'CE-largest':
+                batch_y = batch['largest'].to(self.device)
+            elif self.loss_func == 'CE-random':
+                batch_y = batch['random'].to(self.device)
+
             output = self.model(batch_x)
             loss = self.criterion(output, batch_y)
 
@@ -242,7 +259,7 @@ class AbstractTrainer:
 
             if self.summary_step:
                 if self.step % self.summary_step == 0:
-                    self.train_writer.add_scalar('Loss/train', loss.mean(), self.step)
+                    self.train_writer.add_scalar('loss/train', loss.mean(), self.step)
 
         avg_loss = total_loss / batch_total
         print(f'\tTraining Avg. Loss: {avg_loss:7.3f}')
@@ -250,54 +267,91 @@ class AbstractTrainer:
     def validate(self):
         self.model.eval()
 
-        val_acc = []
         val_loss = []
+
+        if isinstance(self.val_loader.dataset, datasets.Searchstims):
+            val_acc = []
+        elif isinstance(self.val_loader.dataset, datasets.VOCDetection):
+            val_f1 = []
+            val_acc_largest = []
+            val_acc_random = []
 
         with torch.no_grad():
             total = int(np.ceil(len(self.valset) / self.batch_size))
             pbar = tqdm(self.val_loader)
-            for i, (batch_x, batch_y) in enumerate(pbar):
+            for i, batch in enumerate(pbar):
                 pbar.set_description(f'batch {i} of {total}')
-                batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
+                batch_x = batch['img'].to(self.device)
+                if self.loss_func == 'BCE' or self.loss_func == 'CE':
+                    batch_y = batch['target'].to(self.device)
+                elif self.loss_func == 'CE-largest':
+                    batch_y = batch['largest'].to(self.device)
+                elif self.loss_func == 'CE-random':
+                    batch_y = batch['random'].to(self.device)
+
                 output = self.model(batch_x)
                 loss = self.criterion(output, batch_y)
                 val_loss.append(loss.mean().cpu())  # mean needed for multiple GPUs
 
-                if batch_y.dim() > 1:
-                    # convert to one hot vector
-                    predicted = (output > self.sigmoid_threshold).float()
-                    acc = sklearn.metrics.f1_score(batch_y.cpu().numpy(), predicted.cpu().numpy(),
-                                                   average='macro')
-                else:
-                    # below, _ because torch.max returns (values, indices)
-                    _, predicted = torch.max(output.data, 1)
-                    acc = (predicted == batch_y).sum().item() / batch_y.size(0)
-                val_acc.append(acc)
+                # below, _ because torch.max returns (values, indices)
+                _, pred_max = torch.max(output.data, 1)
+                if isinstance(self.val_loader.dataset, datasets.Searchstims):
+                    acc = (pred_max == batch_y).sum().item() / batch_y.size(0)
+                    val_acc.append(acc)
+                elif isinstance(self.val_loader.dataset, datasets.VOCDetection):
+                    batch_y_onehot = batch['target'].to(self.device)
+                    out_sig = self.sigmoid_activation(output)
+                    pred_sig = (out_sig > self.sigmoid_threshold).float()
+                    f1 = sklearn.metrics.f1_score(batch_y_onehot.cpu().numpy(), pred_sig.cpu().numpy(),
+                                                  average='macro')
+                    val_f1.append(f1)
 
-        val_acc = np.asarray(val_acc).mean()
-        val_loss = np.asarray(val_loss).mean()
+                    batch_largest = batch['largest'].to(self.device)
+                    acc_largest = (pred_max == batch_largest).sum().item() / batch_y.size(0)
+                    val_acc_largest.append(acc_largest)
+
+                    batch_random = batch['random'].to(self.device)
+                    acc_random = (pred_max == batch_random).sum().item() / batch_y.size(0)
+                    val_acc_random.append(acc_random)
+
+        val_metrics = {
+            'loss': np.asarray(val_loss).mean(),
+        }
+        if isinstance(self.val_loader.dataset, datasets.Searchstims):
+            val_metrics['acc'] = np.asarray(val_acc).mean()
+        elif isinstance(self.val_loader.dataset, datasets.VOCDetection):
+            val_metrics['f1'] = np.asarray(val_f1).mean()
+            val_metrics['acc_largest'] = np.asarray(val_acc_largest).mean()
+            val_metrics['acc_random'] = np.asarray(val_acc_random).mean()
+
+        metrics_str = ', '.join(
+            [f'{metric}:{value:7.3f}' for metric, value in val_metrics.items()]
+        )
+
         print(
-            f' Validation: accuracy {val_acc:7.3f} loss {val_loss:.4f}'
+            f' Validation: {metrics_str}'
         )
 
         if self.summary_step:
-            # just always add val acc regardless of step -- want to capture it every time
-            self.train_writer.add_scalar('Acc/val', val_acc, self.step)
-            self.train_writer.add_scalar('Loss/val', val_loss, self.step)
+            for metric, value in val_metrics.items():
+                self.train_writer.add_scalar(f'{metric}/val', value, self.step)
 
-        return val_acc
+        return val_metrics
 
     def train_acc_by_set_size(self, epoch):
         self.model.eval()
 
-        set_sizes = np.unique(self.trainset_set_size.set_size)
+        set_sizes = np.unique(self.trainset.set_size)
         acc_by_set_size = {set_size: [] for set_size in set_sizes}
 
-        batch_total = int(np.ceil(len(self.trainset_set_size) / self.batch_size))
-        pbar = tqdm(self.train_loader_no_shuffle)
-        for i, (batch_x, batch_y, batch_set_size) in enumerate(pbar):
+        batch_total = int(np.ceil(len(self.trainset) / self.batch_size))
+        pbar = tqdm(self.train_loader)
+        for i, batch in enumerate(pbar):
             pbar.set_description(f'batch {i} of {batch_total}')
-            batch_x, batch_y = batch_x.to(self.device), batch_y.to(self.device)
+            batch_x = batch['img'].to(self.device)
+            batch_y = batch['target'].to(self.device)
+            batch_set_size = batch['set_size'].cpu().numpy()
+
             output = self.model(batch_x)
             _, predictions = torch.max(output, 1)
             correct = (predictions == batch_y).cpu().numpy()
