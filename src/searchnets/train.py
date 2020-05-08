@@ -206,11 +206,9 @@ def train(csv_file,
             )
 
     if loss_func in {'CE', 'CE-largest', 'CE-random'}:
-        apply_sigmoid = False
         criterion = nn.CrossEntropyLoss()
     elif loss_func == 'BCE':
-        apply_sigmoid = True  # for multi-label prediction
-        criterion = nn.BCELoss()
+        criterion = nn.BCEWithLogitsLoss()
     else:
         raise ValueError(
             f'invalid value for loss function: {loss_func}'
@@ -229,7 +227,6 @@ def train(csv_file,
                                                       new_layer_learning_rate=new_layer_learning_rate,
                                                       save_path=save_path_this_net,
                                                       num_classes=num_classes,
-                                                      apply_sigmoid=apply_sigmoid,
                                                       criterion=criterion,
                                                       loss_func=loss_func,
                                                       optimizer=optimizer,
@@ -250,7 +247,6 @@ def train(csv_file,
                                               trainset=trainset,
                                               save_path=save_path_this_net,
                                               num_classes=num_classes,
-                                              apply_sigmoid=apply_sigmoid,
                                               criterion=criterion,
                                               loss_func=loss_func,
                                               optimizer=optimizer,
