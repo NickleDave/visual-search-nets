@@ -187,12 +187,14 @@ def train(csv_file,
     elif dataset_type == 'searchstims':
         trainset = Searchstims(csv_file=csv_file,
                                split='train',
-                               transform=transform)
+                               transform=transform,
+                               target_transform=target_transform)
 
         if use_val:
             valset = Searchstims(csv_file=csv_file,
                                  split='val',
-                                 transform=transform)
+                                 transform=transform,
+                                 target_transform=target_transform)
         else:
             valset = None
 
@@ -202,13 +204,6 @@ def train(csv_file,
                 'dataset type is VSD but save_acc_by_set_size_by_epoch was set to True;'
                 'can only measure accuracy by set size with searchstims stimuli, not VSD dataset'
             )
-        elif dataset_type == 'searchstims':
-            trainset_set_size = Searchstims(csv_file=csv_file,
-                                            split='train',
-                                            transform=transform,
-                                            return_set_size=True)
-    else:
-        trainset_set_size = None
 
     if loss_func in {'CE', 'CE-largest', 'CE-random'}:
         apply_sigmoid = False
@@ -236,9 +231,9 @@ def train(csv_file,
                                                       num_classes=num_classes,
                                                       apply_sigmoid=apply_sigmoid,
                                                       criterion=criterion,
+                                                      loss_func=loss_func,
                                                       optimizer=optimizer,
                                                       save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
-                                                      trainset_set_size=trainset_set_size,
                                                       batch_size=batch_size,
                                                       epochs=epochs,
                                                       use_val=use_val,
@@ -257,6 +252,7 @@ def train(csv_file,
                                               num_classes=num_classes,
                                               apply_sigmoid=apply_sigmoid,
                                               criterion=criterion,
+                                              loss_func=loss_func,
                                               optimizer=optimizer,
                                               learning_rate=learning_rate,
                                               save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
