@@ -91,7 +91,7 @@ class Tester:
 
         self.sigmoid_threshold = sigmoid_threshold
 
-        if type(self.testset) == VOCDetection:
+        if isinstance(self.testset, VOCDetection):
             self.sigmoid_activation = torch.nn.Sigmoid()
         else:
             self.sigmoid_activation = None
