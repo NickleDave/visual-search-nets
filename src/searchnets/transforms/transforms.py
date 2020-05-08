@@ -8,6 +8,7 @@ __all__ = [
     'ParseVocXml',
     'RandomClassInt',
     'RandomPad',
+    'TensorFromNumpyScalar',
 ]
 
 
@@ -147,3 +148,23 @@ class OneHotFromClassInts:
 
     def __call__(self, class_ints):
         return F.onehot_from_class_ints(class_ints, self.n_classes)
+
+
+class TensorFromNumpyScalar:
+    """convert a scalar value from a numpy array to a torch Tensor.
+
+    Parameters
+    ----------
+    scalar : numpy scalar value
+        e.g., numpy.int64
+
+    Returns
+    -------
+    tensor : torch.Tensor
+        with one element
+    """
+    def __init__(self):
+        pass
+
+    def __call__(self, scalar):
+        return F.tensor_from_numpy_scalar(scalar)
