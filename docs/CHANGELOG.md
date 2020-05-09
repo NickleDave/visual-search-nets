@@ -13,6 +13,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   or a random bounding box [#59](https://github.com/NickleDave/visual-search-nets/pull/59)
 - other `CORnet` models [#66](https://github.com/NickleDave/visual-search-nets/pull/66)
 
+### Changed
+- change `dataset`s so they return dictionaries, enabling more 
+  flexibility in what items are present / used for training and testing
+  [#67](https://github.com/NickleDave/visual-search-nets/pull/67)
+- change how `AbstractTrainer` and `Tester` compute metrics 
+  for the `VOCDetection` dataset;  
+  now compute *all* metrics during validation and testing
+  [#66](https://github.com/NickleDave/visual-search-nets/pull/66)
+
+### Fixed
+- now actually using the correct target corresponding to different loss 
+  functions when training on `VOCDetection` dataset, e.g. `CE-largest` 
+  uses `largest` from the batch dictionary
+  [#66](https://github.com/NickleDave/visual-search-nets/pull/66)
+
 ## [1.0.0]
 This is the version used for SfN 2019 poster, and for the paper
 ### Added
