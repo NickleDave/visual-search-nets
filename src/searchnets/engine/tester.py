@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from .. import nets
-from ..datasets import VOCDetection
+from .. import datasets
 
 from .abstract_trainer import AbstractTrainer
 
@@ -19,6 +19,8 @@ class Tester:
     def __init__(self,
                  net_name,
                  model,
+                 criterion,
+                 loss_func,
                  testset,
                  restore_path,
                  batch_size=64,
@@ -36,6 +38,13 @@ class Tester:
             One of {'alexnet', 'VGG16'}
         model : torch.nn.Module
             actual instance of network.
+        criterion : torch.nn._Loss subclass
+            used to compute loss on test set
+        loss_func : str
+            that represents loss function and target that should be used with it.
+            Used to determine targets for computing loss, and for metrics to use
+            when determining whether to stop early due to metrics computed on
+            validation set.
         testset : torch.Dataset or torchvision.Visiondataset
             test data, represented as a class.
         restore_path : Path
@@ -82,6 +91,9 @@ class Tester:
         self.model = model
         self.device = device
 
+        self.criterion = criterion
+        self.loss_func = loss_func
+
         self.testset = testset
         self.test_loader = DataLoader(self.testset, batch_size=batch_size,
                                       shuffle=False, num_workers=num_workers,
@@ -91,7 +103,7 @@ class Tester:
 
         self.sigmoid_threshold = sigmoid_threshold
 
-        if isinstance(self.testset, VOCDetection):
+        if isinstance(self.testset, datasets.VOCDetection):
             self.sigmoid_activation = torch.nn.Sigmoid()
         else:
             self.sigmoid_activation = None
@@ -100,6 +112,7 @@ class Tester:
     def from_config(cls,
                     net_name,
                     num_classes,
+                    loss_func,
                     **kwargs):
         """factory function that creates instance of Tester from options specified in config.ini file
         
@@ -125,7 +138,20 @@ class Tester:
                 f'invalid value for net_name: {net_name}'
             )
 
-        kwargs = dict(**kwargs, net_name=net_name, model=model)
+        if loss_func in {'CE', 'CE-largest', 'CE-random'}:
+            criterion = nn.CrossEntropyLoss()
+        elif loss_func == 'BCE':
+            criterion = nn.BCEWithLogitsLoss()
+        else:
+            raise ValueError(
+                f'invalid value for loss function: {loss_func}'
+            )
+
+        kwargs = dict(**kwargs,
+                      net_name=net_name,
+                      model=model,
+                      loss_func=loss_func,
+                      criterion=criterion)
         return cls(**kwargs)
 
     def test(self):
@@ -133,57 +159,80 @@ class Tester:
 
         Returns
         -------
-        acc : float
-            accuracy on test set
-        pred : numpy.ndarray
-            predictions for test set
+        test_results : dict
         """
         self.model.eval()
 
         total = int(np.ceil(len(self.testset) / self.batch_size))
         pbar = tqdm(self.test_loader)
-        acc = []
+
+        test_loss = []
         pred = []
-        if type(self.testset) == VOCDetection:
-            img_names = []
-        else:
+        if isinstance(self.test_loader.dataset, datasets.Searchstims):
+            test_acc = []
             img_names = None
+        elif isinstance(self.test_loader.dataset, datasets.VOCDetection):
+            test_f1 = []
+            test_acc_largest = []
+            test_acc_random = []
+            img_names = []
 
         with torch.no_grad():
             for i, batch in enumerate(pbar):
-                batch_x, batch_y = batch['img'].to(self.device), batch['target'].to(self.device)
-                if img_names is not None:
-                    batch_img_name = batch['name'].cpu().numpy().tolist()
                 pbar.set_description(f'batch {i} of {total}')
+                batch_x = batch['img'].to(self.device)
+                if self.loss_func == 'BCE' or self.loss_func == 'CE':
+                    batch_y = batch['target'].to(self.device)
+                elif self.loss_func == 'CE-largest':
+                    batch_y = batch['largest'].to(self.device)
+                elif self.loss_func == 'CE-random':
+                    batch_y = batch['random'].to(self.device)
+
                 output = self.model(batch_x)
-                if type(self.testset) == VOCDetection:
-                    if batch_y.dim() > 1:
-                        # convert to one hot vector
-                        output = self.sigmoid_activation(output)
-                        pred_batch = (output > self.sigmoid_threshold).float()
+                loss = self.criterion(output, batch_y)
+                test_loss.append(loss.mean().cpu())  # mean needed for multiple GPUs
+
+                # below, _ because torch.max returns (values, indices)
+                _, pred_max = torch.max(output.data, 1)
+                if isinstance(self.test_loader.dataset, datasets.Searchstims):
+                    acc = (pred_max == batch_y).sum().item() / batch_y.size(0)
+                    test_acc.append(acc)
+                    pred_batch = pred_max.cpu().numpy()
+                    pred.append(pred_batch)
+                elif isinstance(self.test_loader.dataset, datasets.VOCDetection):
+                    batch_y_onehot = batch['target'].to(self.device)
+                    out_sig = self.sigmoid_activation(output)
+                    pred_sig = (out_sig > self.sigmoid_threshold).float()
+                    f1 = sklearn.metrics.f1_score(batch_y_onehot.cpu().numpy(), pred_sig.cpu().numpy(),
+                                                  average='macro')
+                    test_f1.append(f1)
+
+                    batch_largest = batch['largest'].to(self.device)
+                    acc_largest = (pred_max == batch_largest).sum().item() / batch_largest.size(0)
+                    test_acc_largest.append(acc_largest)
+
+                    batch_random = batch['random'].to(self.device)
+                    acc_random = (pred_max == batch_random).sum().item() / batch_random.size(0)
+                    test_acc_random.append(acc_random)
+
+                    if self.loss_func == 'BCE':
+                        pred_batch = pred_sig.cpu().numpy()
                     else:
-                        raise ValueError(
-                            'output of network for VOCDetection dataset only had one dimension, '
-                            'should have more than one'
-                        )
-                    acc_batch = sklearn.metrics.f1_score(batch_y.cpu().numpy(), pred_batch.cpu().numpy(),
-                                                         average='macro')
-                else:
-                    # below, _ because torch.max returns (values, indices)
-                    _, pred_batch = torch.max(output.data, 1)
-                    acc_batch = (pred_batch == batch_y).sum().item() / batch_y.size(0)
+                        pred_batch = pred_max.cpu().numpy()
+                    pred.append(pred_batch)
 
-                acc.append(acc_batch)
+                    img_names.extend(batch['name'])  # will be a list
 
-                pred_batch = pred_batch.cpu().numpy()
-                pred.append(pred_batch)
-                if img_names is not None:
-                    img_names.extend(batch_img_name)
+        test_results = {
+            'loss': np.asarray(test_loss).mean(),
+            'pred': np.concatenate(pred)
+        }
+        if isinstance(self.test_loader.dataset, datasets.Searchstims):
+            test_results['acc'] = np.asarray(test_acc).mean()
+        elif isinstance(self.test_loader.dataset, datasets.VOCDetection):
+            test_results['f1'] = np.asarray(test_f1).mean()
+            test_results['acc_largest'] = np.asarray(test_acc_largest).mean()
+            test_results['acc_random'] = np.asarray(test_acc_random).mean()
+            test_results['img_names'] = img_names
 
-        acc = np.asarray(acc).mean()
-        pred = np.concatenate(pred)
-
-        if img_names is not None:
-            return acc, pred, img_names
-        else:
-            return acc, pred
+        return test_results
