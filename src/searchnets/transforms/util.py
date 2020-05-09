@@ -1,3 +1,4 @@
+import torch
 import torchvision.transforms as vis_transforms
 
 from . import functional as F
@@ -41,7 +42,7 @@ def get_transforms(dataset_type,
                 [vis_transforms.ToTensor(),
                  vis_transforms.Normalize(mean=MEAN, std=STD)]
             )
-            target_transform = None
+            target_transform = transforms.TensorFromNumpyScalar()
         else:
             raise ValueError(
                 f"no transforms specified for dataset_type '{dataset_type}' and loss_func '{loss_func}'"
@@ -55,32 +56,21 @@ def get_transforms(dataset_type,
              ]
         )
 
-        # start with list of target transforms that we can extend depending on loss function
-        # and then convert to a vis_transforms.Compose instance below
-        target_transform = [
+        if loss_func in {'BCE', 'CE-largest', 'CE-random'}:
+            # we return the target transform for BCE no matter what;
+            # the VOC class also applies transforms for other loss functions
+            # and the AbstractTrainer class uses the specified loss function string
+            # to determine which metrics to use (e.g. true positive rate, f1 score)
+            # during training
+            target_transform = vis_transforms.Compose([
                 transforms.ParseVocXml(),
-        ]
-
-        if loss_func == 'BCE':
-            target_transform.extend(
-                [transforms.ClassIntsFromXml(),
-                 transforms.OneHotFromClassInts(),
-                 ]
-            )
-        elif loss_func == 'CE-largest':
-            target_transform.append(transforms.LargestClassIntFromXml())
-        elif loss_func == 'CE-random':
-            target_transform.extend(
-                [transforms.ClassIntsFromXml(),
-                 transforms.RandomClassInt(),
-                 ]
-            )
+                transforms.ClassIntsFromXml(),
+                transforms.OneHotFromClassInts(),
+            ])
         else:
             raise ValueError(
                 f"no transforms specified for dataset_type '{dataset_type}' and loss_func '{loss_func}'"
             )
-
-        target_transform = vis_transforms.Compose(target_transform)
 
     else:
         raise ValueError(

@@ -54,7 +54,7 @@ class CORblock_RT(nn.Module):
 
 
 class CORnet_RT(nn.Module):
-    def __init__(self, num_classes=1000, apply_sigmoid=False, times=5):
+    def __init__(self, num_classes=1000, times=5):
         super().__init__()
         self.times = times
 
@@ -67,10 +67,6 @@ class CORnet_RT(nn.Module):
             ('flatten', Flatten()),
             ('linear', nn.Linear(512, num_classes))
         ]
-        if apply_sigmoid:
-            decoder_list.append(
-                ('sigmoid', nn.Sigmoid())
-            )
         self.decoder = nn.Sequential(OrderedDict(decoder_list))
 
     def forward(self, inp):

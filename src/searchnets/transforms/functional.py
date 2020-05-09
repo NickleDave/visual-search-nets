@@ -13,6 +13,7 @@ __all__ = [
     'onehot_from_class_ints',
     'parse_voc_xml',
     'random_class_int',
+    'tensor_from_numpy_scalar',
 ]
 
 # declare as a constant because also referenced by munge.VSD_results_df
@@ -225,3 +226,7 @@ def onehot_from_class_ints(class_ints, n_classes=None):
     onehot = torch.FloatTensor(n_classes)
     onehot.zero_()
     return onehot.scatter_(0, torch.LongTensor(class_ints), 1)
+
+
+def tensor_from_numpy_scalar(scalar):
+    return torch.from_numpy(np.asarray(scalar))
