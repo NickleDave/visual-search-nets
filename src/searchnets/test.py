@@ -161,6 +161,7 @@ def test(csv_file,
             print(f'Loading model from {restore_path_this_net}')
             tester = Tester.from_config(net_name=net_name,
                                         testset=testset,
+                                        loss_func=loss_func,
                                         restore_path=restore_path_this_net,
                                         num_classes=num_classes,
                                         batch_size=batch_size,
@@ -168,12 +169,10 @@ def test(csv_file,
                                         num_workers=num_workers,
                                         data_parallel=data_parallel)
 
-            if dataset_type == 'searchstims':
-                acc, y_pred = tester.test()
-            elif dataset_type == 'VSD':
-                acc, y_pred, image_names = tester.test()
+            test_results = tester.test()
 
             if dataset_type == 'searchstims':
+                acc, y_pred = test_results['acc'], test_results['pred']
                 set_size_vec_test = df_dataset[df_dataset['split'] == 'test']['set_size']
                 acc_per_set_size = []
                 for set_size in set_sizes:
@@ -193,11 +192,24 @@ def test(csv_file,
                 # and insert into dictionary where model name is key
                 # and list of accuracies per set size is the "value"
                 acc_per_set_size_model_dict[restore_path_this_net] = acc_per_set_size
+
             elif dataset_type == 'VSD':
+                if loss_func == 'BCE':
+                    acc = test_results['f1']
+                elif loss_func == 'CE-largest':
+                    acc = test_results['acc_largest']
+                elif loss_func == 'CE-random':
+                    acc = test_results['acc_random']
+
+                y_pred, img_names = test_results['pred'], test_results['img_names']
                 acc_per_model_dict[restore_path_this_net] = acc
                 acc_per_model.append(acc)
-                img_names_per_model_dict[restore_path_this_net] = image_names
-                print(f'f1 score for this network: {acc}')
+                img_names_per_model_dict[restore_path_this_net] = img_names
+                results_str = ', '.join(
+                    [f'{key}: {test_results[key]:7.3f}'
+                     for key in ['loss', 'f1', 'acc_largest', 'acc_random']]
+                )
+                print(f'test results: {results_str}')
 
             predictions_per_model_dict[restore_path_this_net] = y_pred
 
