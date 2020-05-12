@@ -15,6 +15,7 @@ from . import data
 from . import datasets
 from . import nets
 from . import plot
+from . import tensorboard
 from . import utils
 
 from .train import train
