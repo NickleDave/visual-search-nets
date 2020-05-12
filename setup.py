@@ -43,6 +43,7 @@ REQUIRED = [
     'scikit-posthocs',
     'searchstims>=2.3.1',
     'seaborn',
+    'tensorboard',
     'torch',
     'torchvision',
     'tqdm',
