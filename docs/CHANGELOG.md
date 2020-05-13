@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - transforms for VOC target that pick either largest class (based on bounding box)
   or a random bounding box [#59](https://github.com/NickleDave/visual-search-nets/pull/59)
 - other `CORnet` models [#66](https://github.com/NickleDave/visual-search-nets/pull/66)
+- `tensorboard` module with functions for converting tensorboard events files to 
+  Pandas `DataFrame`s and `.csv` files [#69](https://github.com/NickleDave/visual-search-nets/pull/69)
 
 ### Changed
 - change `dataset`s so they return dictionaries, enabling more 
