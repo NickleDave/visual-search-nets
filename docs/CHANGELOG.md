@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - other `CORnet` models [#66](https://github.com/NickleDave/visual-search-nets/pull/66)
 - `tensorboard` module with functions for converting tensorboard events files to 
   Pandas `DataFrame`s and `.csv` files [#69](https://github.com/NickleDave/visual-search-nets/pull/69)
+- `analysis` sub-package with functions used to analyze results from 
+  `searchstims` and `VSD` experiments
+  [#71](https://github.com/NickleDave/visual-search-nets/pull/71)
 
 ### Changed
 - change `dataset`s so they return dictionaries, enabling more 
@@ -23,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for the `VOCDetection` dataset;  
   now compute *all* metrics during validation and testing
   [#66](https://github.com/NickleDave/visual-search-nets/pull/66)
+- remove `utils.munge` and `utils.metrics` modules, refactor 
+  functions from them into `analysis` sub-package
+  [#71](https://github.com/NickleDave/visual-search-nets/pull/71)
 
 ### Fixed
 - now actually using the correct target corresponding to different loss 
