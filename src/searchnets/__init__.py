@@ -10,6 +10,7 @@ from .__about__ import (
     __version__,
 )
 
+from . import analysis
 from . import config
 from . import data
 from . import datasets
