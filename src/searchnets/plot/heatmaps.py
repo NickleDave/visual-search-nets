@@ -5,7 +5,7 @@ import joblib
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ..utils.metrics import p_item_grid, acc_grid, err_grid
+from ..analysis.searchstims import p_item_grid, acc_grid, err_grid
 
 
 def heatmap(grid, ax=None, cmap='rainbow', vmin=0, vmax=1):
