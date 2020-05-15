@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   uses `largest` from the batch dictionary
   [#66](https://github.com/NickleDave/visual-search-nets/pull/66)
 
+### Removed
+- automatic setting of defaults for plotting, that were 
+  in `plot.__init__` which made it hard to override them
+  [#72](https://github.com/NickleDave/visual-search-nets/pull/72)
+
 ## [1.0.0]
 This is the version used for SfN 2019 poster, and for the paper
 ### Added
