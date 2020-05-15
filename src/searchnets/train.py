@@ -30,10 +30,10 @@ def train(csv_file,
           loss_func='CE',
           optimizer='SGD',
           use_val=True,
-          val_epoch=1,
+          val_step=1,
           summary_step=None,
           patience=None,
-          checkpoint_epoch=10,
+          ckpt_step=10,
           save_acc_by_set_size_by_epoch=False,
           num_workers=4,
           data_parallel=False):
@@ -114,8 +114,8 @@ def train(csv_file,
         set size. Default is False.
     use_val : bool
         if True, use validation set.
-    val_epoch : int
-        if not None, accuracy on validation set will be measured every `val_epoch` epochs. Default is None.
+    val_step : int
+        if not None, accuracy on validation set will be measured every `val_step` epochs. Default is None.
     summary_step : int
         Step on which to write summaries to file. Each minibatch is counted as one step, and steps are counted across
         epochs. Default is None.
@@ -130,16 +130,16 @@ def train(csv_file,
     -------
     None
     """
-    if use_val and val_epoch is None or val_epoch < 1 or type(val_epoch) != int:
+    if use_val and val_step is None or val_step < 1 or type(val_step) != int:
         raise ValueError(
-            f'invalid value for val_epoch: {val_epoch}. Validation epoch must be positive integer'
+            f'invalid value for val_step: {val_step}. Validation epoch must be positive integer'
         )
 
     if use_val is False and patience is not None:
         raise ValueError('patience argument only works with a validation set')
 
     if patience is not None:
-        if type(val_epoch) != int or patience < 1:
+        if type(val_step) != int or patience < 1:
             raise TypeError('patience must be a positive integer')
 
     if type(epochs_list) is int:
@@ -235,9 +235,9 @@ def train(csv_file,
                                                       epochs=epochs,
                                                       use_val=use_val,
                                                       valset=valset,
-                                                      val_epoch=val_epoch,
+                                                      val_step=val_step,
                                                       patience=patience,
-                                                      checkpoint_epoch=checkpoint_epoch,
+                                                      ckpt_step=ckpt_step,
                                                       summary_step=summary_step,
                                                       device=device,
                                                       num_workers=num_workers,
@@ -256,9 +256,9 @@ def train(csv_file,
                                               epochs=epochs,
                                               use_val=use_val,
                                               valset=valset,
-                                              val_epoch=val_epoch,
+                                              val_step=val_step,
                                               patience=patience,
-                                              checkpoint_epoch=checkpoint_epoch,
+                                              ckpt_step=ckpt_step,
                                               summary_step=summary_step,
                                               device=device,
                                               num_workers=num_workers,
