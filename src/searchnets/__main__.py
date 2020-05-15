@@ -50,10 +50,10 @@ def _call_train(config):
           loss_func=config.train.loss_func,
           optimizer=config.train.optimizer,
           use_val=config.train.use_val,
-          val_epoch=config.train.val_epoch,
+          val_step=config.train.val_step,
           summary_step=config.train.summary_step,
           patience=config.train.patience,
-          checkpoint_epoch=config.train.checkpoint_epoch,
+          ckpt_step=config.train.ckpt_step,
           save_acc_by_set_size_by_epoch=config.train.save_acc_by_set_size_by_epoch,
           num_workers=config.train.num_workers,
           data_parallel=config.train.data_parallel)
