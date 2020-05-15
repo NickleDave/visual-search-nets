@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove `utils.munge` and `utils.metrics` modules, refactor 
   functions from them into `analysis` sub-package
   [#71](https://github.com/NickleDave/visual-search-nets/pull/71)
+- make validation and checkpointing happen on steps, not epochs, so 
+  they can happen more frequently and earlier in training
+  [#73](https://github.com/NickleDave/visual-search-nets/pull/73)
 
 ### Fixed
 - now actually using the correct target corresponding to different loss 
