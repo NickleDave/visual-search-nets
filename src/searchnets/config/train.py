@@ -98,15 +98,20 @@ class TrainConfig:
         set size. Default is False.
     use_val : bool
         if True, use validation set.
-    val_epoch : int
-        if not None, accuracy on validation set will be measured every `val_epoch` epochs
+    val_step : int
+        if not None, accuracy on validation set will be measured every `val_step` steps.
+        Each minibatch is counted as one step, and steps are counted across
+        epochs.
     summary_step : int
-        Step on which to write summaries to file. Each minibatch is counted as one step, and steps are counted across
+        Step on which to write summaries to file.
+        Each minibatch is counted as one step, and steps are counted across
         epochs. Default is None.
     patience : int
         if not None, training will stop if accuracy on validation set has not improved in `patience` steps
-    checkpoint_epoch : int
-        if not None, a checkpoint will be saved every `checkpoint_epoch` epochs. Default is None.
+    ckpt_step : int
+        if not None, a checkpoint will be saved every `ckpt_step` steps.
+        Each minibatch is counted as one step, and steps are counted across
+        epochs. Default is None.
     num_workers : int
         number of workers used by torch.DataLoaders. Default is 4.
     data_parallel : bool
@@ -172,9 +177,9 @@ class TrainConfig:
 
     save_acc_by_set_size_by_epoch = attr.ib(validator=instance_of(bool), default=False)
     use_val = attr.ib(validator=instance_of(bool), default=False)
-    val_epoch = attr.ib(validator=validators.optional(is_pos_int), default=None)
+    val_step = attr.ib(validator=validators.optional(is_pos_int), default=None)
     summary_step = attr.ib(validator=validators.optional(is_pos_int), default=None)
     patience = attr.ib(validator=validators.optional(is_pos_int), default=None)
-    checkpoint_epoch = attr.ib(validator=validators.optional(is_pos_int), default=None)
+    ckpt_step = attr.ib(validator=validators.optional(is_pos_int), default=None)
     num_workers = attr.ib(validator=validators.optional(is_non_neg_int), default=4)
     data_parallel = attr.ib(validator=validators.optional(instance_of(bool)), default=False)
