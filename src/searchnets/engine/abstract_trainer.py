@@ -34,9 +34,9 @@ class AbstractTrainer:
                  epochs=200,
                  use_val=False,
                  valset=None,
-                 val_epoch=None,
+                 val_step=None,
                  patience=20,
-                 checkpoint_epoch=10,
+                 ckpt_step=10,
                  summary_step=None,
                  sigmoid_threshold=0.5,
                  device='cuda',
@@ -69,18 +69,18 @@ class AbstractTrainer:
             number of training samples per batch
         epochs : int
             number of epochs to train network
-        val_epoch : int
+        val_step : int
             epoch at which accuracy should be measured on validation step.
-            Validation occurs every time epoch % val_epoch == 0.
+            Validation occurs every time epoch % val_step == 0.
         use_val : bool
             if True, use validation set. Default is False.
         valset : torch.Dataset or torchvision.VisionDataset
             validation data, represented as a class.
         patience : int
             number of validation epochs to wait before stopping training if accuracy does not increase
-        checkpoint_epoch : int
+        ckpt_step : int
             epoch at which to save a checkpoint.
-            Occurs every time epoch % checkpoint_epoch == 0.
+            Occurs every time epoch % ckpt_step == 0.
         summary_step : int
             step at which to save summary to file.
             Occurs every time step % summary_step == 0.
@@ -119,9 +119,12 @@ class AbstractTrainer:
         self.batch_size = batch_size
         self.step = 0  # each minibatch is a step, and we count steps across epochs
         self.epochs = epochs
-        self.val_epoch = val_epoch
+        self.val_step = val_step
         self.patience = patience
-        self.checkpoint_epoch = checkpoint_epoch
+        if self.patience is not None:
+            self.best_val_acc = 0
+            self.steps_without_improvement = 0
+        self.ckpt_step = ckpt_step
 
         self.save_acc_by_set_size_by_epoch = save_acc_by_set_size_by_epoch
         if save_acc_by_set_size_by_epoch:
@@ -162,59 +165,14 @@ class AbstractTrainer:
         torch.save(ckpt, str(ckpt_path))  # torch.save expects path as a string
 
     def train(self):
-        if self.val_loader is not None:
-            val_acc = []
-            if self.patience is not None:
-                best_val_acc = 0
-                epochs_without_improvement = 0
-
         for epoch in range(1, self.epochs + 1):
 
             print(f'\nEpoch {epoch}')
-            self.train_one_epoch()
-
-            if self.val_loader is not None:
-                if epoch % self.val_epoch == 0:
-
-                    val_metrics = self.validate()
-                    if self.loss_func == 'CE':
-                        val_acc_this_epoch = val_metrics['acc']
-                    elif self.loss_func == 'BCE':
-                        val_acc_this_epoch = val_metrics['f1']
-                    elif self.loss_func == 'CE-largest':
-                        val_acc_this_epoch = val_metrics['acc_largest']
-                    elif self.loss_func == 'CE-random':
-                        val_acc_this_epoch = val_metrics['acc_random']
-
-                    if self.patience is not None:
-                        if val_acc_this_epoch > best_val_acc:
-                            best_val_acc = val_acc_this_epoch
-                            epochs_without_improvement = 0
-                            print(f'Validation accuracy improved, saving model in {self.save_path}')
-                            # notice here we use a different "suffix" so there will be *two* checkpoint files
-                            # one of which is the best validation accuracy, and the other saved on the checkpoint step
-                            # (if specified) and at the end of training
-                            self.save_checkpoint(
-                                epoch=epoch,
-                                ckpt_path=self.save_path.parent.joinpath(
-                                    self.save_path.name + self.BEST_VAL_ACC_CKPT_SUFFIX
-                                )
-                            )
-                        else:
-                            epochs_without_improvement += 1
-                            if epochs_without_improvement > self.patience:
-                                print(
-                                    f'greater than {self.patience} epochs without improvement in validation '
-                                    'accuracy, stopping training')
-
-                                break
-                else:  # if not a validation epoch
-                    val_acc.append(None)
-
-            if self.checkpoint_epoch:
-                #
-                if epoch % self.checkpoint_epoch == 0:
-                    self.save_checkpoint(epoch)
+            self.train_one_epoch(epoch=epoch)
+            if self.patience is not None:
+                if self.steps_without_improvement > self.patience:
+                    # need to break here, in addition to inside train_one_epoch method
+                    break
 
             if self.save_acc_by_set_size_by_epoch:
                 # --- compute accuracy on whole training set, by set size, for this epoch
@@ -230,7 +188,7 @@ class AbstractTrainer:
                        self.acc_by_epoch_by_set_size,
                        delimiter=',')
 
-    def train_one_epoch(self):
+    def train_one_epoch(self, epoch):
         """train model for one epoch"""
         self.model.train()
 
@@ -264,6 +222,46 @@ class AbstractTrainer:
             if self.summary_step:
                 if self.step % self.summary_step == 0:
                     self.train_writer.add_scalar('loss/train', loss.mean(), self.step)
+
+            if self.val_loader is not None:
+                if self.step % self.val_step == 0:
+
+                    val_metrics = self.validate()
+                    self.model.train()  # switch back to train after validate calls eval
+                    if self.loss_func == 'CE':
+                        val_acc_this_epoch = val_metrics['acc']
+                    elif self.loss_func == 'BCE':
+                        val_acc_this_epoch = val_metrics['f1']
+                    elif self.loss_func == 'CE-largest':
+                        val_acc_this_epoch = val_metrics['acc_largest']
+                    elif self.loss_func == 'CE-random':
+                        val_acc_this_epoch = val_metrics['acc_random']
+
+                    if self.patience is not None:
+                        if val_acc_this_epoch > self.best_val_acc:
+                            self.best_val_acc = val_acc_this_epoch
+                            self.steps_without_improvement = 0
+                            print(f'Validation accuracy improved, saving model in {self.save_path}')
+                            # notice here we use a different "suffix" so there will be *two* checkpoint files
+                            # one of which is the best validation accuracy, and the other saved on the checkpoint step
+                            # (if specified) and at the end of training
+                            self.save_checkpoint(
+                                epoch=epoch,
+                                ckpt_path=self.save_path.parent.joinpath(
+                                    self.save_path.name + self.BEST_VAL_ACC_CKPT_SUFFIX
+                                )
+                            )
+                        else:
+                            self.steps_without_improvement += 1
+                            if self.steps_without_improvement > self.patience:
+                                print(
+                                    f'greater than {self.patience} steps without improvement '
+                                    'in validation accuracy, stopping training')
+                                break
+
+            if self.ckpt_step:
+                if self.step % self.ckpt_step == 0:
+                    self.save_checkpoint(epoch)
 
         avg_loss = total_loss / batch_total
         print(f'\tTraining Avg. Loss: {avg_loss:7.3f}')
