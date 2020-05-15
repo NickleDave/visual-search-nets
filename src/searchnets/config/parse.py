@@ -211,10 +211,10 @@ def parse_config(config_fname):
     else:
         use_val = True
 
-    if config.has_option('TRAIN', 'VAL_EPOCH'):
-        val_epoch = int(config['TRAIN']['VAL_EPOCH'])
+    if config.has_option('TRAIN', 'VAL_STEP'):
+        val_step = int(config['TRAIN']['VAL_STEP'])
     else:
-        val_epoch = None
+        val_step = None
 
     if config.has_option('TRAIN', 'SUMMARY_STEP'):
         summary_step = int(config['TRAIN']['SUMMARY_STEP'])
@@ -226,10 +226,10 @@ def parse_config(config_fname):
     else:
         patience = None
 
-    if config.has_option('TRAIN', 'CHECKPOINT_EPOCH'):
-        checkpoint_epoch = int(config['TRAIN']['CHECKPOINT_EPOCH'])
+    if config.has_option('TRAIN', 'CHECKPOINT_STEP'):
+        ckpt_step = int(config['TRAIN']['CHECKPOINT_STEP'])
     else:
-        checkpoint_epoch = None
+        ckpt_step = None
 
     if config.has_option('TRAIN', 'NUM_WORKERS'):
         num_workers = int(config['TRAIN']['NUM_WORKERS'])
@@ -257,10 +257,10 @@ def parse_config(config_fname):
                                optimizer=optimizer,
                                save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
                                use_val=use_val,
-                               val_epoch=val_epoch,
+                               val_step=val_step,
                                summary_step=summary_step,
                                patience=patience,
-                               checkpoint_epoch=checkpoint_epoch,
+                               ckpt_step=ckpt_step,
                                num_workers=num_workers,
                                data_parallel=data_parallel)
 
