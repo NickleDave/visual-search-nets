@@ -41,7 +41,20 @@ def build(model_name, pretrained=False, map_location=None, **kwargs):
     return model
 
 
-def reinit(model, num_classes=2):
+def reinit(model, model_name, num_classes=2):
     """re-initialize linear output layer"""
     model.decoder.linear = nn.Linear(in_features=512, out_features=num_classes)
+    if model_name.lower() == 'cornet_z':
+        # cornet z linear layer initialized this way
+        nn.init.xavier_uniform_(model.decoder.linear.weight)
+        if model.decoder.linear.bias is not None:
+            nn.init.constant_(model.decoder.linear.bias, 0)
+    elif model_name.lower() == 'cornet_s':
+        # no unique initializiation for cornet s,
+        # see comment in model's module
+        pass
+    else:
+        raise ValueError(
+            f'model name not recognized: {model_name}'
+        )
     return model

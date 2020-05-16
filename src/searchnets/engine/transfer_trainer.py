@@ -73,7 +73,7 @@ class TransferTrainer(AbstractTrainer):
             model = nets.vgg16.reinit(model, new_learn_rate_layers, num_classes=num_classes)
         elif 'cornet' in net_name.lower():
             model = nets.cornet.build(model_name=net_name, pretrained=True)
-            model = nets.cornet.reinit(model, num_classes=num_classes)
+            model = nets.cornet.reinit(model, model_name=net_name, num_classes=num_classes)
         else:
             raise ValueError(
                 f'invalid value for net_name: {net_name}'
