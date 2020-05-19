@@ -16,8 +16,11 @@ data/csv/
 data/experiment_*/
 data/expt_*/
 data/for_figshare/*
+
 results/checkpoints/*/
 results/csv/
+results/searchstims/
+results/VSD/
 
 # tests
 tests/test_data/visual_search_stimuli
