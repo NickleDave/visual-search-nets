@@ -59,6 +59,8 @@ def logdir2csv(logdir):
     """
     logdir = Path(logdir)
     events_files = sorted(logdir.glob('*tfevents*'))
+    # remove .csv files -- we can just overwrite them
+    events_files = [path for path in events_files if not str(path).endswith('.csv')]
     if len(events_files) != 1:
         if len(events_files) < 1:
             raise ValueError(
