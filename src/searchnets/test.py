@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 from pathlib import Path
 
@@ -26,6 +27,7 @@ def test(csv_file,
          num_classes=2,
          pad_size=500,
          loss_func='CE',
+         method='transfer',
          num_workers=4,
          data_parallel=False):
     """measure accuracy of trained convolutional neural networks on test set of visual search stimuli
@@ -109,7 +111,9 @@ def test(csv_file,
     for epochs in epochs_list:
         print(f'measuring accuracy on test set for {net_name} model trained for {epochs} epochs')
 
+        # ------ initialize variables to hold outputs from all training replicates -------------------------------------
         if dataset_type == 'searchstims':
+            # ---- for searchstims save just a results.gz file with predictions per model plus accuracies per model
             stim_types = df_dataset['stimulus'].unique()
             set_sizes_by_stim_type = {}
             for stim_type in stim_types:
@@ -133,8 +137,9 @@ def test(csv_file,
             acc_per_set_size_per_model = []
             acc_per_set_size_model_dict = {}
         elif dataset_type == 'VSD':
-            acc_per_model = []
-            acc_per_model_dict = {}
+            # ---- for VSD save results.gz **and** a .csv, because we have multiple metrics,
+            # and because csv files are better anyway
+            test_records = defaultdict(list)  # records gets turned into pandas DataFrame, then saved as .csv
             img_names_per_model_dict = {}
         predictions_per_model_dict = {}
 
@@ -194,32 +199,31 @@ def test(csv_file,
                 acc_per_set_size_model_dict[restore_path_this_net] = acc_per_set_size
 
             elif dataset_type == 'VSD':
-                if loss_func == 'BCE':
-                    acc = test_results['f1']
-                elif loss_func == 'CE-largest':
-                    acc = test_results['acc_largest']
-                elif loss_func == 'CE-random':
-                    acc = test_results['acc_random']
+                test_records['net_name'].append(net_name)
+                test_records['replicate'].append(net_number)
+                test_records['method'].append(method)
+                test_records['loss_func'].append(loss_func)
+                test_records['restore_path'] = restore_path_this_net
+                for metric in ['f1', 'acc_largest', 'acc_random']:
+                    test_records[metric].append(test_results[metric])
 
                 y_pred, img_names = test_results['pred'], test_results['img_names']
-                acc_per_model_dict[restore_path_this_net] = acc
-                acc_per_model.append(acc)
                 img_names_per_model_dict[restore_path_this_net] = img_names
+
                 results_str = ', '.join(
                     [f'{key}: {test_results[key]:7.3f}'
                      for key in ['loss', 'f1', 'acc_largest', 'acc_random']]
                 )
                 print(f'test results: {results_str}')
 
+            # regardless of dataset type we store predictions in this dict
             predictions_per_model_dict[restore_path_this_net] = y_pred
 
         if dataset_type == 'searchstims':
             acc_per_set_size_per_model = np.asarray(acc_per_set_size_per_model)
             acc_per_set_size_per_model = np.squeeze(acc_per_set_size_per_model)
-        elif dataset_type == 'VSD':
-            acc_per_model = np.asarray(acc_per_model)
-            acc_per_model = np.squeeze(acc_per_model)
 
+        # ---- create results dict, save to results.gz file
         if not os.path.isdir(test_results_save_path):
             os.makedirs(test_results_save_path)
         results_fname_stem = str(Path(configfile).stem)  # remove .ini extension
@@ -233,8 +237,12 @@ def test(csv_file,
                                      set_sizes=set_sizes)
                                 )
         elif dataset_type == 'VSD':
-            results_dict.update(dict(acc_per_model_dict=acc_per_model_dict,
-                                     acc_per_model=acc_per_model,
-                                     img_names_per_model_dict=img_names_per_model_dict))
+            results_dict.update(dict(img_names_per_model_dict=img_names_per_model_dict))
 
         joblib.dump(results_dict, results_fname)
+
+        # ---- finally for VSD dataset, create .csv
+        results_csv_fname = os.path.join(test_results_save_path,
+                                         f'{results_fname_stem}_trained_{epochs}_epochs_test_results.csv')
+        results_df = pd.DataFrame.from_records(test_records)
+        results_df.to_csv(results_csv_fname, index=False)
