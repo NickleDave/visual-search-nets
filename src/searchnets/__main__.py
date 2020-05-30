@@ -74,6 +74,7 @@ def _call_test(config, configfile):
          root=config.data.root,
          num_classes=config.data.num_classes,
          pad_size=config.data.pad_size,
+         method=config.train.method,
          loss_func=config.train.loss_func,
          num_workers=config.train.num_workers,
          data_parallel=config.train.data_parallel)
