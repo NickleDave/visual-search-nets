@@ -14,6 +14,7 @@ __all__ = [
     'parse_voc_xml',
     'random_class_int',
     'tensor_from_numpy_scalar',
+    'tile',
 ]
 
 # declare as a constant because also referenced by munge.VSD_results_df
@@ -230,3 +231,45 @@ def onehot_from_class_ints(class_ints, n_classes=None):
 
 def tensor_from_numpy_scalar(scalar):
     return torch.from_numpy(np.asarray(scalar))
+
+
+def tile(a, dim, n_tile):
+    """tile elements of tensor ``a`` along dimension ``dim`` a specified number of times.
+    E.g., to repeat samples consecutively along batch dimension.
+
+    Parameters
+    ----------
+    a : torch.Tensor
+        tensor which should have some dimension tiled
+    dim : int
+        dimension to tile
+    n_tile : int
+        number of times each element in that dimension should be tiled
+
+    Returns
+    -------
+    a_tiled : torch.Tensor
+
+    Examples
+    --------
+    >>> t = torch.tensor([[1, 2, 3], [4, 4, 4]])
+    >>> tile(t, 0, 3)
+    tensor([[1, 2, 3],
+            [1, 2, 3],
+            [1, 2, 3],
+            [4, 4, 4],
+            [4, 4, 4],
+            [4, 4, 4]])
+
+    Notes
+    -----
+    adapted from https://discuss.pytorch.org/t/repeat-examples-along-batch-dimension/36217/4
+    """
+    dim_init_size = a.size(dim)
+    repeat_idx = [1] * a.dim()
+    repeat_idx[dim] = n_tile
+    a = a.repeat(*(repeat_idx))
+    order_index = torch.LongTensor(
+        np.concatenate([dim_init_size * np.arange(n_tile) + i for i in range(dim_init_size)])
+    )
+    return torch.index_select(a, dim, order_index)
