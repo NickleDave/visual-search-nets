@@ -10,6 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from .. import datasets
+from ..transforms.functional import tile
 
 
 class AbstractTrainer:
@@ -29,6 +30,7 @@ class AbstractTrainer:
                  criterion,
                  loss_func,
                  optimizers,
+                 mode='classify',
                  save_acc_by_set_size_by_epoch=False,
                  batch_size=64,
                  epochs=200,
@@ -126,6 +128,8 @@ class AbstractTrainer:
             self.steps_without_improvement = 0
         self.ckpt_step = ckpt_step
 
+        self.mode = mode
+
         self.save_acc_by_set_size_by_epoch = save_acc_by_set_size_by_epoch
         if save_acc_by_set_size_by_epoch:
             self.set_sizes = np.unique(self.trainset.set_size)
@@ -196,19 +200,51 @@ class AbstractTrainer:
 
         batch_total = int(np.ceil(len(self.trainset) / self.batch_size))
         batch_pbar = tqdm(self.train_loader)
+        if self.mode == 'detect':
+            half_batch_size = int(self.batch_size / 2)
+
         for i, batch in enumerate(batch_pbar):
             self.step += 1
 
-            batch_x = batch['img'].to(self.device)
-            if self.loss_func == 'BCE' or self.loss_func == 'CE':
-                batch_y = batch['target'].to(self.device)
-            elif self.loss_func == 'CE-largest':
-                batch_y = batch['largest'].to(self.device)
-            elif self.loss_func == 'CE-random':
-                batch_y = batch['random'].to(self.device)
+            if self.mode == 'classify':
+                batch_x = batch['img'].to(self.device)
+                if self.loss_func == 'BCE' or self.loss_func == 'CE':
+                    batch_y = batch['target'].to(self.device)
+                elif self.loss_func == 'CE-largest':
+                    batch_y = batch['largest'].to(self.device)
+                elif self.loss_func == 'CE-random':
+                    batch_y = batch['random'].to(self.device)
 
-            output = self.model(batch_x)
-            loss = self.criterion(output, batch_y)
+                output = self.model(batch_x)
+                loss = self.criterion(output, batch_y)
+
+            elif self.mode == 'detect':
+                img, query = batch['img'], batch['target']
+                batch_size, n_classes = query.shape
+                img_tile = tile(img, dim=0, n_tile=n_classes)
+                target = query.flatten()
+                query_expanded = torch.cat(batch_size * [torch.diag(torch.ones(n_classes, ))])
+
+                # -- make half of batch be target present, half target absent --
+                all_target_present_inds = np.nonzero(target == 1)
+                target_present_to_use = torch.randperm(all_target_present_inds.shape[0])[:half_batch_size]
+                target_present_inds = all_target_present_inds[target_present_to_use]
+
+                n_absent = target_present_to_use.shape[0]  # might be less than half_batch_size
+                all_target_absent_inds = np.nonzero(target == 0)
+                target_absent_to_use = torch.randperm(all_target_absent_inds.shape[0])[:n_absent]
+                target_absent_inds = all_target_absent_inds[target_absent_to_use]
+
+                batch_inds = torch.cat((target_present_inds, target_absent_inds)).flatten().sort()[0]
+
+                target = target.unsqueeze(1)  # add back non-batch ind, so target matches output shape
+
+                img = img_tile[batch_inds].to(self.device)
+                query = query_expanded[batch_inds].to(self.device)
+                target = target[batch_inds].to(self.device)
+
+                output = self.model(img, query)
+                loss = self.criterion(output, target)
 
             for optimizer in self.optimizers:
                 optimizer.zero_grad()
@@ -228,14 +264,17 @@ class AbstractTrainer:
 
                     val_metrics = self.validate()
                     self.model.train()  # switch back to train after validate calls eval
-                    if self.loss_func == 'CE':
+                    if self.mode == 'classify':
+                        if self.loss_func == 'CE':
+                            val_acc_this_epoch = val_metrics['acc']
+                        elif self.loss_func == 'BCE':
+                            val_acc_this_epoch = val_metrics['f1']
+                        elif self.loss_func == 'CE-largest':
+                            val_acc_this_epoch = val_metrics['acc_largest']
+                        elif self.loss_func == 'CE-random':
+                            val_acc_this_epoch = val_metrics['acc_random']
+                    elif self.mode == 'detect':
                         val_acc_this_epoch = val_metrics['acc']
-                    elif self.loss_func == 'BCE':
-                        val_acc_this_epoch = val_metrics['f1']
-                    elif self.loss_func == 'CE-largest':
-                        val_acc_this_epoch = val_metrics['acc_largest']
-                    elif self.loss_func == 'CE-random':
-                        val_acc_this_epoch = val_metrics['acc_random']
 
                     if self.patience is not None:
                         if val_acc_this_epoch > self.best_val_acc:
@@ -271,60 +310,108 @@ class AbstractTrainer:
 
         val_loss = []
 
-        if isinstance(self.val_loader.dataset, datasets.Searchstims):
+        if self.mode == 'classify':
+            if isinstance(self.val_loader.dataset, datasets.Searchstims):
+                val_acc = []
+            elif isinstance(self.val_loader.dataset, datasets.VOCDetection):
+                val_f1 = []
+                val_acc_largest = []
+                val_acc_random = []
+        elif self.mode == 'detect':
             val_acc = []
-        elif isinstance(self.val_loader.dataset, datasets.VOCDetection):
-            val_f1 = []
-            val_acc_largest = []
-            val_acc_random = []
+            half_batch_size = int(self.batch_size / 2)
 
         with torch.no_grad():
             total = int(np.ceil(len(self.valset) / self.batch_size))
             pbar = tqdm(self.val_loader)
             for i, batch in enumerate(pbar):
                 pbar.set_description(f'batch {i} of {total}')
-                batch_x = batch['img'].to(self.device)
-                if self.loss_func == 'BCE' or self.loss_func == 'CE':
-                    batch_y = batch['target'].to(self.device)
-                elif self.loss_func == 'CE-largest':
-                    batch_y = batch['largest'].to(self.device)
-                elif self.loss_func == 'CE-random':
-                    batch_y = batch['random'].to(self.device)
 
-                output = self.model(batch_x)
-                loss = self.criterion(output, batch_y)
+                # ---- get output, compute loss ----
+                if self.mode == 'classify':
+                    batch_x = batch['img'].to(self.device)
+                    if self.loss_func == 'BCE' or self.loss_func == 'CE':
+                        batch_y = batch['target'].to(self.device)
+                    elif self.loss_func == 'CE-largest':
+                        batch_y = batch['largest'].to(self.device)
+                    elif self.loss_func == 'CE-random':
+                        batch_y = batch['random'].to(self.device)
+
+                    output = self.model(batch_x)
+                    loss = self.criterion(output, batch_y)
+
+                elif self.mode == 'detect':
+                    img, query = batch['img'], batch['target']
+                    batch_size, n_classes = query.shape
+                    img_tile = tile(img, dim=0, n_tile=n_classes)
+                    target = query.flatten()
+                    query_expanded = torch.cat(batch_size * [torch.diag(torch.ones(n_classes, ))])
+
+                    # -- make half of batch be target present, half target absent --
+                    all_target_present_inds = np.nonzero(target == 1)
+                    target_present_to_use = torch.randperm(all_target_present_inds.shape[0])[:half_batch_size]
+                    target_present_inds = all_target_present_inds[target_present_to_use]
+
+                    n_absent = target_present_to_use.shape[0]  # might be less than half_batch_size
+                    all_target_absent_inds = np.nonzero(target == 0)
+                    target_absent_to_use = torch.randperm(all_target_absent_inds.shape[0])[:n_absent]
+                    target_absent_inds = all_target_absent_inds[target_absent_to_use]
+
+                    batch_inds = torch.cat((target_present_inds, target_absent_inds)).flatten().sort()[0]
+
+                    target = target.unsqueeze(1)  # add back non-batch ind, so target matches output shape
+
+                    img = img_tile[batch_inds].to(self.device)
+                    query = query_expanded[batch_inds].to(self.device)
+                    target = target[batch_inds].to(self.device)
+
+                    output = self.model(img, query)
+                    loss = self.criterion(output, target)
+
                 val_loss.append(loss.mean().cpu())  # mean needed for multiple GPUs
 
-                # below, _ because torch.max returns (values, indices)
-                _, pred_max = torch.max(output.data, 1)
-                if isinstance(self.val_loader.dataset, datasets.Searchstims):
-                    acc = (pred_max == batch_y).sum().item() / batch_y.size(0)
-                    val_acc.append(acc)
-                elif isinstance(self.val_loader.dataset, datasets.VOCDetection):
-                    batch_y_onehot = batch['target'].to(self.device)
+                # ---- compute accuracy / accuracies ----
+                if self.mode == 'classify':
+                    # below, _ because torch.max returns (values, indices)
+                    _, pred_max = torch.max(output.data, 1)
+                    if isinstance(self.val_loader.dataset, datasets.Searchstims):
+                        acc = (pred_max == batch_y).sum().item() / batch_y.size(0)
+                        val_acc.append(acc)
+                    elif isinstance(self.val_loader.dataset, datasets.VOCDetection):
+                        batch_y_onehot = batch['target'].to(self.device)
+                        out_sig = self.sigmoid_activation(output)
+                        pred_sig = (out_sig > self.sigmoid_threshold).float()
+                        f1 = sklearn.metrics.f1_score(batch_y_onehot.cpu().numpy(), pred_sig.cpu().numpy(),
+                                                      average='macro')
+                        val_f1.append(f1)
+
+                        batch_largest = batch['largest'].to(self.device)
+                        acc_largest = (pred_max == batch_largest).sum().item() / batch_largest.size(0)
+                        val_acc_largest.append(acc_largest)
+
+                        batch_random = batch['random'].to(self.device)
+                        acc_random = (pred_max == batch_random).sum().item() / batch_random.size(0)
+                        val_acc_random.append(acc_random)
+
+                elif self.mode == 'detect':
                     out_sig = self.sigmoid_activation(output)
                     pred_sig = (out_sig > self.sigmoid_threshold).float()
-                    f1 = sklearn.metrics.f1_score(batch_y_onehot.cpu().numpy(), pred_sig.cpu().numpy(),
-                                                  average='macro')
-                    val_f1.append(f1)
+                    acc = (pred_sig == target).sum().item() / target.size(0)
+                    val_acc.append(acc)
 
-                    batch_largest = batch['largest'].to(self.device)
-                    acc_largest = (pred_max == batch_largest).sum().item() / batch_largest.size(0)
-                    val_acc_largest.append(acc_largest)
-
-                    batch_random = batch['random'].to(self.device)
-                    acc_random = (pred_max == batch_random).sum().item() / batch_random.size(0)
-                    val_acc_random.append(acc_random)
-
+        # ---- assemble dict of metrics to return ----
         val_metrics = {
             'loss': np.asarray(val_loss).mean(),
         }
-        if isinstance(self.val_loader.dataset, datasets.Searchstims):
+        if self.mode == 'classify':
+            if isinstance(self.val_loader.dataset, datasets.Searchstims):
+                val_metrics['acc'] = np.asarray(val_acc).mean()
+            elif isinstance(self.val_loader.dataset, datasets.VOCDetection):
+                val_metrics['f1'] = np.asarray(val_f1).mean()
+                val_metrics['acc_largest'] = np.asarray(val_acc_largest).mean()
+                val_metrics['acc_random'] = np.asarray(val_acc_random).mean()
+        elif self.mode == 'detect':
             val_metrics['acc'] = np.asarray(val_acc).mean()
-        elif isinstance(self.val_loader.dataset, datasets.VOCDetection):
-            val_metrics['f1'] = np.asarray(val_f1).mean()
-            val_metrics['acc_largest'] = np.asarray(val_acc_largest).mean()
-            val_metrics['acc_random'] = np.asarray(val_acc_random).mean()
 
         metrics_str = ', '.join(
             [f'{metric}:{value:7.3f}' for metric, value in val_metrics.items()]
