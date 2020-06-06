@@ -19,7 +19,10 @@ class Trainer(AbstractTrainer):
     def from_config(cls,
                     net_name,
                     num_classes,
+                    trainset,
+                    mode='classify',
                     optimizer='SGD',
+                    embedding_n_out=512,
                     learning_rate=0.001,
                     momentum=0.9,
                     **kwargs,
@@ -35,6 +38,11 @@ class Trainer(AbstractTrainer):
             number of classes. Default is 2 (target present, target absent).
         optimizer : str
             optimizer to use. One of {'SGD', 'Adam', 'AdamW'}.
+        embedding_n_out : int
+            for DetectNet, number of output features from input embedding.
+            I.e., the output size of the linear layer that accepts the
+            one hot vector querying whether a specific class is present as input.
+            Default is 512.
         learning_rate : float
             value for learning rate hyperparameter. Default is 0.001 (which is what
             was used to train AlexNet and VGG16).
@@ -59,6 +67,22 @@ class Trainer(AbstractTrainer):
                 f'invalid value for net_name: {net_name}'
             )
 
+        if mode == 'detect':
+            # remove final output layer, will replace
+            if net_name == 'alexnet' or net_name == 'VGG16':
+                model.classifier = model.classifier[:-1]
+            elif 'cornet' in net_name.lower():
+                # for CORnet models, also need to remove 'output' layer (just an Identity)
+                model.decoder = model.decoder[:-2]
+            a_sample = next(iter(trainset))
+            tmp_img = a_sample['img'].unsqueeze(0)  # add batch dim
+            tmp_out = model(tmp_img)
+            vis_sys_n_features_out = tmp_out.shape[-1]  # (batch, n features)
+            model = nets.detectnet.DetectNet(vis_sys=model,
+                                             num_classes=num_classes,
+                                             vis_sys_n_out=vis_sys_n_features_out,
+                                             embedding_n_out=embedding_n_out)
+
         optimizers = list()
         if optimizer == 'SGD':
             optimizers.append(
@@ -74,6 +98,10 @@ class Trainer(AbstractTrainer):
                 torch.optim.AdamW(model.parameters(),
                                   lr=learning_rate))
 
-        kwargs = dict(**kwargs, net_name=net_name, model=model, optimizers=optimizers)
-        trainer = cls(**kwargs)
+        trainer = cls(net_name=net_name,
+                      model=model,
+                      optimizers=optimizers,
+                      trainset=trainset,
+                      mode=mode,
+                      **kwargs)
         return trainer
