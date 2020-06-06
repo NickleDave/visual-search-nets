@@ -3,7 +3,6 @@ import torch
 
 from .. import nets
 from .abstract_trainer import AbstractTrainer
-# from .triplet_loss import batch_all_triplet_loss, dist_squared, dist_euclid
 
 
 class TransferTrainer(AbstractTrainer):
@@ -19,7 +18,10 @@ class TransferTrainer(AbstractTrainer):
     def from_config(cls,
                     net_name,
                     new_learn_rate_layers,
+                    trainset,
+                    mode='classify',
                     num_classes=2,
+                    embedding_n_out=512,
                     optimizer='SGD',
                     freeze_trained_weights=False,
                     base_learning_rate=1e-20,
@@ -36,6 +38,11 @@ class TransferTrainer(AbstractTrainer):
             One of {'alexnet', 'VGG16'}
         num_classes : int
             number of classes. Default is 2 (target present, target absent).
+        embedding_n_out : int
+            for DetectNet, number of output features from input embedding.
+            I.e., the output size of the linear layer that accepts the
+            one hot vector querying whether a specific class is present as input.
+            Default is 512.
         new_learn_rate_layers : list
             of str, layer names whose weights will be initialized randomly
             and then trained with the 'new_layer_learning_rate'.
@@ -79,63 +86,123 @@ class TransferTrainer(AbstractTrainer):
                 f'invalid value for net_name: {net_name}'
             )
 
-        if optimizer == 'SGD':
-            optimizer = torch.optim.SGD
-        elif optimizer == 'Adam':
-            optimizer = torch.optim.Adam
-        elif optimizer == 'AdamW':
-            optimizer = torch.optim.AdamW
+        if mode == 'detect':
+            # remove final output layer, will replace
+            if net_name == 'alexnet' or net_name == 'VGG16':
+                model.classifier = model.classifier[:-1]
+            elif 'cornet' in net_name.lower():
+                # for CORnet models, also need to remove 'output' layer (just an Identity)
+                model.decoder = model.decoder[:-2]
+            a_sample = next(iter(trainset))
+            tmp_img = a_sample['img'].unsqueeze(0)  # add batch dim
+            tmp_out = model(tmp_img)
+            vis_sys_n_features_out = tmp_out.shape[-1]  # (batch, n features)
+            model = nets.detectnet.DetectNet(vis_sys=model,
+                                             num_classes=num_classes,
+                                             vis_sys_n_out=vis_sys_n_features_out,
+                                             embedding_n_out=embedding_n_out)
 
         optimizers = []
-        if net_name == 'alexnet' or net_name == 'VGG16':
-            classifier_params = model.classifier.parameters()
-        elif 'cornet' in net_name.lower():
-            classifier_params = model.decoder.parameters()
+        if mode == 'classify':
+            # violating principle of Don't Repeat Yourself here
+            # to be extra careful not to change behavior of previous code;
+            # all code in this 'if' block is what was used to assign parameters
+            # to optimizers before adding the 'detect' mode
+            if net_name == 'alexnet' or net_name == 'VGG16':
+                classifier_params = model.classifier.parameters()
+            elif 'cornet' in net_name.lower():
+                classifier_params = model.decoder.parameters()
 
-        if optimizer == 'SGD':
-            optimizers.append(
-                torch.optim.SGD(classifier_params,
-                                lr=new_layer_learning_rate,
-                                momentum=momentum))
-        elif optimizer == 'Adam':
-            optimizers.append(
-                torch.optim.Adam(classifier_params,
-                                 lr=new_layer_learning_rate))
-        elif optimizer == 'AdamW':
-            optimizers.append(
-                torch.optim.AdamW(classifier_params,
-                                  lr=new_layer_learning_rate))
-
-        if net_name == 'alexnet' or net_name == 'VGG16':
-            feature_params = model.features.parameters()
-        elif 'cornet' in net_name.lower():
-            feature_params = [list(p) for p in
-                              [model.V1.parameters(), model.V2.parameters(),
-                               model.V4.parameters(), model.IT.parameters()]]
-            feature_params = [p for params in feature_params for p in params]
-
-        if freeze_trained_weights:
-            for params in feature_params:
-                params.requires_grad = False
-        else:
             if optimizer == 'SGD':
                 optimizers.append(
-                    torch.optim.SGD(feature_params,
-                                    lr=base_learning_rate,
+                    torch.optim.SGD(classifier_params,
+                                    lr=new_layer_learning_rate,
                                     momentum=momentum))
             elif optimizer == 'Adam':
                 optimizers.append(
-                    torch.optim.Adam(feature_params,
-                                     lr=base_learning_rate))
+                    torch.optim.Adam(classifier_params,
+                                     lr=new_layer_learning_rate))
             elif optimizer == 'AdamW':
                 optimizers.append(
-                    torch.optim.AdamW(feature_params,
-                                      lr=base_learning_rate))
+                    torch.optim.AdamW(classifier_params,
+                                      lr=new_layer_learning_rate))
 
-        kwargs = dict(**kwargs,
-                      net_name=net_name,
+            if net_name == 'alexnet' or net_name == 'VGG16':
+                feature_params = model.features.parameters()
+            elif 'cornet' in net_name.lower():
+                feature_params = [list(p) for p in
+                                  [model.V1.parameters(), model.V2.parameters(),
+                                   model.V4.parameters(), model.IT.parameters()]]
+                feature_params = [p for params in feature_params for p in params]
+
+            if freeze_trained_weights:
+                for params in feature_params:
+                    params.requires_grad = False
+            else:
+                if optimizer == 'SGD':
+                    optimizers.append(
+                        torch.optim.SGD(feature_params,
+                                        lr=base_learning_rate,
+                                        momentum=momentum))
+                elif optimizer == 'Adam':
+                    optimizers.append(
+                        torch.optim.Adam(feature_params,
+                                         lr=base_learning_rate))
+                elif optimizer == 'AdamW':
+                    optimizers.append(
+                        torch.optim.AdamW(feature_params,
+                                          lr=base_learning_rate))
+        elif mode == 'detect':
+            if net_name == 'alexnet' or net_name == 'VGG16':
+                new_learn_rate_params = list(model.vis_sys.classifier.parameters())
+            elif 'cornet' in net_name.lower():
+                new_learn_rate_params = list(model.vis_sys.decoder.parameters())
+            new_learn_rate_params += list(model.embedding.parameters())
+            new_learn_rate_params += list(model.decoder.parameters())
+
+            if optimizer == 'SGD':
+                optimizers.append(
+                    torch.optim.SGD(new_learn_rate_params,
+                                    lr=new_layer_learning_rate,
+                                    momentum=momentum))
+            elif optimizer == 'Adam':
+                optimizers.append(
+                    torch.optim.Adam(new_learn_rate_params,
+                                     lr=new_layer_learning_rate))
+            elif optimizer == 'AdamW':
+                optimizers.append(
+                    torch.optim.AdamW(new_learn_rate_params,
+                                      lr=new_layer_learning_rate))
+
+            if net_name == 'alexnet' or net_name == 'VGG16':
+                feature_params = model.vis_sys.features.parameters()
+            elif 'cornet' in net_name.lower():
+                feature_params = [list(p) for p in
+                                  [model.vis_sys.V1.parameters(), model.vis_sys.V2.parameters(),
+                                   model.vis_sys.V4.parameters(), model.vis_sys.IT.parameters()]]
+                feature_params = [p for params in feature_params for p in params]
+
+            if freeze_trained_weights:
+                for params in feature_params:
+                    params.requires_grad = False
+            else:
+                if optimizer == 'SGD':
+                    optimizers.append(
+                        torch.optim.SGD(feature_params,
+                                        lr=base_learning_rate,
+                                        momentum=momentum))
+                elif optimizer == 'Adam':
+                    optimizers.append(
+                        torch.optim.Adam(feature_params,
+                                         lr=base_learning_rate))
+                elif optimizer == 'AdamW':
+                    optimizers.append(
+                        torch.optim.AdamW(feature_params,
+                                          lr=base_learning_rate))
+        trainer = cls(net_name=net_name,
                       model=model,
                       optimizers=optimizers,
-                      )
-        trainer = cls(**kwargs)
+                      trainset=trainset,
+                      mode=mode,
+                      **kwargs)
         return trainer
