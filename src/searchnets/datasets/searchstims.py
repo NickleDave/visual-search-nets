@@ -71,8 +71,7 @@ class Searchstims(Dataset):
             img = self.transform(img)
 
         if self.target_transform:
-
-            target = torch.from_numpy(np.asarray(target))
+            target = self.target_transform(target)
 
         sample = {
             'img': img,
