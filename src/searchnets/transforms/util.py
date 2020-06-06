@@ -1,3 +1,5 @@
+import functools
+
 import torch
 import torchvision.transforms as vis_transforms
 
@@ -37,12 +39,19 @@ def get_transforms(dataset_type,
     transform, target_transform
     """
     if dataset_type == 'searchstims':
+        transform = vis_transforms.Compose(
+            [vis_transforms.ToTensor(),
+             vis_transforms.Normalize(mean=MEAN, std=STD)]
+        )
         if loss_func == 'CE':
-            transform = vis_transforms.Compose(
-                [vis_transforms.ToTensor(),
-                 vis_transforms.Normalize(mean=MEAN, std=STD)]
-            )
             target_transform = transforms.TensorFromNumpyScalar()
+        elif loss_func == 'BCE':
+            dim_adder = functools.partial(torch.unsqueeze, dim=0)
+            target_transform = vis_transforms.Compose([
+                transforms.TensorFromNumpyScalar(),
+                torch.Tensor.float,
+                vis_transforms.Lambda(dim_adder),
+                ])
         else:
             raise ValueError(
                 f"no transforms specified for dataset_type '{dataset_type}' and loss_func '{loss_func}'"
