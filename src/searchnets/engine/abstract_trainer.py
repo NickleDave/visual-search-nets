@@ -150,7 +150,7 @@ class AbstractTrainer:
             self.train_writer = None
 
         self.sigmoid_threshold = sigmoid_threshold
-        if isinstance(self.trainset, datasets.VOCDetection):
+        if isinstance(self.trainset, datasets.VOCDetection) or mode == 'detect':
             self.sigmoid_activation = torch.nn.Sigmoid()
         else:
             self.sigmoid_activation = None
