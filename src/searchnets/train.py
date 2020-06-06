@@ -21,6 +21,7 @@ def train(csv_file,
           root=None,
           pad_size=VSD_PAD_SIZE,
           method='transfer',
+          mode='classify',
           num_classes=2,
           learning_rate=None,
           base_learning_rate=1e-20,
@@ -28,6 +29,7 @@ def train(csv_file,
           new_layer_learning_rate=0.001,
           freeze_trained_weights=True,
           loss_func='CE',
+          embedding_n_out=512,
           optimizer='SGD',
           use_val=True,
           val_step=1,
@@ -95,6 +97,11 @@ def train(csv_file,
         `base_learning_rate` but still smaller than the usual
         learning rate for a deep net trained with SGD,
         e.g. 0.001 instead of 0.01
+    embedding_n_out : int
+        for DetectNet, number of output features from input embedding.
+        I.e., the output size of the linear layer that accepts the
+        one hot vector querying whether a specific class is present as input.
+        Default is 512.
     loss_func : str
         type of loss function to use. One of {'CE', 'BCE'}.
         Default is 'CE', the standard cross-entropy loss.
@@ -130,6 +137,12 @@ def train(csv_file,
     -------
     None
     """
+    if mode == 'detect' and loss_func != 'BCE':
+        print(
+            f"when mode is 'detect', loss_func must be 'BCE', but was {loss_func}. Setting to 'BCE."
+        )
+        loss_func = 'BCE'
+
     if use_val and val_step is None or val_step < 1 or type(val_step) != int:
         raise ValueError(
             f'invalid value for val_step: {val_step}. Validation epoch must be positive integer'
@@ -229,7 +242,9 @@ def train(csv_file,
                                                       num_classes=num_classes,
                                                       criterion=criterion,
                                                       loss_func=loss_func,
+                                                      embedding_n_out=embedding_n_out,
                                                       optimizer=optimizer,
+                                                      mode=mode,
                                                       save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
                                                       batch_size=batch_size,
                                                       epochs=epochs,
@@ -249,8 +264,10 @@ def train(csv_file,
                                               num_classes=num_classes,
                                               criterion=criterion,
                                               loss_func=loss_func,
+                                              embedding_n_out=embedding_n_out,
                                               optimizer=optimizer,
                                               learning_rate=learning_rate,
+                                              mode=mode,
                                               save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
                                               batch_size=batch_size,
                                               epochs=epochs,
