@@ -165,6 +165,11 @@ def parse_config(config_fname):
     else:
         method = 'transfer'
 
+    if config.has_option('TRAIN', 'MODE'):
+        mode = config['TRAIN']['MODE']
+    else:
+        mode = 'classify'
+
     if config.has_option('TRAIN', 'LEARNING_RATE'):
         learning_rate = float(config['TRAIN']['LEARNING_RATE'])
     else:
@@ -190,6 +195,11 @@ def parse_config(config_fname):
     epochs_list = ast.literal_eval(config['TRAIN']['EPOCHS'])
     if type(epochs_list) == int:
         epochs_list = [epochs_list]
+
+    if config.has_option('TRAIN', 'EMBEDDING_N_OUT'):
+        embedding_n_out = int(config['TRAIN']['EMBEDDING_N_OUT'])
+    else:
+        embedding_n_out = 512
 
     if config.has_option('TRAIN', 'LOSS_FUNC'):
         loss_func = config['TRAIN']['LOSS_FUNC']
@@ -248,11 +258,13 @@ def parse_config(config_fname):
                                random_seed=random_seed,
                                save_path=save_path,
                                method=method,
+                               mode=mode,
                                learning_rate=learning_rate,
                                new_learn_rate_layers=new_learn_rate_layers,
                                new_layer_learning_rate=new_layer_learning_rate,
                                base_learning_rate=base_learning_rate,
                                freeze_trained_weights=freeze_trained_weights,
+                               embedding_n_out=embedding_n_out,
                                loss_func=loss_func,
                                optimizer=optimizer,
                                save_acc_by_set_size_by_epoch=save_acc_by_set_size_by_epoch,
