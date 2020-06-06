@@ -106,11 +106,6 @@ class TransferTrainer(AbstractTrainer):
                 torch.optim.AdamW(classifier_params,
                                   lr=new_layer_learning_rate))
 
-        optimizers.append(
-            torch.optim.SGD(classifier_params,
-                            lr=new_layer_learning_rate,
-                            momentum=momentum))
-
         if net_name == 'alexnet' or net_name == 'VGG16':
             feature_params = model.features.parameters()
         elif 'cornet' in net_name.lower():
