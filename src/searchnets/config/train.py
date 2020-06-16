@@ -78,7 +78,7 @@ class TrainConfig:
     mode : str
         training mode. One of {'classify', 'detect'}.
         'classify' is standard image classification.
-        'detect' trains to detct whether specified target is present or absent.
+        'detect' trains to detect whether specified target is present or absent.
         Default is 'classify'.
     base_learning_rate : float
         Applied to layers with weights loaded from training the
