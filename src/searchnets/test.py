@@ -242,7 +242,8 @@ def test(csv_file,
         joblib.dump(results_dict, results_fname)
 
         # ---- finally for VSD dataset, create .csv
-        results_csv_fname = os.path.join(test_results_save_path,
-                                         f'{results_fname_stem}_trained_{epochs}_epochs_test_results.csv')
-        results_df = pd.DataFrame.from_records(test_records)
-        results_df.to_csv(results_csv_fname, index=False)
+        if dataset_type == 'VSD':
+            results_csv_fname = os.path.join(test_results_save_path,
+                                             f'{results_fname_stem}_trained_{epochs}_epochs_test_results.csv')
+            results_df = pd.DataFrame.from_records(test_records)
+            results_df.to_csv(results_csv_fname, index=False)
