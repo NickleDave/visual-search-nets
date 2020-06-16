@@ -36,6 +36,16 @@ class TransferTrainer(AbstractTrainer):
         net_name : str
             name of convolutional neural net architecture to train.
             One of {'alexnet', 'VGG16'}
+        new_learn_rate_layers : list
+            of str, layer names whose weights will be initialized randomly
+            and then trained with the 'new_layer_learning_rate'.
+        trainset : torch.Dataset or torchvision.Visiondataset
+            training data, represented as a class.
+        mode : str
+            training mode. One of {'classify', 'detect'}.
+            'classify' is standard image classification.
+            'detect' trains to detect whether specified target is present or absent.
+            Default is 'classify'.
         num_classes : int
             number of classes. Default is 2 (target present, target absent).
         embedding_n_out : int
@@ -43,13 +53,8 @@ class TransferTrainer(AbstractTrainer):
             I.e., the output size of the linear layer that accepts the
             one hot vector querying whether a specific class is present as input.
             Default is 512.
-        new_learn_rate_layers : list
-            of str, layer names whose weights will be initialized randomly
-            and then trained with the 'new_layer_learning_rate'.
-        loss_func : str
-            type of loss function to use. One of {'CE', 'InvDPrime', 'triplet'}. Default is 'CE',
-            the standard cross-entropy loss. 'InvDPrime' is inverse D prime. 'triplet' is triplet loss
-            used in face recognition and biometric applications.
+        optimizer : str
+            optimizer to use. One of {'SGD', 'Adam', 'AdamW'}.
         freeze_trained_weights : bool
             if True, freeze weights in any layer not in "new_learn_rate_layers".
             These are the layers that have weights pre-trained on ImageNet.
