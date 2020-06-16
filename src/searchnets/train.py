@@ -75,6 +75,11 @@ def train(csv_file,
         'transfer' means perform transfer learning, using weights pre-trained
         on imagenet.
         Default is 'transfer'.
+    mode : str
+        training mode. One of {'classify', 'detect'}.
+        'classify' is standard image classification.
+        'detect' trains to detect whether specified target is present or absent.
+        Default is 'classify'.
 
     Other Parameters
     ----------------
