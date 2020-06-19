@@ -47,6 +47,7 @@ def compute_d_prime(y_true, y_pred):
 # used by searchnets_results_df
 SEARCHSTIMS_DF_COLUMNS = ['net_name',
                           'method',
+                          'mode',
                           'learning_rate',
                           'net_number',
                           'stimulus',
@@ -63,6 +64,7 @@ def results_gz_to_df(results_gz_path,
                      data_csv_path,
                      net_name,
                      method,
+                     mode,
                      learning_rate,
                      results_csv_path=None,
                      ):
@@ -80,6 +82,11 @@ def results_gz_to_df(results_gz_path,
         One of {'alexnet', 'VGG16', 'CorNet Z'}
     method : str
         training method. One of {'initialize', 'transfer'}. See docstring for searchnets.train.
+    mode : str
+        training mode. One of {'classify', 'detect'}.
+        'classify' is standard image classification.
+        'detect' trains to detect whether specified target is present or absent.
+        Default is 'classify'.
     learning_rate : float
         hyperparameter used during weight update step of training network.
     results_csv_path : str
@@ -135,7 +142,7 @@ def results_gz_to_df(results_gz_path,
                         )
                     else:
                         hit_rate, false_alarm_rate, d_prime = None, None, None
-                    row = [net_name, method, learning_rate, net_num, stim, set_size, target_cond,
+                    row = [net_name, method, mode, learning_rate, net_num, stim, set_size, target_cond,
                            acc, hit_rate, false_alarm_rate, d_prime]
                     rows.append(row)
 
