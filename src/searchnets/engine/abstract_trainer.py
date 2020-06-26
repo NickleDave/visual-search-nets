@@ -200,8 +200,6 @@ class AbstractTrainer:
 
         batch_total = int(np.ceil(len(self.trainset) / self.batch_size))
         batch_pbar = tqdm(self.train_loader)
-        if self.mode == 'detect':
-            half_batch_size = int(self.batch_size / 2)
 
         for i, batch in enumerate(batch_pbar):
             self.step += 1
@@ -219,29 +217,31 @@ class AbstractTrainer:
                 loss = self.criterion(output, batch_y)
 
             elif self.mode == 'detect':
-                img, query = batch['img'], batch['target']
-                batch_size, n_classes = query.shape
-                img_tile = tile(img, dim=0, n_tile=n_classes)
-                target = query.flatten()
-                query_expanded = torch.cat(batch_size * [torch.diag(torch.ones(n_classes, ))])
+                img, target_one_hot = batch['img'].to(self.device), batch['target']
+                batch_size, n_classes = target_one_hot.shape
+                # compute for every batch since last batch can be smaller
+                half_batch_size = int(batch_size / 2)
 
                 # -- make half of batch be target present, half target absent --
-                all_target_present_inds = np.nonzero(target == 1)
-                target_present_to_use = torch.randperm(all_target_present_inds.shape[0])[:half_batch_size]
-                target_present_inds = all_target_present_inds[target_present_to_use]
+                permuted_sample_inds = np.random.permutation(batch_size)
+                target_present_inds = permuted_sample_inds[:half_batch_size]
+                target_absent_inds = permuted_sample_inds[half_batch_size:]
+                target = np.zeros((batch_size, 1)).astype(np.float32)
+                target[target_present_inds] = 1
+                target[target_absent_inds] = 0
 
-                n_absent = target_present_to_use.shape[0]  # might be less than half_batch_size
-                all_target_absent_inds = np.nonzero(target == 0)
-                target_absent_to_use = torch.randperm(all_target_absent_inds.shape[0])[:n_absent]
-                target_absent_inds = all_target_absent_inds[target_absent_to_use]
+                query = np.zeros((batch_size, n_classes)).astype(np.float32)
+                query_one_hot = torch.diag(torch.ones(n_classes,))
+                for row, (target_present, classes_present_one_hot) in enumerate(zip(target, target_one_hot)):
+                    if target_present == 0:
+                        candidate_inds = np.nonzero(classes_present_one_hot == 0).flatten()
+                    elif target_present == 1:
+                        candidate_inds = np.nonzero(classes_present_one_hot == 1).flatten()
+                    choice = np.random.choice(candidate_inds)
+                    query[row] = query_one_hot[choice, :]
 
-                batch_inds = torch.cat((target_present_inds, target_absent_inds)).flatten().sort()[0]
-
-                target = target.unsqueeze(1)  # add back non-batch ind, so target matches output shape
-
-                img = img_tile[batch_inds].to(self.device)
-                query = query_expanded[batch_inds].to(self.device)
-                target = target[batch_inds].to(self.device)
+                query = torch.from_numpy(query).to(self.device)
+                target = torch.from_numpy(target).to(self.device)
 
                 output = self.model(img, query)
                 loss = self.criterion(output, target)
@@ -341,29 +341,31 @@ class AbstractTrainer:
                     loss = self.criterion(output, batch_y)
 
                 elif self.mode == 'detect':
-                    img, query = batch['img'], batch['target']
-                    batch_size, n_classes = query.shape
-                    img_tile = tile(img, dim=0, n_tile=n_classes)
-                    target = query.flatten()
-                    query_expanded = torch.cat(batch_size * [torch.diag(torch.ones(n_classes, ))])
+                    img, target_one_hot = batch['img'].to(self.device), batch['target']
+                    batch_size, n_classes = target_one_hot.shape
+                    # compute for every batch since last batch can be smaller
+                    half_batch_size = int(batch_size / 2)
 
                     # -- make half of batch be target present, half target absent --
-                    all_target_present_inds = np.nonzero(target == 1)
-                    target_present_to_use = torch.randperm(all_target_present_inds.shape[0])[:half_batch_size]
-                    target_present_inds = all_target_present_inds[target_present_to_use]
+                    permuted_sample_inds = np.random.permutation(batch_size)
+                    target_present_inds = permuted_sample_inds[:half_batch_size]
+                    target_absent_inds = permuted_sample_inds[half_batch_size:]
+                    target = np.zeros((batch_size, 1)).astype(np.float32)
+                    target[target_present_inds] = 1
+                    target[target_absent_inds] = 0
 
-                    n_absent = target_present_to_use.shape[0]  # might be less than half_batch_size
-                    all_target_absent_inds = np.nonzero(target == 0)
-                    target_absent_to_use = torch.randperm(all_target_absent_inds.shape[0])[:n_absent]
-                    target_absent_inds = all_target_absent_inds[target_absent_to_use]
+                    query = np.zeros((batch_size, n_classes)).astype(np.float32)
+                    query_one_hot = torch.diag(torch.ones(n_classes, ))
+                    for row, (target_present, classes_present_one_hot) in enumerate(zip(target, target_one_hot)):
+                        if target_present == 0:
+                            candidate_inds = np.nonzero(classes_present_one_hot == 0).flatten()
+                        elif target_present == 1:
+                            candidate_inds = np.nonzero(classes_present_one_hot == 1).flatten()
+                        choice = np.random.choice(candidate_inds)
+                        query[row] = query_one_hot[choice, :]
 
-                    batch_inds = torch.cat((target_present_inds, target_absent_inds)).flatten().sort()[0]
-
-                    target = target.unsqueeze(1)  # add back non-batch ind, so target matches output shape
-
-                    img = img_tile[batch_inds].to(self.device)
-                    query = query_expanded[batch_inds].to(self.device)
-                    target = target[batch_inds].to(self.device)
+                    query = torch.from_numpy(query).to(self.device)
+                    target = torch.from_numpy(target).to(self.device)
 
                     output = self.model(img, query)
                     loss = self.criterion(output, target)
