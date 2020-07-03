@@ -8,6 +8,7 @@ to type the python -m)
 import os
 import argparse
 
+from .assay import assay
 from .config import parse_config
 from .data import split
 from .train import train
@@ -84,6 +85,28 @@ def _call_test(config, configfile):
          data_parallel=config.train.data_parallel)
 
 
+def _call_assay(config, configfile):
+    """helper function to call searchstims.assay"""
+    assay(csv_file=config.data.csv_file_out,
+          net_name=config.train.net_name,
+          number_nets_to_train=config.train.number_nets_to_train,
+          epochs_list=config.train.epochs_list,
+          batch_size=config.train.batch_size,
+          restore_path=config.train.save_path,
+          test_results_save_path=config.test.test_results_save_path,
+          configfile=configfile,
+          random_seed=config.train.random_seed,
+          root=config.data.root,
+          num_classes=config.data.num_classes,
+          pad_size=config.data.pad_size,
+          embedding_n_out=config.train.embedding_n_out,
+          loss_func=config.train.loss_func,
+          method=config.train.method,
+          mode=config.train.mode,
+          num_workers=config.train.num_workers,
+          data_parallel=config.train.data_parallel)
+
+
 def cli(command, configfile):
     """command-line interface
     Called by main() when user runs from the command-line by typing 'searchnets'
@@ -123,6 +146,9 @@ def cli(command, configfile):
     elif command == 'test':
         _call_test(config, configfile)
 
+    elif command == 'assay':
+        _call_assay(config, configfile)
+
     elif command == 'all':
         _call_split(config)
         _call_train(config)
@@ -132,6 +158,7 @@ def cli(command, configfile):
 CHOICES = ['split',
            'train',
            'test',
+           'assay',
            'all',
            ]
 
