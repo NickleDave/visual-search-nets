@@ -26,8 +26,10 @@ def test(csv_file,
          root=None,
          num_classes=2,
          pad_size=500,
+         embedding_n_out=512,
          loss_func='CE',
          method='transfer',
+         mode='classify',
          num_workers=4,
          data_parallel=False):
     """measure accuracy of trained convolutional neural networks on test set of visual search stimuli
@@ -79,6 +81,23 @@ def test(csv_file,
         number of workers used by torch.DataLoaders. Default is 4.
     data_parallel : bool
         if True, use torch.nn.dataparallel to train network on multiple GPUs. Default is False.
+    method : str
+        training method. One of {'initialize', 'transfer'}.
+        'initialize' means randomly initialize all weights and train the
+        networks "from scratch".
+        'transfer' means perform transfer learning, using weights pre-trained
+        on imagenet.
+        Default is 'transfer'.
+    mode : str
+        training mode. One of {'classify', 'detect'}.
+        'classify' is standard image classification.
+        'detect' trains to detect whether specified target is present or absent.
+        Default is 'classify'.
+    embedding_n_out : int
+        for DetectNet, number of output features from input embedding.
+        I.e., the output size of the linear layer that accepts the
+        one hot vector querying whether a specific class is present as input.
+        Default is 512.
 
     Returns
     -------
@@ -95,6 +114,12 @@ def test(csv_file,
             where keys are paths to model and values are array
             of predictions made by that model for test set
     """
+    if mode == 'detect' and loss_func != 'BCE':
+        print(
+            f"when mode is 'detect', loss_func must be 'BCE', but was {loss_func}. Setting to 'BCE."
+        )
+        loss_func = 'BCE'
+
     if random_seed:
         np.random.seed(random_seed)  # for shuffling in batch_generator
         torch.manual_seed(random_seed)
@@ -136,11 +161,13 @@ def test(csv_file,
 
             acc_per_set_size_per_model = []
             acc_per_set_size_model_dict = {}
+
         elif dataset_type == 'VSD':
             # ---- for VSD save results.gz **and** a .csv, because we have multiple metrics,
             # and because csv files are better anyway
             test_records = defaultdict(list)  # records gets turned into pandas DataFrame, then saved as .csv
             img_names_per_model_dict = {}
+
         predictions_per_model_dict = {}
 
         for net_number in range(1, number_nets_to_train + 1):
@@ -165,10 +192,12 @@ def test(csv_file,
 
             print(f'Loading model from {restore_path_this_net}')
             tester = Tester.from_config(net_name=net_name,
-                                        testset=testset,
-                                        loss_func=loss_func,
-                                        restore_path=restore_path_this_net,
                                         num_classes=num_classes,
+                                        loss_func=loss_func,
+                                        testset=testset,
+                                        mode=mode,
+                                        embedding_n_out=embedding_n_out,
+                                        restore_path=restore_path_this_net,
                                         batch_size=batch_size,
                                         device=device,
                                         num_workers=num_workers,
@@ -179,6 +208,8 @@ def test(csv_file,
             if dataset_type == 'searchstims':
                 acc, y_pred = test_results['acc'], test_results['pred']
                 set_size_vec_test = df_dataset[df_dataset['split'] == 'test']['set_size']
+                if mode == 'detect':
+                    y_pred = np.squeeze(y_pred)  # because DetectNet adds a dimension to output. My bad.
                 acc_per_set_size = []
                 for set_size in set_sizes:
                     # in line below, [0] at end because np.where returns a tuple
@@ -204,17 +235,20 @@ def test(csv_file,
                 test_records['method'].append(method)
                 test_records['loss_func'].append(loss_func)
                 test_records['restore_path'] = restore_path_this_net
-                for metric in ['f1', 'acc_largest', 'acc_random']:
-                    test_records[metric].append(test_results[metric])
+                if mode == 'classify':
+                    for metric in ['f1', 'acc_largest', 'acc_random']:
+                        test_records[metric].append(test_results[metric])
+                    results_str = ', '.join(
+                        [f'{key}: {test_results[key]:7.3f}'
+                         for key in ['loss', 'f1', 'acc_largest', 'acc_random']]
+                    )
+                elif mode == 'detect':
+                    test_records['acc'].append(test_results['acc'])
+                    results_str = f"acc: {test_results['acc']:7.3f}"
+                print(f'test results: {results_str}')
 
                 y_pred, img_names = test_results['pred'], test_results['img_names']
                 img_names_per_model_dict[restore_path_this_net] = img_names
-
-                results_str = ', '.join(
-                    [f'{key}: {test_results[key]:7.3f}'
-                     for key in ['loss', 'f1', 'acc_largest', 'acc_random']]
-                )
-                print(f'test results: {results_str}')
 
             # regardless of dataset type we store predictions in this dict
             predictions_per_model_dict[restore_path_this_net] = y_pred
@@ -242,7 +276,8 @@ def test(csv_file,
         joblib.dump(results_dict, results_fname)
 
         # ---- finally for VSD dataset, create .csv
-        results_csv_fname = os.path.join(test_results_save_path,
-                                         f'{results_fname_stem}_trained_{epochs}_epochs_test_results.csv')
-        results_df = pd.DataFrame.from_records(test_records)
-        results_df.to_csv(results_csv_fname, index=False)
+        if dataset_type == 'VSD':
+            results_csv_fname = os.path.join(test_results_save_path,
+                                             f'{results_fname_stem}_trained_{epochs}_epochs_test_results.csv')
+            results_df = pd.DataFrame.from_records(test_records)
+            results_df.to_csv(results_csv_fname, index=False)

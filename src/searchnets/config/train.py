@@ -68,6 +68,18 @@ class TrainConfig:
         to seed random number generator
     save_path : str
         path to directory where model and any checkpoints should be saved
+    method : str
+        training method. One of {'initialize', 'transfer'}.
+        'initialize' means randomly initialize all weights and train the
+        networks "from scratch".
+        'transfer' means perform transfer learning, using weights pre-trained
+        on imagenet.
+        Default is 'transfer'.
+    mode : str
+        training mode. One of {'classify', 'detect'}.
+        'classify' is standard image classification.
+        'detect' trains to detect whether specified target is present or absent.
+        Default is 'classify'.
     base_learning_rate : float
         Applied to layers with weights loaded from training the
         architecture on ImageNet. Should be a very small number
@@ -80,16 +92,16 @@ class TrainConfig:
     dropout_rate : float
         Probability that any unit in a layer will "drop out" during
         a training epoch, as a form of regularization. Default is 0.5.
+    embedding_n_out : int
+        for DetectNet, number of output features from input embedding.
+        I.e., the output size of the linear layer that accepts the
+        one hot vector querying whether a specific class is present as input.
+        Default is 512.
     loss_func : str
         type of loss function to use. One of {'CE', 'invDPrime'}. Default is 'CE',
         the standard cross-entropy loss. 'invDprime' is inverse D prime.
     optimizer : str
         optimizer to use. One of {'SGD', 'Adam', 'AdamW'}.
-    triplet_loss_margin : float
-        Minimum margin between clusters, parameter in triplet loss function. Default is 0.5.
-    squared_dist : bool
-        if True, when computing similarity of embeddings (e.g. for triplet loss), use pairwise squared
-        distance, i.e. Euclidean distance.
     save_acc_by_set_size_by_epoch : bool
         if True, compute accuracy on training set for each epoch separately
         for each unique set size in the visual search stimuli. These values
@@ -146,6 +158,14 @@ class TrainConfig:
             raise ValueError(
                 f"method must be one of {{'initialize', 'transfer'}}, but was {value}."
             )
+    mode = attr.ib(validator=instance_of(str), default='classify')
+    @mode.validator
+    def check_method(self, attribute, value):
+        if value not in {'classify', 'detect'}:
+            raise ValueError(
+                f"method must be one of {{'classify', 'detect'}}, but was {value}."
+            )
+
     # for 'initialize' training
     learning_rate = attr.ib(validator=instance_of(float), default=0.001)
 
@@ -159,6 +179,8 @@ class TrainConfig:
     new_layer_learning_rate = attr.ib(validator=instance_of(float), default=0.001)
     base_learning_rate = attr.ib(validator=instance_of(float), default=1e-20)
     freeze_trained_weights = attr.ib(validator=instance_of(bool), default=True)
+
+    embedding_n_out = attr.ib(validator=validators.optional(is_non_neg_int), default=512)
 
     loss_func = attr.ib(validator=instance_of(str), default='CE')
     @loss_func.validator

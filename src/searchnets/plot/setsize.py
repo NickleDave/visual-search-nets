@@ -21,7 +21,7 @@ MN_COLORS = {
 }
 
 
-def metric_v_set_size_df(df, net_name, method, stimulus, metric, conditions,
+def metric_v_set_size_df(df, net_name, method, mode, stimulus, metric, conditions,
                          unit_colors=UNIT_COLORS, mn_colors=MN_COLORS,
                          ax=None, title=None, save_as=None, figsize=(10, 5),
                          set_xlabel=False, set_ylabel=False, set_ylim=True,
@@ -41,7 +41,12 @@ def metric_v_set_size_df(df, net_name, method, stimulus, metric, conditions,
         name of neural net architecture. Must be a value in the 'net_name' column
         of df.
     method : str
-        method used for training. Must be a value in the 'method' column of df.
+        method used for training. One of {'initialize', 'transfer'}.
+        Must be a value in the 'method' column of df.
+    mode : str
+        training mode. One of {'classify', 'detect'}.
+        'classify' is standard image classification.
+        'detect' trains to detect whether specified target is present or absent.
     stimulus : str
         type of visual search stimulus, e.g. 'RVvGV', '2_v_5'. Must be a value in
         the 'stimulus' column of df.
@@ -93,6 +98,7 @@ def metric_v_set_size_df(df, net_name, method, stimulus, metric, conditions,
 
     df = df[(df['net_name'] == net_name)
             & (df['method'] == method)
+            & (df['mode'] == mode)
             & (df['stimulus'] == stimulus)]
 
     if not all(
