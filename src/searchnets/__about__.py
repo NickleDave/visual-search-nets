@@ -20,10 +20,10 @@ except NameError:
 
 
 __title__ = "visual-search-nets"
-__summary__ = "experiments measuring how convolutional neural networks perform a visual search task"
+__summary__ = "neural network models of visual search behavior"
 __uri__ = "https://github.com/NickleDave/visual-search-nets"
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 if base_dir is not None and os.path.exists(os.path.join(base_dir, ".commit")):
     with open(os.path.join(base_dir, ".commit")) as fp:
@@ -35,4 +35,4 @@ __author__ = "David Nicholson"
 __email__ = "nicholdav@gmail.com"
 
 __license__ = "BSD"
-__copyright__ = "2019 %s" % __author__
+__copyright__ = "2019-present %s" % __author__
