@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.1.0]
 ### Added
 - `transforms` sub-package [#58](https://github.com/NickleDave/visual-search-nets/pull/58)
   + decouples transforms from datasets
@@ -43,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - automatic setting of defaults for plotting, that were 
   in `plot.__init__` which made it hard to override them
   [#72](https://github.com/NickleDave/visual-search-nets/pull/72)
+- factor out everything related to papers, making `searchnets` a separate library
+  [#78](https://github.com/NickleDave/visual-search-nets/pull/78)
 
 ## [1.0.0]
 This is the version used for SfN 2019 poster, and for the paper
