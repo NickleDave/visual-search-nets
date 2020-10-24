@@ -2,13 +2,21 @@
 [![PyPI version](https://badge.fury.io/py/visual-search-nets.svg)](https://badge.fury.io/py/visual-search-nets)
 # visual-search-nets
 
-Experiments to measure the behavior of deep neural networks performing 
-a visual search task.
+neural networks models of visual search behavior
 
-For some background and a summary of the results, please see [this Jupyter notebook](./docs/notebooks/results.ipynb).
+Paper on how object recognition models account for visual search behavior,
+that uses this package: 
+https://github.com/NickleDave/untangling-visual-search
+
+[Proceedings paper](https://ccneuro.org/2019/proceedings/0000986.pdf) from 
+[2019 Conference on Cognitive Computational Neuroscience](https://ccneuro.org/2019/)
+that used previous versions of this library.
+
+Tool that can be used to generate visual search stimuli
+to then carry out experiments with this library:
+https://github.com/NickleDave/searchstims
 
 ## Installation
-Experiments were run using Anaconda on Ubuntu 16.04.
 The following commands were used to create the environment:
 
 ```console
@@ -21,7 +29,7 @@ tu@computi:~$ pip install .
 
 ## usage
 Installing this package (by running `pip install .` in the source directory) makes it 
-possible to run the experiments from the command line with the `searchnets` command, like so:
+possible to run experiments from the command line with the `searchnets` command, like so:
 ```console
 tu@computi:~$ searchnets train config.ini
 ```  
@@ -30,16 +38,6 @@ where `command` is some command to run, and `config.ini` is the name of a config
 with options that specify how the command will be executed.  
 For details on the commands, see [this page in the docs](./docs/cli.md).
 For details on the `config.ini` files, please see [this other page](./docs/config.ini.md).
-
-## Data
-Data is deposited here:
-<https://figshare.com/articles/visual-search-nets/7688840>
-
-## Replicating experiments
-The `Makefile` replicates the experiments.
-```console
-tu@computi:~$ make all
-```
 
 ## Acknowledgements
 - Research funded by the Lifelong Learning Machines program, 
