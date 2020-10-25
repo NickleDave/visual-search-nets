@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1]
+### Removed
+- remove unnecessary dependencies from setup.py, fix #79
+  [2248c34](https://github.com/NickleDave/visual-search-nets/commit/2248c341635908994a11491df34f534501766eb8)
+
 ## [1.1.0]
 ### Added
 - `transforms` sub-package [#58](https://github.com/NickleDave/visual-search-nets/pull/58)
