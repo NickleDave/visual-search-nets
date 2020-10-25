@@ -23,7 +23,7 @@ __title__ = "visual-search-nets"
 __summary__ = "neural network models of visual search behavior"
 __uri__ = "https://github.com/NickleDave/visual-search-nets"
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 if base_dir is not None and os.path.exists(os.path.join(base_dir, ".commit")):
     with open(os.path.join(base_dir, ".commit")) as fp:
