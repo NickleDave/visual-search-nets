@@ -33,14 +33,10 @@ REQUIRED = [
     'attrs',
     'imageio',
     'joblib',
-    'jupyterlab',
     'numpy',
     'matplotlib',
     'pandas',
-    'pyprojroot',
     'scipy',
-    'scikit-learn',
-    'scikit-posthocs',
     'searchstims>=2.3.1',
     'seaborn',
     'tensorboard',
@@ -50,9 +46,9 @@ REQUIRED = [
 ]
 
 # What packages are optional?
-EXTRAS = {
-    'dev': ['jupytext', 'cite2c'],
-}
+#EXTRAS = {
+#    'dev': ['jupytext', 'cite2c'],
+#}
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------
