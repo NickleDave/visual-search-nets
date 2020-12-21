@@ -77,5 +77,5 @@ def logdir2csv(logdir):
 
     df = logdir2df(logdir)
 
-    csv_path = events_file.parent.joinpath(events_file.stem + '.csv')
+    csv_path = events_file.stem + '.csv'
     df.to_csv(logdir.joinpath(csv_path))
