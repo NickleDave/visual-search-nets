@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- change `searchnets.test` so it saves a test results .csv for all datasets
+  [#84](https://github.com/NickleDave/visual-search-nets/pull/84)
+
 ### Fixed
 - fix `searchnets.tensorboard.logdir2csv` so it doesn't duplicate part of save path
   [#82](https://github.com/NickleDave/visual-search-nets/pull/82)
