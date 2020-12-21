@@ -137,8 +137,11 @@ def test(csv_file,
         print(f'measuring accuracy on test set for {net_name} model trained for {epochs} epochs')
 
         # ------ initialize variables to hold outputs from all training replicates -------------------------------------
+        # for both 'searchstims' and 'VSD' dataset we save test results in a .csv
+        test_records = defaultdict(list)  # records gets turned into pandas DataFrame, then saved as .csv
+
         if dataset_type == 'searchstims':
-            # ---- for searchstims save just a results.gz file with predictions per model plus accuracies per model
+            # ---- for searchstims save results.gz file with predictions per model plus accuracies per model
             stim_types = df_dataset['stimulus'].unique()
             set_sizes_by_stim_type = {}
             for stim_type in stim_types:
@@ -163,9 +166,7 @@ def test(csv_file,
             acc_per_set_size_model_dict = {}
 
         elif dataset_type == 'VSD':
-            # ---- for VSD save results.gz **and** a .csv, because we have multiple metrics,
-            # and because csv files are better anyway
-            test_records = defaultdict(list)  # records gets turned into pandas DataFrame, then saved as .csv
+            # ---- for VSD, save image names in case we need them for further analysis
             img_names_per_model_dict = {}
 
         predictions_per_model_dict = {}
@@ -205,8 +206,16 @@ def test(csv_file,
 
             test_results = tester.test()
 
+            test_records['net_name'].append(net_name)
+            test_records['replicate'].append(net_number)
+            test_records['method'].append(method)
+            test_records['loss_func'].append(loss_func)
+            test_records['restore_path'] = restore_path_this_net
+
             if dataset_type == 'searchstims':
-                acc, y_pred = test_results['acc'], test_results['pred']
+                test_records['acc'].append(test_results['acc'])
+
+                y_pred = test_results['pred']
                 set_size_vec_test = df_dataset[df_dataset['split'] == 'test']['set_size']
                 if mode == 'detect':
                     y_pred = np.squeeze(y_pred)  # because DetectNet adds a dimension to output. My bad.
@@ -230,11 +239,6 @@ def test(csv_file,
                 acc_per_set_size_model_dict[restore_path_this_net] = acc_per_set_size
 
             elif dataset_type == 'VSD':
-                test_records['net_name'].append(net_name)
-                test_records['replicate'].append(net_number)
-                test_records['method'].append(method)
-                test_records['loss_func'].append(loss_func)
-                test_records['restore_path'] = restore_path_this_net
                 if mode == 'classify':
                     for metric in ['f1', 'acc_largest', 'acc_random']:
                         test_records[metric].append(test_results[metric])
@@ -275,9 +279,8 @@ def test(csv_file,
 
         joblib.dump(results_dict, results_fname)
 
-        # ---- finally for VSD dataset, create .csv
-        if dataset_type == 'VSD':
-            results_csv_fname = os.path.join(test_results_save_path,
-                                             f'{results_fname_stem}_trained_{epochs}_epochs_test_results.csv')
-            results_df = pd.DataFrame.from_records(test_records)
-            results_df.to_csv(results_csv_fname, index=False)
+        # ---- finally create test results .csv
+        results_csv_fname = os.path.join(test_results_save_path,
+                                         f'{results_fname_stem}_trained_{epochs}_epochs_test_results.csv')
+        results_df = pd.DataFrame.from_records(test_records)
+        results_df.to_csv(results_csv_fname, index=False)
