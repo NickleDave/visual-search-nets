@@ -1,0 +1,50 @@
+[tool.poetry]
+name = "visual-search-nets"
+version = "1.2.0"
+description = "neural network models of visual search behavior"
+authors = ["NickleDave <nickledave@users.noreply.github.com>"]
+license = "BSD"
+classifiers = [
+        'License :: OSI Approved :: BSD License',
+        'Development Status :: 5 - Production/Stable',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: Implementation :: CPython'
+]
+readme = 'README.md'
+homepage = 'https://github.com/NickleDave/visual-search-nets'
+packages = [
+    { include = "searchnets", from = "src" },
+]
+
+[tool.poetry.dependencies]
+python = ">3.7.1, <3.10"
+attrs = "^21.2.0"
+imageio = "^2.9.0"
+joblib = "^1.0.1"
+numpy = "^1.21.0"
+matplotlib = "^3.4.2"
+pandas = "^1.3.0"
+pyprojroot = "^0.2.0"
+scikit-learn = "^0.24.2"
+scipy = "^1.7.0"
+searchstims = ">2.3.1"
+seaborn = "^0.11.1"
+tensorboard = "^2.5.0"
+torch = "^1.8.1"
+torchvision = "^0.9.1"
+tqdm = "^4.61.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.4"
+ipython = "^7.25.0"
+
+[tool.poetry.scripts]
+searchnets = 'searchnets.__main__:main'
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
