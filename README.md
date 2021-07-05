@@ -2,11 +2,10 @@
 [![PyPI version](https://badge.fury.io/py/visual-search-nets.svg)](https://badge.fury.io/py/visual-search-nets)
 # visual-search-nets
 
-neural networks models of visual search behavior
+neural networks models performing visual search tasks
 
-Paper on how object recognition models account for visual search behavior,
-that uses this package: 
-https://github.com/NickleDave/untangling-visual-search
+Code for paper with experiments that use this library: 
+https://github.com/NickleDave/Nicholson-Prinz-2021
 
 [Proceedings paper](https://ccneuro.org/2019/proceedings/0000986.pdf) from 
 [2019 Conference on Cognitive Computational Neuroscience](https://ccneuro.org/2019/)
