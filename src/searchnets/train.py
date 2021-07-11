@@ -21,6 +21,8 @@ def train(csv_file,
           root=None,
           pad_size=VSD_PAD_SIZE,
           method='transfer',
+          pretrained=True,
+          weights_path=None,
           mode='classify',
           num_classes=2,
           learning_rate=None,
@@ -75,6 +77,13 @@ def train(csv_file,
         'transfer' means perform transfer learning, using weights pre-trained
         on imagenet.
         Default is 'transfer'.
+    pretrained : bool
+        whether to load pre-trained model weights. Default is True.
+    weights_path : str
+        path to pre-trained model weights. Default is ``None``.
+        If ``pretrained`` is ``True`` and ``weights_path`` is ``None``,
+        then the pre-trained weights will be loaded from the urls
+        associated with the models.
     mode : str
         training mode. One of {'classify', 'detect'}.
         'classify' is standard image classification.
@@ -239,6 +248,8 @@ def train(csv_file,
             if method == 'transfer':
                 trainer = TransferTrainer.from_config(net_name=net_name,
                                                       trainset=trainset,
+                                                      pretrained=pretrained,
+                                                      weights_path=weights_path,
                                                       new_learn_rate_layers=new_learn_rate_layers,
                                                       freeze_trained_weights=freeze_trained_weights,
                                                       base_learning_rate=base_learning_rate,
@@ -265,6 +276,8 @@ def train(csv_file,
             elif method == 'initialize':
                 trainer = Trainer.from_config(net_name=net_name,
                                               trainset=trainset,
+                                              pretrained=pretrained,
+                                              weights_path=weights_path,
                                               save_path=save_path_this_net,
                                               num_classes=num_classes,
                                               criterion=criterion,

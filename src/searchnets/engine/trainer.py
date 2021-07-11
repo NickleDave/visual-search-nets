@@ -21,6 +21,8 @@ class Trainer(AbstractTrainer):
                     num_classes,
                     trainset,
                     mode='classify',
+                    pretrained=False,
+                    weights_path=None,
                     optimizer='SGD',
                     embedding_n_out=512,
                     learning_rate=0.001,
@@ -36,6 +38,20 @@ class Trainer(AbstractTrainer):
             One of {'alexnet', 'VGG16'}
         num_classes : int
             number of classes. Default is 2 (target present, target absent).
+        trainset : torch.utils.data.Dataset
+            instance of one of the sub-classes in ``searchnets.datasets``
+        mode : str
+            training mode. One of {'classify', 'detect'}.
+            'classify' is standard image classification.
+            'detect' trains to detect whether specified target is present or absent.
+            Default is 'classify'.
+        pretrained : bool
+            whether to load pre-trained model weights. Default is False.
+        weights_path : str
+            path to pre-trained model weights. Default is ``None``.
+            If ``pretrained`` is ``True`` and ``weights_path`` is ``None``,
+            then the pre-trained weights will be loaded from the urls
+            associated with the models.
         optimizer : str
             optimizer to use. One of {'SGD', 'Adam', 'AdamW'}.
         embedding_n_out : int
@@ -56,11 +72,11 @@ class Trainer(AbstractTrainer):
         trainer : Trainer
         """
         if net_name == 'alexnet':
-            model = nets.alexnet.build(pretrained=False, num_classes=num_classes)
+            model = nets.alexnet.build(pretrained=pretrained, weights_path=weights_path, num_classes=num_classes)
         elif net_name == 'VGG16':
-            model = nets.vgg16.build(pretrained=False, num_classes=num_classes)
+            model = nets.vgg16.build(pretrained=pretrained, weights_path=weights_path, num_classes=num_classes)
         elif 'cornet' in net_name.lower():
-            model = nets.cornet.build(model_name=net_name, pretrained=False,
+            model = nets.cornet.build(model_name=net_name, pretrained=False,  weights_path=weights_path,
                                       num_classes=num_classes)
         else:
             raise ValueError(

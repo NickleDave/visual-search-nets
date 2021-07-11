@@ -42,6 +42,8 @@ def _call_train(config):
           pad_size=config.data.pad_size,
           save_path=config.train.save_path,
           method=config.train.method,
+          pretrained=config.train.pretrained,
+          weights_path=config.train.weights_path,
           mode=config.train.mode,
           num_classes=config.data.num_classes,
           learning_rate=config.train.learning_rate,

@@ -49,7 +49,7 @@ class AlexNet(nn.Module):
         return x
 
 
-def build(pretrained=False, progress=True, **kwargs):
+def build(pretrained=False, progress=True, weights_path=None, **kwargs):
     r"""AlexNet model architecture from the
     `"One weird trick..." <https://arxiv.org/abs/1404.5997>`_ paper.
 
@@ -59,8 +59,20 @@ def build(pretrained=False, progress=True, **kwargs):
     """
     model = AlexNet(**kwargs)
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls['alexnet'],
-                                              progress=progress)
+        if weights_path:
+            ckpt = torch.load(weights_path)
+            if 'state_dict' in ckpt:
+                state_dict = ckpt['state_dict']
+            else:
+                state_dict = ckpt  # assume checkpoint is just state dict
+        else:
+            state_dict = load_state_dict_from_url(model_urls['alexnet'],
+                                                  progress=progress)
+        if any(['module.' in k for k in state_dict.keys()]):
+            state_dict = {
+                k.replace('module.', ''): v
+                for k, v in state_dict.items()
+            }
         model.load_state_dict(state_dict)
     return model
 

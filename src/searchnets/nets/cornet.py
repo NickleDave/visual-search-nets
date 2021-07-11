@@ -20,7 +20,7 @@ VALID_MODEL_NAMES = frozenset(
 )
 
 
-def build(model_name, pretrained=False, map_location=None, **kwargs):
+def build(model_name, pretrained=False, map_location=None, weights_path=None, **kwargs):
     model_name = model_name.lower()
     if model_name not in VALID_MODEL_NAMES:
         raise ValueError(
@@ -31,13 +31,25 @@ def build(model_name, pretrained=False, map_location=None, **kwargs):
     model_module = sys.modules[module_name]
     model = model_module.MODEL(**kwargs)
     if pretrained:
-        model_hash = model_module.HASH
-        model_letter = model_module.MODEL_LETTER
-        url = f'https://s3.amazonaws.com/cornet-models/cornet_{model_letter}-{model_hash}.pth'
-        ckpt_data = torch.utils.model_zoo.load_url(url, map_location=map_location)
-        # remove the 'module.' from keys in state_dict, since we don't have the model wrapped in nn.DataParallel yet
-        ckpt_data['state_dict'] = {k.replace('module.', ''): v for k, v in ckpt_data['state_dict'].items()}
-        model.load_state_dict(ckpt_data['state_dict'])
+        if weights_path:
+            ckpt = torch.load(weights_path)
+            if 'state_dict' in ckpt:
+                state_dict = ckpt['state_dict']
+            else:
+                state_dict = ckpt  # assume checkpoint is just state dict
+        else:
+            model_hash = model_module.HASH
+            model_letter = model_module.MODEL_LETTER
+            url = f'https://s3.amazonaws.com/cornet-models/cornet_{model_letter}-{model_hash}.pth'
+            ckpt_data = torch.utils.model_zoo.load_url(url, map_location=map_location)
+            # remove the 'module.' from keys in state_dict, since we don't have the model wrapped in nn.DataParallel yet
+            state_dict = {k.replace('module.', ''): v for k, v in ckpt_data['state_dict'].items()}
+        if any(['module.' in k for k in state_dict.keys()]):
+            state_dict = {
+                k.replace('module.', ''): v
+                for k, v in state_dict.items()
+            }
+        model.load_state_dict(state_dict)
     return model
 
 

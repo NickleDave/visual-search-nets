@@ -2,7 +2,7 @@
 from pathlib import Path
 
 import attr
-from attr import validators
+from attr import converters, validators
 from attr.validators import instance_of
 
 from ..utils.general import projroot_path
@@ -75,6 +75,13 @@ class TrainConfig:
         'transfer' means perform transfer learning, using weights pre-trained
         on imagenet.
         Default is 'transfer'.
+    pretrained : bool
+        whether to load pre-trained model weights. Default is True.
+    weights_path : str
+        path to pre-trained model weights. Default is ``None``.
+        If ``pretrained`` is ``True`` and ``weights_path`` is ``None``,
+        then the pre-trained weights will be loaded from the urls
+        associated with the models.
     mode : str
         training mode. One of {'classify', 'detect'}.
         'classify' is standard image classification.
@@ -158,6 +165,12 @@ class TrainConfig:
             raise ValueError(
                 f"method must be one of {{'initialize', 'transfer'}}, but was {value}."
             )
+
+    pretrained = attr.ib(validator=instance_of(bool), default=True)
+    weights_path = attr.ib(converter=converters.optional(projroot_path),
+                           validator=validators.optional(instance_of(Path)),
+                           default=None)
+
     mode = attr.ib(validator=instance_of(str), default='classify')
     @mode.validator
     def check_method(self, attribute, value):
