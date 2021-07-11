@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- add ability to specify whether model is `pretrained`, 
+  and to specify `weights_path`, a path to pre-trained model weights
+  [#88](https://github.com/NickleDave/visual-search-nets/pull/88)
 
 ## [1.2.0]
 ### Changed
