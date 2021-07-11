@@ -19,6 +19,8 @@ class TransferTrainer(AbstractTrainer):
                     net_name,
                     new_learn_rate_layers,
                     trainset,
+                    pretrained=True,
+                    weights_path=None,
                     mode='classify',
                     num_classes=2,
                     embedding_n_out=512,
@@ -41,6 +43,13 @@ class TransferTrainer(AbstractTrainer):
             and then trained with the 'new_layer_learning_rate'.
         trainset : torch.Dataset or torchvision.Visiondataset
             training data, represented as a class.
+        pretrained : bool
+            whether to load pre-trained model weights. Default is True.
+        weights_path : str
+            path to pre-trained model weights. Default is ``None``.
+            If ``pretrained`` is ``True`` and ``weights_path`` is ``None``,
+            then the pre-trained weights will be loaded from the urls
+            associated with the models.
         mode : str
             training mode. One of {'classify', 'detect'}.
             'classify' is standard image classification.
@@ -78,13 +87,13 @@ class TransferTrainer(AbstractTrainer):
         trainer : TransferTrainer
         """
         if net_name == 'alexnet':
-            model = nets.alexnet.build(pretrained=True, progress=True)
+            model = nets.alexnet.build(pretrained=pretrained, weights_path=weights_path, progress=True)
             model = nets.alexnet.reinit(model, new_learn_rate_layers, num_classes=num_classes)
         elif net_name == 'VGG16':
-            model = nets.vgg16.build(pretrained=True, progress=True)
+            model = nets.vgg16.build(pretrained=pretrained, weights_path=weights_path, progress=True)
             model = nets.vgg16.reinit(model, new_learn_rate_layers, num_classes=num_classes)
         elif 'cornet' in net_name.lower():
-            model = nets.cornet.build(model_name=net_name, pretrained=True)
+            model = nets.cornet.build(model_name=net_name, pretrained=pretrained, weights_path=weights_path)
             model = nets.cornet.reinit(model, model_name=net_name, num_classes=num_classes)
         else:
             raise ValueError(

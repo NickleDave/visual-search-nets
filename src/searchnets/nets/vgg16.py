@@ -75,18 +75,30 @@ cfgs = {
 }
 
 
-def _vgg(arch, cfg, batch_norm, pretrained, progress, **kwargs):
+def _vgg(arch, cfg, batch_norm, pretrained, progress, weights_path=None, **kwargs):
     if pretrained:
         kwargs['init_weights'] = False
     model = VGG(make_layers(cfgs[cfg], batch_norm=batch_norm), **kwargs)
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls[arch],
-                                              progress=progress)
+        if weights_path:
+            ckpt = torch.load(weights_path)
+            if 'state_dict' in ckpt:
+                state_dict = ckpt['state_dict']
+            else:
+                state_dict = ckpt  # assume checkpoint is just state dict
+        else:
+            state_dict = load_state_dict_from_url(model_urls[arch],
+                                                  progress=progress)
+        if any(['module.' in k for k in state_dict.keys()]):
+            state_dict = {
+                k.replace('module.', ''): v
+                for k, v in state_dict.items()
+            }
         model.load_state_dict(state_dict)
     return model
 
 
-def build(pretrained=False, progress=True, **kwargs):
+def build(pretrained=False, progress=True, weights_path=None, **kwargs):
     r"""VGG 16-layer model (configuration "D")
     `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
 
@@ -94,10 +106,10 @@ def build(pretrained=False, progress=True, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _vgg('vgg16', 'D', False, pretrained, progress, **kwargs)
+    return _vgg('vgg16', 'D', False, pretrained, progress, weights_path, **kwargs)
 
 
-def build_bn(pretrained=False, progress=True, **kwargs):
+def build_bn(pretrained=False, progress=True, weights_path=None, **kwargs):
     r"""VGG 16-layer model (configuration "D") with batch normalization
     `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
 
@@ -105,7 +117,7 @@ def build_bn(pretrained=False, progress=True, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _vgg('vgg16_bn', 'D', True, pretrained, progress, **kwargs)
+    return _vgg('vgg16_bn', 'D', True, pretrained, progress, weights_path, **kwargs)
 
 
 def reinit(model, init_layers, num_classes=2):

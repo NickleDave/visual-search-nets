@@ -165,6 +165,16 @@ def parse_config(config_fname):
     else:
         method = 'transfer'
 
+    if config.has_option('TRAIN', 'PRETRAINED'):
+        pretrained = bool(strtobool(config['TRAIN']['PRETRAINED']))
+    else:
+        pretrained = True
+
+    if config.has_option('TRAIN', 'WEIGHTS_PATH'):
+        weights_path = config['TRAIN']['WEIGHTS_PATH']
+    else:
+        weights_path = None
+
     if config.has_option('TRAIN', 'MODE'):
         mode = config['TRAIN']['MODE']
     else:
@@ -258,6 +268,8 @@ def parse_config(config_fname):
                                random_seed=random_seed,
                                save_path=save_path,
                                method=method,
+                               pretrained=pretrained,
+                               weights_path=weights_path,
                                mode=mode,
                                learning_rate=learning_rate,
                                new_learn_rate_layers=new_learn_rate_layers,
