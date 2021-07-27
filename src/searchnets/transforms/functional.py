@@ -220,7 +220,16 @@ def onehot_from_class_ints(class_ints, n_classes=None):
     Returns
     -------
     onehot : torch.Tensor
+
+    Notes
+    -----
+    Note that if there are duplicates (e.g., multiple instances of the class '6'),
+    those are ignored, since there's no way to represent multiples in a one-hot vector, 
+    unlike when an image uses bounding-box notation.
+    Without removing duplicates, converting to one-hot vector would raise an error.
+    Therefore this function uses only unique classes in `class_ints`.
     """
+    class_ints = list(set(class_ints))  # make unique; see https://github.com/NickleDave/visual-search-nets/issues/89
     # we don't use functional.one_hot because we want to return an array of all zeros if none of the objects
     # are present; can't pass an array of "nothing" to functional.one_hot to get that output
     n_classes = n_classes or len(VOC_CLASS_INT_MAP)
