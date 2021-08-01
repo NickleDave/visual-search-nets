@@ -44,22 +44,6 @@ def compute_d_prime(y_true, y_pred):
     return hit_rate.item(), false_alarm_rate.item(), d_prime.item()
 
 
-# used by searchnets_results_df
-SEARCHSTIMS_DF_COLUMNS = ['net_name',
-                          'method',
-                          'mode',
-                          'learning_rate',
-                          'net_number',
-                          'stimulus',
-                          'set_size',
-                          'target_condition',
-                          'accuracy',
-                          'hit_rate',
-                          'false_alarm_rate',
-                          'd_prime',
-                          ]
-
-
 def results_gz_to_df(results_gz_path,
                      data_csv_path,
                      net_name,
@@ -134,6 +118,8 @@ def results_gz_to_df(results_gz_path,
                     elif target_cond == 'both':
                         cond_df = set_size_df
                     correct_bool = cond_df['y_true'] == cond_df['y_pred']
+                    n_correct = correct_bool.sum()
+                    n_trials = correct_bool.shape[0]
                     acc = np.sum(correct_bool) / correct_bool.shape[0]
 
                     if target_cond == 'both':
@@ -142,11 +128,24 @@ def results_gz_to_df(results_gz_path,
                         )
                     else:
                         hit_rate, false_alarm_rate, d_prime = None, None, None
-                    row = [net_name, method, mode, learning_rate, net_num, stim, set_size, target_cond,
-                           acc, hit_rate, false_alarm_rate, d_prime]
-                    rows.append(row)
+                    rows.append({
+                        'net_name': net_name,
+                        'method': method,
+                        'mode': mode,
+                        'learning_rate': learning_rate,
+                        'net_number': net_num,
+                        'stimulus': stim,
+                        'set_size': set_size,
+                        'target_condition': target_cond,
+                        'n_correct': n_correct,
+                        'n_trials': n_trials,
+                        'accuracy': acc,
+                        'hit_rate': hit_rate,
+                        'false_alarm_rate': false_alarm_rate,
+                        'd_prime': d_prime,
+                    })
 
-    df = pd.DataFrame.from_records(rows, columns=SEARCHSTIMS_DF_COLUMNS)
+    df = pd.DataFrame.from_records(rows)
     if results_csv_path:
         df.to_csv(results_csv_path)
     return df
