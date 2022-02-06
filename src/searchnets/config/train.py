@@ -82,6 +82,10 @@ class TrainConfig:
         If ``pretrained`` is ``True`` and ``weights_path`` is ``None``,
         then the pre-trained weights will be loaded from the urls
         associated with the models.
+    num_source_classes : int
+        number of classes in source dataset that model was trained on.
+        Used when loading weights from ``weights_path``.
+        Default is 1000 (number of classes in ImageNet).
     mode : str
         training mode. One of {'classify', 'detect'}.
         'classify' is standard image classification.
@@ -170,6 +174,7 @@ class TrainConfig:
     weights_path = attr.ib(converter=converters.optional(projroot_path),
                            validator=validators.optional(instance_of(Path)),
                            default=None)
+    num_source_classes = attr.ib(converter=int, default=1000)
 
     mode = attr.ib(validator=instance_of(str), default='classify')
     @mode.validator

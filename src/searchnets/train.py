@@ -23,6 +23,7 @@ def train(csv_file,
           method='transfer',
           pretrained=True,
           weights_path=None,
+          num_source_classes=1000,
           mode='classify',
           num_classes=2,
           learning_rate=None,
@@ -84,6 +85,10 @@ def train(csv_file,
         If ``pretrained`` is ``True`` and ``weights_path`` is ``None``,
         then the pre-trained weights will be loaded from the urls
         associated with the models.
+    num_source_classes : int
+        number of classes in source dataset that model was trained on.
+        Used when loading weights from ``weights_path``.
+        Default is 1000 (number of classes in ImageNet).
     mode : str
         training mode. One of {'classify', 'detect'}.
         'classify' is standard image classification.
@@ -250,6 +255,7 @@ def train(csv_file,
                                                       trainset=trainset,
                                                       pretrained=pretrained,
                                                       weights_path=weights_path,
+                                                      num_source_classes=num_source_classes,
                                                       new_learn_rate_layers=new_learn_rate_layers,
                                                       freeze_trained_weights=freeze_trained_weights,
                                                       base_learning_rate=base_learning_rate,

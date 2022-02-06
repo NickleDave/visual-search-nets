@@ -44,6 +44,7 @@ def _call_train(config):
           method=config.train.method,
           pretrained=config.train.pretrained,
           weights_path=config.train.weights_path,
+          num_source_classes=config.train.num_source_classes,
           mode=config.train.mode,
           num_classes=config.data.num_classes,
           learning_rate=config.train.learning_rate,
