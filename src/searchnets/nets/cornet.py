@@ -20,7 +20,7 @@ VALID_MODEL_NAMES = frozenset(
 )
 
 
-def build(model_name, pretrained=False, map_location=None, weights_path=None, **kwargs):
+def build(model_name, pretrained=False, map_location=None, weights_path=None, num_classes=1000, **kwargs):
     model_name = model_name.lower()
     if model_name not in VALID_MODEL_NAMES:
         raise ValueError(
@@ -29,7 +29,7 @@ def build(model_name, pretrained=False, map_location=None, weights_path=None, **
         )
     module_name = model_module_map[model_name]
     model_module = sys.modules[module_name]
-    model = model_module.MODEL(**kwargs)
+    model = model_module.MODEL(num_classes=num_classes, **kwargs)
     if pretrained:
         if weights_path:
             ckpt = torch.load(weights_path)

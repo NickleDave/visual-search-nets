@@ -49,7 +49,7 @@ class AlexNet(nn.Module):
         return x
 
 
-def build(pretrained=False, progress=True, weights_path=None, **kwargs):
+def build(pretrained=False, progress=True, weights_path=None, num_classes=1000, **kwargs):
     r"""AlexNet model architecture from the
     `"One weird trick..." <https://arxiv.org/abs/1404.5997>`_ paper.
 
@@ -57,7 +57,7 @@ def build(pretrained=False, progress=True, weights_path=None, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    model = AlexNet(**kwargs)
+    model = AlexNet(num_classes=num_classes, **kwargs)
     if pretrained:
         if weights_path:
             ckpt = torch.load(weights_path)

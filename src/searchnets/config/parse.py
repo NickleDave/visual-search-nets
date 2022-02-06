@@ -175,6 +175,11 @@ def parse_config(config_fname):
     else:
         weights_path = None
 
+    if config.has_option('TRAIN', 'NUM_SOURCE_CLASSES'):
+        num_source_classes = config['TRAIN']['NUM_SOURCE_CLASSES']
+    else:
+        num_source_classes = 1000
+
     if config.has_option('TRAIN', 'MODE'):
         mode = config['TRAIN']['MODE']
     else:
@@ -270,6 +275,7 @@ def parse_config(config_fname):
                                method=method,
                                pretrained=pretrained,
                                weights_path=weights_path,
+                               num_source_classes=num_source_classes,
                                mode=mode,
                                learning_rate=learning_rate,
                                new_learn_rate_layers=new_learn_rate_layers,

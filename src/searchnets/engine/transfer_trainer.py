@@ -21,6 +21,7 @@ class TransferTrainer(AbstractTrainer):
                     trainset,
                     pretrained=True,
                     weights_path=None,
+                    num_source_classes=1000,
                     mode='classify',
                     num_classes=2,
                     embedding_n_out=512,
@@ -50,6 +51,10 @@ class TransferTrainer(AbstractTrainer):
             If ``pretrained`` is ``True`` and ``weights_path`` is ``None``,
             then the pre-trained weights will be loaded from the urls
             associated with the models.
+        num_source_classes : int
+            number of classes in source dataset that model was trained on.
+            Used when loading weights from ``weights_path``.
+            Default is 1000 (number of classes in ImageNet).
         mode : str
             training mode. One of {'classify', 'detect'}.
             'classify' is standard image classification.
@@ -87,13 +92,16 @@ class TransferTrainer(AbstractTrainer):
         trainer : TransferTrainer
         """
         if net_name == 'alexnet':
-            model = nets.alexnet.build(pretrained=pretrained, weights_path=weights_path, progress=True)
+            model = nets.alexnet.build(pretrained=pretrained, num_classes=num_source_classes,
+                                       weights_path=weights_path, progress=True)
             model = nets.alexnet.reinit(model, new_learn_rate_layers, num_classes=num_classes)
         elif net_name == 'VGG16':
-            model = nets.vgg16.build(pretrained=pretrained, weights_path=weights_path, progress=True)
+            model = nets.vgg16.build(pretrained=pretrained, num_classes=num_source_classes,
+                                     weights_path=weights_path, progress=True)
             model = nets.vgg16.reinit(model, new_learn_rate_layers, num_classes=num_classes)
         elif 'cornet' in net_name.lower():
-            model = nets.cornet.build(model_name=net_name, pretrained=pretrained, weights_path=weights_path)
+            model = nets.cornet.build(model_name=net_name, pretrained=pretrained,
+                                      num_classes=num_source_classes, weights_path=weights_path)
             model = nets.cornet.reinit(model, model_name=net_name, num_classes=num_classes)
         else:
             raise ValueError(

@@ -75,10 +75,10 @@ cfgs = {
 }
 
 
-def _vgg(arch, cfg, batch_norm, pretrained, progress, weights_path=None, **kwargs):
+def _vgg(arch, cfg, batch_norm, pretrained, progress, weights_path=None, num_classes=1000, **kwargs):
     if pretrained:
         kwargs['init_weights'] = False
-    model = VGG(make_layers(cfgs[cfg], batch_norm=batch_norm), **kwargs)
+    model = VGG(make_layers(cfgs[cfg], batch_norm=batch_norm), num_classes=num_classes, **kwargs)
     if pretrained:
         if weights_path:
             ckpt = torch.load(weights_path)
@@ -98,7 +98,7 @@ def _vgg(arch, cfg, batch_norm, pretrained, progress, weights_path=None, **kwarg
     return model
 
 
-def build(pretrained=False, progress=True, weights_path=None, **kwargs):
+def build(pretrained=False, progress=True, weights_path=None, num_classes=1000, **kwargs):
     r"""VGG 16-layer model (configuration "D")
     `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
 
@@ -106,10 +106,10 @@ def build(pretrained=False, progress=True, weights_path=None, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _vgg('vgg16', 'D', False, pretrained, progress, weights_path, **kwargs)
+    return _vgg('vgg16', 'D', False, pretrained, progress, weights_path, num_classes, **kwargs)
 
 
-def build_bn(pretrained=False, progress=True, weights_path=None, **kwargs):
+def build_bn(pretrained=False, progress=True, weights_path=None, num_classes=1000, **kwargs):
     r"""VGG 16-layer model (configuration "D") with batch normalization
     `"Very Deep Convolutional Networks For Large-Scale Image Recognition" <https://arxiv.org/pdf/1409.1556.pdf>`_
 
@@ -117,7 +117,7 @@ def build_bn(pretrained=False, progress=True, weights_path=None, **kwargs):
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _vgg('vgg16_bn', 'D', True, pretrained, progress, weights_path, **kwargs)
+    return _vgg('vgg16_bn', 'D', True, pretrained, progress, weights_path, num_classes, **kwargs)
 
 
 def reinit(model, init_layers, num_classes=2):
