@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add ability to specify whether model is `pretrained`, 
   and to specify `weights_path`, a path to pre-trained model weights
   [#88](https://github.com/NickleDave/visual-search-nets/pull/88)
+- add ability to specify number of classes in source dataset
+  when performing transfer training
+  [#91](https://github.com/NickleDave/visual-search-nets/pull/91)
 
 ## [1.2.0]
 ### Changed
