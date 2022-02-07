@@ -206,7 +206,7 @@ class AbstractTrainer:
 
             if self.mode == 'classify':
                 batch_x = batch['img'].to(self.device)
-                if self.loss_func == 'BCE' or self.loss_func == 'CE':
+                if self.loss_func in {'BCE', 'CE', 'CE-VSD'}:
                     batch_y = batch['target'].to(self.device)
                 elif self.loss_func == 'CE-largest':
                     batch_y = batch['largest'].to(self.device)
@@ -265,7 +265,7 @@ class AbstractTrainer:
                     val_metrics = self.validate()
                     self.model.train()  # switch back to train after validate calls eval
                     if self.mode == 'classify':
-                        if self.loss_func == 'CE':
+                        if self.loss_func == 'CE' or self.loss_func == 'CE-VSD':
                             val_acc_this_epoch = val_metrics['acc']
                         elif self.loss_func == 'BCE':
                             val_acc_this_epoch = val_metrics['f1']
@@ -330,7 +330,7 @@ class AbstractTrainer:
                 # ---- get output, compute loss ----
                 if self.mode == 'classify':
                     batch_x = batch['img'].to(self.device)
-                    if self.loss_func == 'BCE' or self.loss_func == 'CE':
+                    if self.loss_func in {'BCE', 'CE', 'CE-VSD'}:
                         batch_y = batch['target'].to(self.device)
                     elif self.loss_func == 'CE-largest':
                         batch_y = batch['largest'].to(self.device)

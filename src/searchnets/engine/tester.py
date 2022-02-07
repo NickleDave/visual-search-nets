@@ -179,7 +179,7 @@ class Tester:
                                              vis_sys_n_out=vis_sys_n_features_out,
                                              embedding_n_out=embedding_n_out)
 
-        if loss_func in {'CE', 'CE-largest', 'CE-random'}:
+        if loss_func in {'CE', 'CE-largest', 'CE-random', 'CE-VSD'}:
             criterion = nn.CrossEntropyLoss()
         elif loss_func == 'BCE':
             criterion = nn.BCEWithLogitsLoss()
@@ -233,7 +233,7 @@ class Tester:
 
                 if self.mode == 'classify':
                     batch_x = batch['img'].to(self.device)
-                    if self.loss_func == 'BCE' or self.loss_func == 'CE':
+                    if self.loss_func in {'BCE', 'CE', 'CE-VSD'}:
                         batch_y = batch['target'].to(self.device)
                     elif self.loss_func == 'CE-largest':
                         batch_y = batch['largest'].to(self.device)

@@ -39,11 +39,23 @@ def get_transforms(dataset_type,
     transform, target_transform
     """
     if dataset_type == 'searchstims':
-        transform = vis_transforms.Compose(
-            [vis_transforms.ToTensor(),
-             vis_transforms.Normalize(mean=MEAN, std=STD)]
-        )
-        if loss_func == 'CE':
+        if loss_func == 'CE' or loss_func == 'BCE':
+            transform = vis_transforms.Compose(
+                [vis_transforms.ToTensor(),
+                 vis_transforms.Normalize(mean=MEAN, std=STD)]
+            )
+        elif loss_func == 'CE-VSD':
+            # added just to deal with the case where we train on VSD as if it were searchstims,
+            # i.e. binary classification of target present / absent, with output of size 2 + cross-entropy loss
+            # img transform is the same regardless of the loss
+            transform = vis_transforms.Compose(
+                [vis_transforms.ToTensor(),
+                 vis_transforms.Normalize(mean=MEAN, std=STD),  # note didn't normalize for VSD training below
+                 transforms.RandomPad(pad_size=pad_size),
+                 ]
+            )
+
+        if loss_func == 'CE' or loss_func == 'CE-VSD':
             target_transform = transforms.TensorFromNumpyScalar()
         elif loss_func == 'BCE':
             dim_adder = functools.partial(torch.unsqueeze, dim=0)
