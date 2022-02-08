@@ -237,7 +237,7 @@ def train(csv_file,
                 'can only measure accuracy by set size with searchstims stimuli, not VSD dataset'
             )
 
-    if loss_func in {'CE', 'CE-largest', 'CE-random'}:
+    if loss_func in {'CE', 'CE-largest', 'CE-random', 'CE-VSD'}:
         criterion = nn.CrossEntropyLoss()
     elif loss_func == 'BCE':
         criterion = nn.BCEWithLogitsLoss()

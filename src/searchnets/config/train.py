@@ -34,7 +34,8 @@ VALID_LOSS_FUNCTIONS = {
     'BCE',
     'CE',
     'CE-largest',
-    'CE-random'
+    'CE-random',
+    'CE-VSD'
 }
 
 
@@ -109,8 +110,9 @@ class TrainConfig:
         one hot vector querying whether a specific class is present as input.
         Default is 512.
     loss_func : str
-        type of loss function to use. One of {'CE', 'invDPrime'}. Default is 'CE',
-        the standard cross-entropy loss. 'invDprime' is inverse D prime.
+        type of loss function to use.
+        Valid loss functions listed in ``searchnets.config.train.VALID_LOSS_FUNCTIONS``.
+        Default is 'CE', the standard cross-entropy loss.
     optimizer : str
         optimizer to use. One of {'SGD', 'Adam', 'AdamW'}.
     save_acc_by_set_size_by_epoch : bool
