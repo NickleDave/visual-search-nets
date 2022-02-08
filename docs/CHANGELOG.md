@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add ability to specify number of classes in source dataset
   when performing transfer training
   [#91](https://github.com/NickleDave/visual-search-nets/pull/91)
+- make it possible to train on Pascal VOC / 
+  Visual Search Difficulty dataset in the same way 
+  models are trained on `searchstims` datasets,
+  to enable direct comparison of performance
+  [#92](https://github.com/NickleDave/visual-search-nets/pull/92)
 
 ## [1.2.0]
 ### Changed
